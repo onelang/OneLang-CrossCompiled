@@ -1,0 +1,9 @@
+{
+    "autoload": {
+        "psr-4": {
+            "OneCore\\": "onepkg/OneCore",
+            "OneFile\\": "onepkg/OneFile",
+            "OneYaml\\": "onepkg/OneYaml"
+        }
+    }
+}
