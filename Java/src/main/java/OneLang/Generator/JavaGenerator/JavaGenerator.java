@@ -831,14 +831,14 @@ public class JavaGenerator implements IGenerator {
     }
     
     public String toImport(ExportScopeRef scope) {
-        return Objects.equals(scope.scopeName, "index") ? "OneStd" : scope.packageName + "." + scope.scopeName.replaceAll("\\.ts$", "").replaceAll("/", ".");
+        return Objects.equals(scope.scopeName, "index") ? "OneStd" : scope.packageName + "." + scope.scopeName.replaceAll("/", ".");
     }
     
     public GeneratedFile[] generate(Package pkg) {
         var result = new ArrayList<GeneratedFile>();
         for (var path : pkg.files.keySet().toArray(String[]::new)) {
             var file = pkg.files.get(path);
-            var packagePath = pkg.name + "/" + file.sourcePath.path.replaceAll("\\.ts$", "");
+            var packagePath = pkg.name + "/" + file.sourcePath.path;
             var dstDir = "src/main/java/" + packagePath;
             var packageName = packagePath.replaceAll("/", ".");
             

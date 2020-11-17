@@ -676,7 +676,7 @@ namespace Generator
         
         public string toImport(ExportScopeRef scope)
         {
-            return scope.scopeName == "index" ? $"OneStd" : $"{scope.packageName}.{scope.scopeName.replace(new RegExp("\\.ts$"), "").replace(new RegExp("/"), ".")}";
+            return scope.scopeName == "index" ? $"OneStd" : $"{scope.packageName}.{scope.scopeName.replace(new RegExp("/"), ".")}";
         }
         
         public GeneratedFile[] generate(Package pkg)
@@ -684,7 +684,7 @@ namespace Generator
             var result = new List<GeneratedFile>();
             foreach (var path in Object.keys(pkg.files)) {
                 var file = pkg.files.get(path);
-                var packagePath = $"{pkg.name}/{file.sourcePath.path.replace(new RegExp("\\.ts$"), "")}";
+                var packagePath = $"{pkg.name}/{file.sourcePath.path}";
                 var dstDir = $"src/main/java/{packagePath}";
                 var packageName = packagePath.replace(new RegExp("/"), ".");
                 

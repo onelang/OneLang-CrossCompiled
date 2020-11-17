@@ -36,7 +36,7 @@ class TypeScriptParser2:
         self.reader.hooks = self
         self.node_manager = nodeMan.NodeManager(self.reader)
         self.expression_parser = self.create_expression_parser(self.reader, self.node_manager)
-        self.export_scope = types.ExportScopeRef(self.path.pkg.name, re.sub(".ts$", "", self.path.path) if self.path.path != None else None) if self.path != None else None
+        self.export_scope = types.ExportScopeRef(self.path.pkg.name, re.sub("\\.ts$", "", self.path.path) if self.path.path != None else None) if self.path != None else None
     
     def create_expression_parser(self, reader, node_manager = None):
         expression_parser = exprPars.ExpressionParser(reader, self, node_manager)

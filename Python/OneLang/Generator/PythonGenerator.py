@@ -493,5 +493,5 @@ class PythonGenerator:
         self.package = pkg
         result = []
         for path in pkg.files.keys():
-            result.append(genFile.GeneratedFile(f'''{pkg.name}/{path}''', self.gen_file(pkg.files.get(path))))
+            result.append(genFile.GeneratedFile(f'''{pkg.name}/{path}.py''', self.gen_file(pkg.files.get(path))))
         return result

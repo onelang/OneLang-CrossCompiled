@@ -8,7 +8,7 @@ import OneLang.One.Ast.Types.ExportedScope;
 import OneLang.One.Ast.Types.LiteralTypes;
 import OneLang.One.Ast.Types.Class;
 import OneLang.One.Ast.Types.ExportScopeRef;
-import OneLang.Parsers.TypeScriptParser2.TypeScriptParser2;
+import OneLang.Parsers.TypeScriptParser.TypeScriptParser2;
 import OneLang.StdLib.PackageManager.PackageManager;
 import OneLang.StdLib.PackagesFolderSource.PackagesFolderSource;
 import OneLang.One.Transforms.FillParent.FillParent;
@@ -53,6 +53,8 @@ import OneLang.One.Ast.Types.SourcePath;
 import OneLang.One.Ast.Types.LiteralTypes;
 import OneLang.One.Ast.Types.Class;
 import OneLang.One.Ast.AstTypes.ClassType;
+import OneStd.RegExp;
+import java.util.regex.Pattern;
 import java.util.Arrays;
 
 public class Compiler {
@@ -139,7 +141,7 @@ public class Compiler {
     }
     
     public void addProjectFile(String fn, String content) {
-        var file = TypeScriptParser2.parseFile(content, new SourcePath(this.projectPkg, fn));
+        var file = TypeScriptParser2.parseFile(content, new SourcePath(this.projectPkg, fn.replaceAll("\\.ts$", "")));
         this.setupFile(file);
         this.projectPkg.addFile(file, false);
     }

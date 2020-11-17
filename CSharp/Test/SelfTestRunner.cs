@@ -54,10 +54,9 @@ namespace Test
             
             var allMatch = true;
             foreach (var genFile in generated) {
-                var fn = genFile.path.replace(new RegExp("\\.ts$"), ext);
                 var projBase = $"{this.baseDir}test/artifacts/ProjectTest/OneLang";
-                var tsGenPath = $"{this.baseDir}/xcompiled/{langName}/{fn}";
-                var reGenPath = $"{projBase}/{langName}_Regen/{fn}";
+                var tsGenPath = $"{this.baseDir}/xcompiled/{langName}/{genFile.path}";
+                var reGenPath = $"{projBase}/{langName}_Regen/{genFile.path}";
                 var tsGenContent = OneFile.readText(tsGenPath);
                 var reGenContent = genFile.content;
                 

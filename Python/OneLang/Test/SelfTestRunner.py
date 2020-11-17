@@ -4,7 +4,6 @@ import OneLang.One.CompilerHelper as compHelp
 import OneLang.Generator.IGenerator as iGen
 import OneLang.One.Compiler as comp
 import OneLang.Test.PackageStateCapture as packStateCapt
-import re
 
 class CompilerHooks:
     def __init__(self, compiler, base_dir):
@@ -41,10 +40,9 @@ class SelfTestRunner:
         
         all_match = True
         for gen_file in generated:
-            fn = re.sub("\\.ts$", ext, gen_file.path)
             proj_base = f'''{self.base_dir}test/artifacts/ProjectTest/OneLang'''
-            ts_gen_path = f'''{self.base_dir}/xcompiled/{lang_name}/{fn}'''
-            re_gen_path = f'''{proj_base}/{lang_name}_Regen/{fn}'''
+            ts_gen_path = f'''{self.base_dir}/xcompiled/{lang_name}/{gen_file.path}'''
+            re_gen_path = f'''{proj_base}/{lang_name}_Regen/{gen_file.path}'''
             ts_gen_content = OneFile.read_text(ts_gen_path)
             re_gen_content = gen_file.content
             

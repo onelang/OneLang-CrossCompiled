@@ -566,13 +566,13 @@ class JavaGenerator:
         return "" if len(imports) == 0 else "\n".join(list(map(lambda x: f'''import {x};''', imports))) + "\n\n"
     
     def to_import(self, scope):
-        return f'''OneStd''' if scope.scope_name == "index" else f'''{scope.package_name}.{re.sub("/", ".", re.sub("\\.ts$", "", scope.scope_name))}'''
+        return f'''OneStd''' if scope.scope_name == "index" else f'''{scope.package_name}.{re.sub("/", ".", scope.scope_name)}'''
     
     def generate(self, pkg):
         result = []
         for path in pkg.files.keys():
             file = pkg.files.get(path)
-            package_path = f'''{pkg.name}/{re.sub("\\.ts$", "", file.source_path.path)}'''
+            package_path = f'''{pkg.name}/{file.source_path.path}'''
             dst_dir = f'''src/main/java/{package_path}'''
             package_name = re.sub("/", ".", package_path)
             

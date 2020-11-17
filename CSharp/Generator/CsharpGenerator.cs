@@ -586,7 +586,7 @@ namespace Generator
         {
             var result = new List<GeneratedFile>();
             foreach (var path in Object.keys(pkg.files))
-                result.push(new GeneratedFile(path, this.genFile(pkg.files.get(path))));
+                result.push(new GeneratedFile($"{path}.cs", this.genFile(pkg.files.get(path))));
             return result.ToArray();
         }
     }

@@ -110,7 +110,7 @@ namespace Generator
                     return $"Dictionary";
                 
                 if (classType.decl.parentFile.exportScope == null)
-                    return $"\\OneLang\\{this.name_(classType.decl.name)}";
+                    return $"\\OneCore\\{this.name_(classType.decl.name)}";
                 else
                     return this.name_(classType.decl.name);
             }
@@ -262,7 +262,7 @@ namespace Generator
             else if (expr is StaticMethodCallExpression statMethCallExpr) {
                 res = $"{this.name_(statMethCallExpr.method.parentInterface.name)}::{this.methodCall(statMethCallExpr)}";
                 if (statMethCallExpr.method.parentInterface.parentFile.exportScope == null)
-                    res = $"\\OneLang\\{res}";
+                    res = $"\\OneCore\\{res}";
             }
             else if (expr is GlobalFunctionCallExpression globFunctCallExpr)
                 res = $"Global.{this.name_(globFunctCallExpr.func.name)}{this.exprCall(new IType[0], globFunctCallExpr.args)}";
@@ -346,7 +346,7 @@ namespace Generator
             else if (expr is ParenthesizedExpression parExpr)
                 res = $"({this.expr(parExpr.expression)})";
             else if (expr is RegexLiteral regexLit)
-                res = $"new \\OneLang\\RegExp({JSON.stringify(regexLit.pattern)})";
+                res = $"new \\OneCore\\RegExp({JSON.stringify(regexLit.pattern)})";
             else if (expr is Lambda lambd) {
                 var params_ = lambd.parameters.map(x => $"${this.name_(x.name)}");
                 // TODO: captures should not be null
@@ -564,8 +564,8 @@ namespace Generator
         
         public string pathToNs(string path)
         {
-            // Generator/ExprLang/ExprLangAst.ts -> Generator\ExprLang\ExprLangAst
-            var parts = path.replace(new RegExp("\\.ts"), "").split(new RegExp("/"));
+            // Generator/ExprLang/ExprLangAst -> Generator\ExprLang\ExprLangAst
+            var parts = path.split(new RegExp("/"));
             //parts.pop();
             return parts.join("\\");
         }
@@ -580,7 +580,7 @@ namespace Generator
             return this.name_(name).toUpperCase();
         }
         
-        public string genFile(SourceFile sourceFile)
+        public string genFile(string projName, SourceFile sourceFile)
         {
             this.usings = new Set<string>();
             
@@ -609,7 +609,7 @@ namespace Generator
                     if (fileNs == "index")
                         continue;
                     foreach (var impItem in imp.imports)
-                        usingsSet.add(fileNs + "\\" + this.name_(impItem.name));
+                        usingsSet.add($"{imp.exportScope.packageName}\\{fileNs}\\{this.name_(impItem.name)}");
                 }
             }
             
@@ -621,8 +621,7 @@ namespace Generator
                 usings.push($"use {using_};");
             
             var result = new List<string> { usings.join("\n"), enums.join("\n"), intfs.join("\n\n"), classes.join("\n\n"), main }.filter(x => x != "").join("\n\n");
-            var nl = "\n";
-            result = $"<?php\n\nnamespace {this.pathToNs(sourceFile.sourcePath.path)};\n\n{result}\n";
+            result = $"<?php\n\nnamespace {projName}\\{this.pathToNs(sourceFile.sourcePath.path)};\n\n{result}\n";
             return result;
         }
         
@@ -630,7 +629,7 @@ namespace Generator
         {
             var result = new List<GeneratedFile>();
             foreach (var path in Object.keys(pkg.files))
-                result.push(new GeneratedFile(path, this.genFile(pkg.files.get(path))));
+                result.push(new GeneratedFile($"src/{pkg.name}/{path}.php", this.genFile(pkg.name, pkg.files.get(path))));
             return result.ToArray();
         }
     }

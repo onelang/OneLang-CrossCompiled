@@ -91,7 +91,7 @@ class PhpGenerator:
                 return f'''Dictionary'''
             
             if t.decl.parent_file.export_scope == None:
-                return f'''\\OneLang\\{self.name_(t.decl.name)}'''
+                return f'''\\OneCore\\{self.name_(t.decl.name)}'''
             else:
                 return self.name_(t.decl.name)
         elif isinstance(t, astTypes.InterfaceType):
@@ -218,7 +218,7 @@ class PhpGenerator:
         elif isinstance(expr, exprs.StaticMethodCallExpression):
             res = f'''{self.name_(expr.method.parent_interface.name)}::{self.method_call(expr)}'''
             if expr.method.parent_interface.parent_file.export_scope == None:
-                res = f'''\\OneLang\\{res}'''
+                res = f'''\\OneCore\\{res}'''
         elif isinstance(expr, exprs.GlobalFunctionCallExpression):
             res = f'''Global.{self.name_(expr.func.name)}{self.expr_call([], expr.args)}'''
         elif isinstance(expr, exprs.LambdaCallExpression):
@@ -295,7 +295,7 @@ class PhpGenerator:
         elif isinstance(expr, exprs.ParenthesizedExpression):
             res = f'''({self.expr(expr.expression)})'''
         elif isinstance(expr, exprs.RegexLiteral):
-            res = f'''new \\OneLang\\RegExp({JSON.stringify(expr.pattern)})'''
+            res = f'''new \\OneCore\\RegExp({JSON.stringify(expr.pattern)})'''
         elif isinstance(expr, types.Lambda):
             params = list(map(lambda x: f'''${self.name_(x.name)}''', expr.parameters))
             # TODO: captures should not be null
@@ -486,8 +486,8 @@ class PhpGenerator:
         return "\n".join(list(map(lambda x: f'''    {x}''', re.split("\\n", str))))
     
     def path_to_ns(self, path):
-        # Generator/ExprLang/ExprLangAst.ts -> Generator\ExprLang\ExprLangAst
-        parts = re.split("/", re.sub("\\.ts", "", path))
+        # Generator/ExprLang/ExprLangAst -> Generator\ExprLang\ExprLangAst
+        parts = re.split("/", path)
         #parts.pop();
         return "\\".join(parts)
     
@@ -497,7 +497,7 @@ class PhpGenerator:
     def enum_member_name(self, name):
         return self.name_(name).upper()
     
-    def gen_file(self, source_file):
+    def gen_file(self, proj_name, source_file):
         self.usings = dict()
         
         enums = []
@@ -527,7 +527,7 @@ class PhpGenerator:
                 if file_ns == "index":
                     continue
                 for imp_item in imp.imports:
-                    usings_set[file_ns + "\\" + self.name_(imp_item.name)] = None
+                    usings_set[f'''{imp.export_scope.package_name}\\{file_ns}\\{self.name_(imp_item.name)}'''] = None
         
         for using in self.usings:
             usings_set[using] = None
@@ -537,12 +537,11 @@ class PhpGenerator:
             usings.append(f'''use {using};''')
         
         result = "\n\n".join(list(filter(lambda x: x != "", ["\n".join(usings), "\n".join(enums), "\n\n".join(intfs), "\n\n".join(classes), main])))
-        nl = "\n"
-        result = f'''<?php\n\nnamespace {self.path_to_ns(source_file.source_path.path)};\n\n{result}\n'''
+        result = f'''<?php\n\nnamespace {proj_name}\\{self.path_to_ns(source_file.source_path.path)};\n\n{result}\n'''
         return result
     
     def generate(self, pkg):
         result = []
         for path in pkg.files.keys():
-            result.append(genFile.GeneratedFile(path, self.gen_file(pkg.files.get(path))))
+            result.append(genFile.GeneratedFile(f'''src/{pkg.name}/{path}.php''', self.gen_file(pkg.name, pkg.files.get(path))))
         return result

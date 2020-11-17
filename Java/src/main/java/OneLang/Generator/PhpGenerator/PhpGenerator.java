@@ -286,7 +286,7 @@ public class PhpGenerator implements IGenerator {
                 return "Dictionary";
             
             if (((ClassType)t).decl.getParentFile().exportScope == null)
-                return "\\OneLang\\" + this.name_(((ClassType)t).decl.getName());
+                return "\\OneCore\\" + this.name_(((ClassType)t).decl.getName());
             else
                 return this.name_(((ClassType)t).decl.getName());
         }
@@ -427,7 +427,7 @@ public class PhpGenerator implements IGenerator {
         else if (expr instanceof StaticMethodCallExpression) {
             res = this.name_(((StaticMethodCallExpression)expr).getMethod().parentInterface.getName()) + "::" + this.methodCall(((StaticMethodCallExpression)expr));
             if (((StaticMethodCallExpression)expr).getMethod().parentInterface.getParentFile().exportScope == null)
-                res = "\\OneLang\\" + res;
+                res = "\\OneCore\\" + res;
         }
         else if (expr instanceof GlobalFunctionCallExpression)
             res = "Global." + this.name_(((GlobalFunctionCallExpression)expr).func.getName()) + this.exprCall(new IType[0], ((GlobalFunctionCallExpression)expr).args);
@@ -511,7 +511,7 @@ public class PhpGenerator implements IGenerator {
         else if (expr instanceof ParenthesizedExpression)
             res = "(" + this.expr(((ParenthesizedExpression)expr).expression) + ")";
         else if (expr instanceof RegexLiteral)
-            res = "new \\OneLang\\RegExp(" + JSON.stringify(((RegexLiteral)expr).pattern) + ")";
+            res = "new \\OneCore\\RegExp(" + JSON.stringify(((RegexLiteral)expr).pattern) + ")";
         else if (expr instanceof Lambda) {
             var params = Arrays.stream(((Lambda)expr).getParameters()).map(x -> "$" + this.name_(x.getName())).toArray(String[]::new);
             // TODO: captures should not be null
@@ -721,8 +721,8 @@ public class PhpGenerator implements IGenerator {
     }
     
     public String pathToNs(String path) {
-        // Generator/ExprLang/ExprLangAst.ts -> Generator\ExprLang\ExprLangAst
-        var parts = path.replaceAll("\\.ts", "").split("/", -1);
+        // Generator/ExprLang/ExprLangAst -> Generator\ExprLang\ExprLangAst
+        var parts = path.split("/", -1);
         //parts.pop();
         return Arrays.stream(parts).collect(Collectors.joining("\\"));
     }
@@ -735,7 +735,7 @@ public class PhpGenerator implements IGenerator {
         return this.name_(name).toUpperCase();
     }
     
-    public String genFile(SourceFile sourceFile) {
+    public String genFile(String projName, SourceFile sourceFile) {
         this.usings = new LinkedHashSet<String>();
         
         var enums = new ArrayList<String>();
@@ -763,7 +763,7 @@ public class PhpGenerator implements IGenerator {
                 if (Objects.equals(fileNs, "index"))
                     continue;
                 for (var impItem : imp.imports)
-                    usingsSet.add(fileNs + "\\" + this.name_(impItem.getName()));
+                    usingsSet.add(imp.exportScope.packageName + "\\" + fileNs + "\\" + this.name_(impItem.getName()));
             }
         }
         
@@ -775,15 +775,14 @@ public class PhpGenerator implements IGenerator {
             usings.add("use " + using + ";");
         
         var result = Arrays.stream(new ArrayList<>(List.of(usings.stream().collect(Collectors.joining("\n")), enums.stream().collect(Collectors.joining("\n")), Arrays.stream(intfs).collect(Collectors.joining("\n\n")), classes.stream().collect(Collectors.joining("\n\n")), main)).stream().filter(x -> !Objects.equals(x, "")).toArray(String[]::new)).collect(Collectors.joining("\n\n"));
-        var nl = "\n";
-        result = "<?php\n\nnamespace " + this.pathToNs(sourceFile.sourcePath.path) + ";\n\n" + result + "\n";
+        result = "<?php\n\nnamespace " + projName + "\\" + this.pathToNs(sourceFile.sourcePath.path) + ";\n\n" + result + "\n";
         return result;
     }
     
     public GeneratedFile[] generate(Package pkg) {
         var result = new ArrayList<GeneratedFile>();
         for (var path : pkg.files.keySet().toArray(String[]::new))
-            result.add(new GeneratedFile(path, this.genFile(pkg.files.get(path))));
+            result.add(new GeneratedFile("src/" + pkg.name + "/" + path + ".php", this.genFile(pkg.name, pkg.files.get(path))));
         return result.toArray(GeneratedFile[]::new);
     }
 }

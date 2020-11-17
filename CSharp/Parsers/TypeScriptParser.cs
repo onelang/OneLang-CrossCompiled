@@ -50,7 +50,7 @@ namespace Parsers
             this.reader.hooks = this;
             this.nodeManager = new NodeManager(this.reader);
             this.expressionParser = this.createExpressionParser(this.reader, this.nodeManager);
-            this.exportScope = this.path != null ? new ExportScopeRef(this.path.pkg.name, this.path.path != null ? this.path.path.replace(new RegExp(".ts$"), "") : null) : null;
+            this.exportScope = this.path != null ? new ExportScopeRef(this.path.pkg.name, this.path.path != null ? this.path.path.replace(new RegExp("\\.ts$"), "") : null) : null;
         }
         
         public ExpressionParser createExpressionParser(Reader reader, NodeManager nodeManager = null)

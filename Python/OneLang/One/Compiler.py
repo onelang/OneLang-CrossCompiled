@@ -1,6 +1,6 @@
 from OneLangStdLib import *
 import OneLang.One.Ast.Types as types
-import OneLang.Parsers.TypeScriptParser2 as typeScrPars
+import OneLang.Parsers.TypeScriptParser as typeScrPars
 import OneLang.StdLib.PackageManager as packMan
 import OneLang.StdLib.PackagesFolderSource as packFoldSourc
 import OneLang.One.Transforms.FillParent as fillPar
@@ -18,6 +18,7 @@ import OneLang.One.Transforms.FillMutabilityInfo as fillMutInfo
 import OneLang.One.AstTransformer as astTrans
 import OneLang.One.ITransformer as iTrans
 import OneLang.One.Transforms.LambdaCaptureCollector as lambdCaptColl
+import re
 
 class Compiler:
     def __init__(self):
@@ -85,7 +86,7 @@ class Compiler:
         file.array_types = [(file.available_symbols.get("TsArray")).type, (file.available_symbols.get("IterableIterator")).type, (file.available_symbols.get("RegExpExecArray")).type, (file.available_symbols.get("TsString")).type, (file.available_symbols.get("Set")).type]
     
     def add_project_file(self, fn, content):
-        file = typeScrPars.TypeScriptParser2.parse_file(content, types.SourcePath(self.project_pkg, fn))
+        file = typeScrPars.TypeScriptParser2.parse_file(content, types.SourcePath(self.project_pkg, re.sub("\\.ts$", "", fn)))
         self.setup_file(file)
         self.project_pkg.add_file(file)
     

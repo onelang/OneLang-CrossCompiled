@@ -8,7 +8,7 @@ import OneLang.One.Ast.Types.ExportedScope;
 import OneLang.One.Ast.Types.LiteralTypes;
 import OneLang.One.Ast.Types.Class;
 import OneLang.One.Ast.Types.ExportScopeRef;
-import OneLang.Parsers.TypeScriptParser2.TypeScriptParser2;
+import OneLang.Parsers.TypeScriptParser.TypeScriptParser2;
 import OneLang.StdLib.PackageManager.PackageManager;
 import OneLang.StdLib.PackagesFolderSource.PackagesFolderSource;
 import OneLang.One.Transforms.FillParent.FillParent;

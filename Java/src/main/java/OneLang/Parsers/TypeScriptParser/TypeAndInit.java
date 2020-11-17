@@ -1,4 +1,4 @@
-package OneLang.Parsers.TypeScriptParser2;
+package OneLang.Parsers.TypeScriptParser;
 
 import OneLang.Parsers.Common.Reader.Reader;
 import OneLang.Parsers.Common.Reader.IReaderHooks;

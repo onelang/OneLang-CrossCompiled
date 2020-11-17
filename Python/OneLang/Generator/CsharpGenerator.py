@@ -498,5 +498,5 @@ class CsharpGenerator:
     def generate(self, pkg):
         result = []
         for path in pkg.files.keys():
-            result.append(genFile.GeneratedFile(path, self.gen_file(pkg.files.get(path))))
+            result.append(genFile.GeneratedFile(f'''{path}.cs''', self.gen_file(pkg.files.get(path))))
         return result

@@ -103,7 +103,7 @@ namespace One
         
         public void addProjectFile(string fn, string content)
         {
-            var file = TypeScriptParser2.parseFile(content, new SourcePath(this.projectPkg, fn));
+            var file = TypeScriptParser2.parseFile(content, new SourcePath(this.projectPkg, fn.replace(new RegExp("\\.ts$"), "")));
             this.setupFile(file);
             this.projectPkg.addFile(file);
         }

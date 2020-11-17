@@ -729,7 +729,7 @@ public class PythonGenerator implements IGenerator {
         this.package_ = pkg;
         var result = new ArrayList<GeneratedFile>();
         for (var path : pkg.files.keySet().toArray(String[]::new))
-            result.add(new GeneratedFile(pkg.name + "/" + path, this.genFile(pkg.files.get(path))));
+            result.add(new GeneratedFile(pkg.name + "/" + path + ".py", this.genFile(pkg.files.get(path))));
         return result.toArray(GeneratedFile[]::new);
     }
 }

@@ -9,8 +9,6 @@ import OneLang.Test.PackageStateCapture.PackageStateCapture;
 
 import OneStd.console;
 import OneLang.Test.SelfTestRunner.CompilerHooks;
-import OneStd.RegExp;
-import java.util.regex.Pattern;
 import OneStd.Objects;
 import OneLang.Generator.IGenerator.IGenerator;
 
@@ -35,10 +33,9 @@ public class SelfTestRunner {
         
         var allMatch = true;
         for (var genFile : generated) {
-            var fn = genFile.path.replaceAll("\\.ts$", ext);
             var projBase = this.baseDir + "test/artifacts/ProjectTest/OneLang";
-            var tsGenPath = this.baseDir + "/xcompiled/" + langName + "/" + fn;
-            var reGenPath = projBase + "/" + langName + "_Regen/" + fn;
+            var tsGenPath = this.baseDir + "/xcompiled/" + langName + "/" + genFile.path;
+            var reGenPath = projBase + "/" + langName + "_Regen/" + genFile.path;
             var tsGenContent = OneFile.readText(tsGenPath);
             var reGenContent = genFile.content;
             

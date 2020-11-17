@@ -1,4 +1,4 @@
-package OneLang.Parsers.TypeScriptParser2;
+package OneLang.Parsers.TypeScriptParser;
 
 import OneLang.Parsers.Common.Reader.Reader;
 import OneLang.Parsers.Common.Reader.IReaderHooks;
@@ -104,7 +104,7 @@ import OneLang.One.Ast.Expressions.AwaitExpression;
 import OneLang.One.Ast.Statements.Block;
 import OneLang.One.Ast.Expressions.ParenthesizedExpression;
 import OneLang.One.Ast.Statements.ReturnStatement;
-import OneLang.Parsers.TypeScriptParser2.TypeAndInit;
+import OneLang.Parsers.TypeScriptParser.TypeAndInit;
 import OneLang.One.Ast.Statements.Statement;
 import OneLang.One.Ast.Statements.VariableDeclaration;
 import OneLang.One.Ast.Statements.UnsetStatement;
@@ -123,7 +123,7 @@ import OneLang.One.Ast.Statements.ContinueStatement;
 import OneLang.One.Ast.Statements.ExpressionStatement;
 import OneLang.One.Ast.Expressions.BinaryExpression;
 import OneLang.One.Ast.Expressions.UnaryExpression;
-import OneLang.Parsers.TypeScriptParser2.MethodSignature;
+import OneLang.Parsers.TypeScriptParser.MethodSignature;
 import OneLang.One.Ast.Types.Field;
 import OneLang.One.Ast.Types.Interface;
 import OneLang.One.Ast.Types.Method;
@@ -137,7 +137,7 @@ import OneLang.One.Ast.Types.Import;
 import OneLang.One.Ast.Types.UnresolvedImport;
 import OneLang.One.Ast.Types.SourceFile;
 import OneLang.One.Ast.Types.GlobalFunction;
-import OneLang.Parsers.TypeScriptParser2.TypeScriptParser2;
+import OneLang.Parsers.TypeScriptParser.TypeScriptParser2;
 
 public class TypeScriptParser2 implements IParser, IExpressionParserHooks, IReaderHooks {
     public List<String> context;
@@ -159,7 +159,7 @@ public class TypeScriptParser2 implements IParser, IExpressionParserHooks, IRead
         this.reader.hooks = this;
         this.setNodeManager(new NodeManager(this.reader));
         this.expressionParser = this.createExpressionParser(this.reader, this.getNodeManager());
-        this.exportScope = this.path != null ? new ExportScopeRef(this.path.pkg.name, this.path.path != null ? this.path.path.replaceAll(".ts$", "") : null) : null;
+        this.exportScope = this.path != null ? new ExportScopeRef(this.path.pkg.name, this.path.path != null ? this.path.path.replaceAll("\\.ts$", "") : null) : null;
     }
     
     public ExpressionParser createExpressionParser(Reader reader, NodeManager nodeManager) {

@@ -739,7 +739,7 @@ public class CsharpGenerator implements IGenerator {
     public GeneratedFile[] generate(Package pkg) {
         var result = new ArrayList<GeneratedFile>();
         for (var path : pkg.files.keySet().toArray(String[]::new))
-            result.add(new GeneratedFile(path, this.genFile(pkg.files.get(path))));
+            result.add(new GeneratedFile(path + ".cs", this.genFile(pkg.files.get(path))));
         return result.toArray(GeneratedFile[]::new);
     }
 }
