@@ -782,7 +782,7 @@ public class PhpGenerator implements IGenerator {
     public GeneratedFile[] generate(Package pkg) {
         var result = new ArrayList<GeneratedFile>();
         for (var path : pkg.files.keySet().toArray(String[]::new))
-            result.add(new GeneratedFile("src/" + pkg.name + "/" + path + ".php", this.genFile(pkg.name, pkg.files.get(path))));
+            result.add(new GeneratedFile(pkg.name + "/" + path + ".php", this.genFile(pkg.name, pkg.files.get(path))));
         return result.toArray(GeneratedFile[]::new);
     }
 }

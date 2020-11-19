@@ -629,7 +629,7 @@ namespace Generator
         {
             var result = new List<GeneratedFile>();
             foreach (var path in Object.keys(pkg.files))
-                result.push(new GeneratedFile($"src/{pkg.name}/{path}.php", this.genFile(pkg.name, pkg.files.get(path))));
+                result.push(new GeneratedFile($"{pkg.name}/{path}.php", this.genFile(pkg.name, pkg.files.get(path))));
             return result.ToArray();
         }
     }

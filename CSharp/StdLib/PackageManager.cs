@@ -111,6 +111,11 @@ namespace StdLib
             this.minver = minver;
             this.maxver = maxver;
         }
+        
+        public static ImplPkgImplIntf fromYaml(YamlValue obj)
+        {
+            return new ImplPkgImplIntf(obj.str("name"), obj.dbl("minver"), obj.dbl("maxver"));
+        }
     }
     
     public class ImplPkgImplementation {
@@ -126,6 +131,43 @@ namespace StdLib
             this.nativeIncludes = nativeIncludes;
             this.nativeIncludeDir = nativeIncludeDir;
         }
+        
+        public static ImplPkgImplementation fromYaml(YamlValue obj)
+        {
+            return new ImplPkgImplementation(ImplPkgImplIntf.fromYaml(obj.obj("interface")), obj.str("language"), obj.strArr("native-includes"), obj.str("native-include-dir"));
+        }
+    }
+    
+    public class ImplPkgNativeDependency {
+        public string name;
+        public string version;
+        
+        public ImplPkgNativeDependency(string name, string version)
+        {
+            this.name = name;
+            this.version = version;
+        }
+        
+        public static ImplPkgNativeDependency fromYaml(YamlValue obj)
+        {
+            return new ImplPkgNativeDependency(obj.str("name"), obj.str("version"));
+        }
+    }
+    
+    public class ImplPkgLanguage {
+        public string id;
+        public ImplPkgNativeDependency[] nativeDependencies;
+        
+        public ImplPkgLanguage(string id, ImplPkgNativeDependency[] nativeDependencies)
+        {
+            this.id = id;
+            this.nativeDependencies = nativeDependencies;
+        }
+        
+        public static ImplPkgLanguage fromYaml(YamlValue obj)
+        {
+            return new ImplPkgLanguage(obj.str("id"), obj.arr("native-dependencies").map(impl => ImplPkgNativeDependency.fromYaml(impl)));
+        }
     }
     
     public class ImplPackageYaml {
@@ -136,8 +178,9 @@ namespace StdLib
         public string version;
         public string[] includes;
         public ImplPkgImplementation[] implements_;
+        public ImplPkgLanguage[] languages;
         
-        public ImplPackageYaml(double fileVersion, string vendor, string name, string description, string version, string[] includes, ImplPkgImplementation[] implements_)
+        public ImplPackageYaml(double fileVersion, string vendor, string name, string description, string version, string[] includes, ImplPkgImplementation[] implements_, ImplPkgLanguage[] languages)
         {
             this.fileVersion = fileVersion;
             this.vendor = vendor;
@@ -146,11 +189,12 @@ namespace StdLib
             this.version = version;
             this.includes = includes;
             this.implements_ = implements_;
+            this.languages = languages;
         }
         
         public static ImplPackageYaml fromYaml(YamlValue obj)
         {
-            return new ImplPackageYaml(obj.dbl("file-version"), obj.str("vendor"), obj.str("name"), obj.str("description"), obj.str("version"), obj.strArr("includes"), obj.arr("implements").map(impl => new ImplPkgImplementation(new ImplPkgImplIntf(impl.obj("interface").str("name"), impl.obj("interface").dbl("minver"), impl.obj("interface").dbl("maxver")), impl.str("language"), impl.strArr("native-includes"), impl.str("native-include-dir"))));
+            return new ImplPackageYaml(obj.dbl("file-version"), obj.str("vendor"), obj.str("name"), obj.str("description"), obj.str("version"), obj.strArr("includes"), obj.arr("implements").map(impl => ImplPkgImplementation.fromYaml(impl)), obj.arr("languages").map(impl => ImplPkgLanguage.fromYaml(impl)));
         }
     }
     

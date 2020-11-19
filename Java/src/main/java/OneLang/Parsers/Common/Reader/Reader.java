@@ -96,6 +96,23 @@ public class Reader {
         return true;
     }
     
+    public String readUntil(String token, Boolean orToEnd) {
+        var index = this.input.indexOf(token, this.offset);
+        if (index == -1) {
+            if (!orToEnd)
+                return null;
+            
+            var result = this.input.substring(this.offset);
+            this.wsOffset = this.offset = this.input.length();
+            return result;
+        }
+        else {
+            var result = this.input.substring(this.offset, index);
+            this.wsOffset = this.offset = index;
+            return result;
+        }
+    }
+    
     public void skipLine() {
         if (!this.skipUntil("\n"))
             this.offset = this.input.length();

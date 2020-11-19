@@ -543,5 +543,5 @@ class PhpGenerator:
     def generate(self, pkg):
         result = []
         for path in pkg.files.keys():
-            result.append(genFile.GeneratedFile(f'''src/{pkg.name}/{path}.php''', self.gen_file(pkg.name, pkg.files.get(path))))
+            result.append(genFile.GeneratedFile(f'''{pkg.name}/{path}.php''', self.gen_file(pkg.name, pkg.files.get(path))))
         return result

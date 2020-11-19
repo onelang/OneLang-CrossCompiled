@@ -4,6 +4,8 @@ import OneStd.OneYaml;
 import OneStd.YamlValue;
 
 import OneLang.StdLib.PackageManager.ImplPkgImplIntf;
+import OneLang.StdLib.PackageManager.ImplPkgImplementation;
+import OneStd.YamlValue;
 
 public class ImplPkgImplementation {
     public ImplPkgImplIntf interface_;
@@ -17,5 +19,9 @@ public class ImplPkgImplementation {
         this.language = language;
         this.nativeIncludes = nativeIncludes;
         this.nativeIncludeDir = nativeIncludeDir;
+    }
+    
+    public static ImplPkgImplementation fromYaml(YamlValue obj) {
+        return new ImplPkgImplementation(ImplPkgImplIntf.fromYaml(obj.obj("interface")), obj.str("language"), obj.strArr("native-includes"), obj.str("native-include-dir"));
     }
 }

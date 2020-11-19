@@ -60,6 +60,10 @@ class ImplPkgImplIntf:
         self.name = name
         self.minver = minver
         self.maxver = maxver
+    
+    @classmethod
+    def from_yaml(cls, obj):
+        return ImplPkgImplIntf(obj.str("name"), obj.dbl("minver"), obj.dbl("maxver"))
 
 class ImplPkgImplementation:
     def __init__(self, interface_, language, native_includes, native_include_dir):
@@ -67,9 +71,31 @@ class ImplPkgImplementation:
         self.language = language
         self.native_includes = native_includes
         self.native_include_dir = native_include_dir
+    
+    @classmethod
+    def from_yaml(cls, obj):
+        return ImplPkgImplementation(ImplPkgImplIntf.from_yaml(obj.obj("interface")), obj.str("language"), obj.str_arr("native-includes"), obj.str("native-include-dir"))
+
+class ImplPkgNativeDependency:
+    def __init__(self, name, version):
+        self.name = name
+        self.version = version
+    
+    @classmethod
+    def from_yaml(cls, obj):
+        return ImplPkgNativeDependency(obj.str("name"), obj.str("version"))
+
+class ImplPkgLanguage:
+    def __init__(self, id, native_dependencies):
+        self.id = id
+        self.native_dependencies = native_dependencies
+    
+    @classmethod
+    def from_yaml(cls, obj):
+        return ImplPkgLanguage(obj.str("id"), list(map(lambda impl: ImplPkgNativeDependency.from_yaml(impl), obj.arr("native-dependencies"))))
 
 class ImplPackageYaml:
-    def __init__(self, file_version, vendor, name, description, version, includes, implements_):
+    def __init__(self, file_version, vendor, name, description, version, includes, implements_, languages):
         self.file_version = file_version
         self.vendor = vendor
         self.name = name
@@ -77,10 +103,11 @@ class ImplPackageYaml:
         self.version = version
         self.includes = includes
         self.implements_ = implements_
+        self.languages = languages
     
     @classmethod
     def from_yaml(cls, obj):
-        return ImplPackageYaml(obj.dbl("file-version"), obj.str("vendor"), obj.str("name"), obj.str("description"), obj.str("version"), obj.str_arr("includes"), list(map(lambda impl: ImplPkgImplementation(ImplPkgImplIntf(impl.obj("interface").str("name"), impl.obj("interface").dbl("minver"), impl.obj("interface").dbl("maxver")), impl.str("language"), impl.str_arr("native-includes"), impl.str("native-include-dir")), obj.arr("implements"))))
+        return ImplPackageYaml(obj.dbl("file-version"), obj.str("vendor"), obj.str("name"), obj.str("description"), obj.str("version"), obj.str_arr("includes"), list(map(lambda impl: ImplPkgImplementation.from_yaml(impl), obj.arr("implements"))), list(map(lambda impl: ImplPkgLanguage.from_yaml(impl), obj.arr("languages"))))
 
 class ImplementationPackage:
     def __init__(self, content):

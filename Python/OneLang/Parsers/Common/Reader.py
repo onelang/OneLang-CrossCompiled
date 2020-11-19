@@ -85,6 +85,20 @@ class Reader:
             self.ws_offset = self.offset
         return True
     
+    def read_until(self, token, or_to_end = False):
+        index = self.input.find(token, self.offset)
+        if index == -1:
+            if not or_to_end:
+                return None
+            
+            result = self.input[self.offset:]
+            self.ws_offset = self.offset = len(self.input)
+            return result
+        else:
+            result = self.input[self.offset:index]
+            self.ws_offset = self.offset = index
+            return result
+    
     def skip_line(self):
         if not self.skip_until("\n"):
             self.offset = len(self.input)

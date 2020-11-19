@@ -681,7 +681,7 @@ class PhpGenerator implements IGenerator {
     function generate($pkg) {
         $result = array();
         foreach (array_keys($pkg->files) as $path)
-            $result[] = new GeneratedFile("src/" . $pkg->name . "/" . $path . ".php", $this->genFile($pkg->name, @$pkg->files[$path] ?? null));
+            $result[] = new GeneratedFile($pkg->name . "/" . $path . ".php", $this->genFile($pkg->name, @$pkg->files[$path] ?? null));
         return $result;
     }
 }

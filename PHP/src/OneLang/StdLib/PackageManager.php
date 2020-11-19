@@ -107,6 +107,10 @@ class ImplPkgImplIntf {
         $this->minver = $minver;
         $this->maxver = $maxver;
     }
+    
+    static function fromYaml($obj) {
+        return new ImplPkgImplIntf($obj->str("name"), $obj->dbl("minver"), $obj->dbl("maxver"));
+    }
 }
 
 class ImplPkgImplementation {
@@ -121,6 +125,38 @@ class ImplPkgImplementation {
         $this->nativeIncludes = $nativeIncludes;
         $this->nativeIncludeDir = $nativeIncludeDir;
     }
+    
+    static function fromYaml($obj) {
+        return new ImplPkgImplementation(ImplPkgImplIntf::fromYaml($obj->obj("interface")), $obj->str("language"), $obj->strArr("native-includes"), $obj->str("native-include-dir"));
+    }
+}
+
+class ImplPkgNativeDependency {
+    public $name;
+    public $version;
+    
+    function __construct($name, $version) {
+        $this->name = $name;
+        $this->version = $version;
+    }
+    
+    static function fromYaml($obj) {
+        return new ImplPkgNativeDependency($obj->str("name"), $obj->str("version"));
+    }
+}
+
+class ImplPkgLanguage {
+    public $id;
+    public $nativeDependencies;
+    
+    function __construct($id, $nativeDependencies) {
+        $this->id = $id;
+        $this->nativeDependencies = $nativeDependencies;
+    }
+    
+    static function fromYaml($obj) {
+        return new ImplPkgLanguage($obj->str("id"), array_map(function ($impl) { return ImplPkgNativeDependency::fromYaml($impl); }, $obj->arr("native-dependencies")));
+    }
 }
 
 class ImplPackageYaml {
@@ -131,8 +167,9 @@ class ImplPackageYaml {
     public $version;
     public $includes;
     public $implements_;
+    public $languages;
     
-    function __construct($fileVersion, $vendor, $name, $description, $version, $includes, $implements_) {
+    function __construct($fileVersion, $vendor, $name, $description, $version, $includes, $implements_, $languages) {
         $this->fileVersion = $fileVersion;
         $this->vendor = $vendor;
         $this->name = $name;
@@ -140,10 +177,11 @@ class ImplPackageYaml {
         $this->version = $version;
         $this->includes = $includes;
         $this->implements_ = $implements_;
+        $this->languages = $languages;
     }
     
     static function fromYaml($obj) {
-        return new ImplPackageYaml($obj->dbl("file-version"), $obj->str("vendor"), $obj->str("name"), $obj->str("description"), $obj->str("version"), $obj->strArr("includes"), array_map(function ($impl) { return new ImplPkgImplementation(new ImplPkgImplIntf($impl->obj("interface")->str("name"), $impl->obj("interface")->dbl("minver"), $impl->obj("interface")->dbl("maxver")), $impl->str("language"), $impl->strArr("native-includes"), $impl->str("native-include-dir")); }, $obj->arr("implements")));
+        return new ImplPackageYaml($obj->dbl("file-version"), $obj->str("vendor"), $obj->str("name"), $obj->str("description"), $obj->str("version"), $obj->strArr("includes"), array_map(function ($impl) { return ImplPkgImplementation::fromYaml($impl); }, $obj->arr("implements")), array_map(function ($impl) { return ImplPkgLanguage::fromYaml($impl); }, $obj->arr("languages")));
     }
 }
 

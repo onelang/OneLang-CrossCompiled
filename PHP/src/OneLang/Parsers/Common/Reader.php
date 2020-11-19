@@ -117,6 +117,23 @@ class Reader {
         return true;
     }
     
+    function readUntil($token, $orToEnd = false) {
+        $index = strpos($this->input, $token, $this->offset);
+        if ($index === -1) {
+            if (!$orToEnd)
+                return null;
+            
+            $result = substr($this->input, $this->offset);
+            $this->wsOffset = $this->offset = strlen($this->input);
+            return $result;
+        }
+        else {
+            $result = substr($this->input, $this->offset, $index - ($this->offset));
+            $this->wsOffset = $this->offset = $index;
+            return $result;
+        }
+    }
+    
     function skipLine() {
         if (!$this->skipUntil("\n"))
             $this->offset = strlen($this->input);

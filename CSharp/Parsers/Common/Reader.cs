@@ -131,6 +131,24 @@ namespace Parsers.Common
             return true;
         }
         
+        public string readUntil(string token, bool orToEnd = false)
+        {
+            var index = this.input.indexOf(token, this.offset);
+            if (index == -1) {
+                if (!orToEnd)
+                    return null;
+                
+                var result = this.input.substr(this.offset);
+                this.wsOffset = this.offset = this.input.length();
+                return result;
+            }
+            else {
+                var result = this.input.substring(this.offset, index);
+                this.wsOffset = this.offset = index;
+                return result;
+            }
+        }
+        
         public void skipLine()
         {
             if (!this.skipUntil("\n"))
