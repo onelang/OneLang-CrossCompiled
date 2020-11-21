@@ -141,11 +141,13 @@ class ForNode implements ITemplateNode {
     public $variableName;
     public $itemsExpr;
     public $body;
+    public $joiner;
     
-    function __construct($variableName, $itemsExpr, $body) {
+    function __construct($variableName, $itemsExpr, $body, $joiner) {
         $this->variableName = $variableName;
         $this->itemsExpr = $itemsExpr;
         $this->body = $body;
+        $this->joiner = $joiner;
     }
     
     function format($model) {
@@ -155,6 +157,9 @@ class ForNode implements ITemplateNode {
         
         $result = "";
         foreach (($items)->items as $item) {
+            if ($this->joiner !== null && $result !== "")
+                $result .= $this->joiner;
+            
             $model->props[$this->variableName] = $item;
             $result .= $this->body->format($model);
         }
@@ -174,6 +179,16 @@ class TemplateParser {
         $this->exprParser = new ExpressionParser($this->reader);
     }
     
+    function parseAttributes() {
+        $result = Array();
+        while ($this->reader->readToken(",")) {
+            $key = $this->reader->expectIdentifier();
+            $value = $this->reader->readToken("=") ? $this->reader->expectString() : null;
+            $result[$key] = $value;
+        }
+        return $result;
+    }
+    
     function parseBlock() {
         $items = array();
         while (!$this->reader->get_eof()) {
@@ -184,10 +199,11 @@ class TemplateParser {
                     $varName = $this->reader->readIdentifier();
                     $this->reader->expectToken("of");
                     $itemsExpr = $this->exprParser->parse();
+                    $attrs = $this->parseAttributes();
                     $this->reader->expectToken("}}");
                     $body = $this->parseBlock();
                     $this->reader->expectToken("{{/for}}");
-                    $items[] = new ForNode($varName, $itemsExpr, $body);
+                    $items[] = new ForNode($varName, $itemsExpr, $body, @$attrs["joiner"] ?? null);
                 }
                 else {
                     $expr = $this->exprParser->parse();
@@ -266,20 +282,22 @@ class OneProjectFile {
     public $dependencies;
     public $sourceDir;
     public $sourceLang;
+    public $nativeSourceDir;
     public $outputDir;
     public $projectTemplates;
     
-    function __construct($name, $dependencies, $sourceDir, $sourceLang, $outputDir, $projectTemplates) {
+    function __construct($name, $dependencies, $sourceDir, $sourceLang, $nativeSourceDir, $outputDir, $projectTemplates) {
         $this->name = $name;
         $this->dependencies = $dependencies;
         $this->sourceDir = $sourceDir;
         $this->sourceLang = $sourceLang;
+        $this->nativeSourceDir = $nativeSourceDir;
         $this->outputDir = $outputDir;
         $this->projectTemplates = $projectTemplates;
     }
     
     static function fromJson($json) {
-        return new OneProjectFile($json->get("name")->asString(), array_map(function ($dep) { return new ProjectDependency($dep->get("name")->asString(), $dep->get("version")->asString()); }, array_map(function ($dep) { return $dep->asObject(); }, $json->get("dependencies")->getArrayItems())), $json->get("sourceDir")->asString(), $json->get("sourceLang")->asString(), $json->get("outputDir")->asString(), array_map(function ($x) { return $x->asString(); }, $json->get("projectTemplates")->getArrayItems()));
+        return new OneProjectFile($json->get("name")->asString(), array_map(function ($dep) { return new ProjectDependency($dep->get("name")->asString(), $dep->get("version")->asString()); }, array_map(function ($dep) { return $dep->asObject(); }, $json->get("dependencies")->getArrayItems())), $json->get("sourceDir")->asString(), $json->get("sourceLang")->asString(), $json->get("nativeSourceDir")->asString(), $json->get("outputDir")->asString(), array_map(function ($x) { return $x->asString(); }, $json->get("projectTemplates")->getArrayItems()));
     }
 }
 
@@ -313,12 +331,14 @@ class ProjectGenerator {
             foreach ($generator->getTransforms() as $trans)
                 $trans->visitFiles(array_values($compiler->projectPkg->files));
             
+            // generate cross compiled source code
             $outDir = $this->outDir . "/" . $langName;
             \OneLang\Core\console::log("Generating " . $langName . " code...");
             $files = $generator->generate($compiler->projectPkg);
             foreach ($files as $file)
                 OneFile::writeText($outDir . "/" . $projTemplate->meta->destinationDir ?? "" . "/" . $file->path, $file->content);
             
+            // copy implementation native sources
             $oneDeps = array();
             $nativeDeps = Array();
             foreach ($this->projectFile->dependencies as $dep) {
@@ -342,6 +362,7 @@ class ProjectGenerator {
                 }
             }
             
+            // generate files from project template
             $model = new ObjectValue(Array(
                 "dependencies" => new ArrayValue(array_map(function ($name) use ($nativeDeps) { return new ObjectValue(Array(
                     "name" => new StringValue($name),
@@ -353,6 +374,11 @@ class ProjectGenerator {
                 )); }, $oneDeps))
             ));
             $projTemplate->generate($outDir, $model);
+            
+            // copy native source codes from one project
+            $nativeSrcDir = $this->projDir . "/" . $this->projectFile->nativeSourceDir . "/" . $langName;
+            foreach (OneFile::listFiles($nativeSrcDir, true) as $fn)
+                OneFile::copy($nativeSrcDir . "/" . $fn, $outDir . "/" . $fn);
         }
     }
 }

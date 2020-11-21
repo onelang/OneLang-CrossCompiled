@@ -26,18 +26,21 @@ import OneLang.One.Ast.Expressions.Expression;
 import OneLang.Generator.ProjectGenerator.TemplateBlock;
 import OneLang.Generator.ProjectGenerator.ExprVM;
 import OneLang.Generator.ProjectGenerator.ArrayValue;
+import OneStd.Objects;
 import OneLang.Generator.ProjectGenerator.ObjectValue;
 
 public class ForNode implements ITemplateNode {
     public String variableName;
     public Expression itemsExpr;
     public TemplateBlock body;
+    public String joiner;
     
-    public ForNode(String variableName, Expression itemsExpr, TemplateBlock body)
+    public ForNode(String variableName, Expression itemsExpr, TemplateBlock body, String joiner)
     {
         this.variableName = variableName;
         this.itemsExpr = itemsExpr;
         this.body = body;
+        this.joiner = joiner;
     }
     
     public String format(ObjectValue model) {
@@ -47,6 +50,9 @@ public class ForNode implements ITemplateNode {
         
         var result = "";
         for (var item : (((ArrayValue)items)).items) {
+            if (this.joiner != null && !Objects.equals(result, ""))
+                result += this.joiner;
+            
             model.props.put(this.variableName, item);
             result += this.body.format(model);
         }

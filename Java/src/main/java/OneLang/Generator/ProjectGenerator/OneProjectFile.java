@@ -31,20 +31,22 @@ public class OneProjectFile {
     public ProjectDependency[] dependencies;
     public String sourceDir;
     public String sourceLang;
+    public String nativeSourceDir;
     public String outputDir;
     public String[] projectTemplates;
     
-    public OneProjectFile(String name, ProjectDependency[] dependencies, String sourceDir, String sourceLang, String outputDir, String[] projectTemplates)
+    public OneProjectFile(String name, ProjectDependency[] dependencies, String sourceDir, String sourceLang, String nativeSourceDir, String outputDir, String[] projectTemplates)
     {
         this.name = name;
         this.dependencies = dependencies;
         this.sourceDir = sourceDir;
         this.sourceLang = sourceLang;
+        this.nativeSourceDir = nativeSourceDir;
         this.outputDir = outputDir;
         this.projectTemplates = projectTemplates;
     }
     
     public static OneProjectFile fromJson(OneJObject json) {
-        return new OneProjectFile(json.get("name").asString(), Arrays.stream(Arrays.stream(json.get("dependencies").getArrayItems()).map(dep -> dep.asObject()).toArray(OneJObject[]::new)).map(dep -> new ProjectDependency(dep.get("name").asString(), dep.get("version").asString())).toArray(ProjectDependency[]::new), json.get("sourceDir").asString(), json.get("sourceLang").asString(), json.get("outputDir").asString(), Arrays.stream(json.get("projectTemplates").getArrayItems()).map(x -> x.asString()).toArray(String[]::new));
+        return new OneProjectFile(json.get("name").asString(), Arrays.stream(Arrays.stream(json.get("dependencies").getArrayItems()).map(dep -> dep.asObject()).toArray(OneJObject[]::new)).map(dep -> new ProjectDependency(dep.get("name").asString(), dep.get("version").asString())).toArray(ProjectDependency[]::new), json.get("sourceDir").asString(), json.get("sourceLang").asString(), json.get("nativeSourceDir").asString(), json.get("outputDir").asString(), Arrays.stream(json.get("projectTemplates").getArrayItems()).map(x -> x.asString()).toArray(String[]::new));
     }
 }

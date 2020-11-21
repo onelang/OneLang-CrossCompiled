@@ -85,10 +85,11 @@ class ExpressionNode:
             raise Error(f'''ExpressionNode ({tSOvervGen.TSOverviewGenerator.preview.expr(self.expr)}) return a non-string result!''')
 
 class ForNode:
-    def __init__(self, variable_name, items_expr, body):
+    def __init__(self, variable_name, items_expr, body, joiner):
         self.variable_name = variable_name
         self.items_expr = items_expr
         self.body = body
+        self.joiner = joiner
     
     def format(self, model):
         items = ExprVM(model).evaluate(self.items_expr)
@@ -97,6 +98,9 @@ class ForNode:
         
         result = ""
         for item in (items).items:
+            if self.joiner != None and result != "":
+                result += self.joiner
+            
             model.props[self.variable_name] = item
             result += self.body.format(model)
         /* unset model.props.get(self.variable_name); */
@@ -110,6 +114,14 @@ class TemplateParser:
         self.reader = read.Reader(template)
         self.expr_parser = exprPars.ExpressionParser(self.reader)
     
+    def parse_attributes(self):
+        result = {}
+        while self.reader.read_token(","):
+            key = self.reader.expect_identifier()
+            value = self.reader.expect_string() if self.reader.read_token("=") else None
+            result[key] = value
+        return result
+    
     def parse_block(self):
         items = []
         while not self.reader.get_eof():
@@ -120,10 +132,11 @@ class TemplateParser:
                     var_name = self.reader.read_identifier()
                     self.reader.expect_token("of")
                     items_expr = self.expr_parser.parse()
+                    attrs = self.parse_attributes()
                     self.reader.expect_token("}}")
                     body = self.parse_block()
                     self.reader.expect_token("{{/for}}")
-                    items.append(ForNode(var_name, items_expr, body))
+                    items.append(ForNode(var_name, items_expr, body, attrs.get("joiner")))
                 else:
                     expr = self.expr_parser.parse()
                     items.append(ExpressionNode(expr))
@@ -173,17 +186,18 @@ class ProjectDependency:
         self.version = version
 
 class OneProjectFile:
-    def __init__(self, name, dependencies, source_dir, source_lang, output_dir, project_templates):
+    def __init__(self, name, dependencies, source_dir, source_lang, native_source_dir, output_dir, project_templates):
         self.name = name
         self.dependencies = dependencies
         self.source_dir = source_dir
         self.source_lang = source_lang
+        self.native_source_dir = native_source_dir
         self.output_dir = output_dir
         self.project_templates = project_templates
     
     @classmethod
     def from_json(cls, json):
-        return OneProjectFile(json.get("name").as_string(), list(map(lambda dep: ProjectDependency(dep.get("name").as_string(), dep.get("version").as_string()), list(map(lambda dep: dep.as_object(), json.get("dependencies").get_array_items())))), json.get("sourceDir").as_string(), json.get("sourceLang").as_string(), json.get("outputDir").as_string(), list(map(lambda x: x.as_string(), json.get("projectTemplates").get_array_items())))
+        return OneProjectFile(json.get("name").as_string(), list(map(lambda dep: ProjectDependency(dep.get("name").as_string(), dep.get("version").as_string()), list(map(lambda dep: dep.as_object(), json.get("dependencies").get_array_items())))), json.get("sourceDir").as_string(), json.get("sourceLang").as_string(), json.get("nativeSourceDir").as_string(), json.get("outputDir").as_string(), list(map(lambda x: x.as_string(), json.get("projectTemplates").get_array_items())))
 
 class ProjectGenerator:
     def __init__(self, base_dir, proj_dir):
@@ -210,12 +224,14 @@ class ProjectGenerator:
             for trans in generator.get_transforms():
                 trans.visit_files(compiler.project_pkg.files.values())
             
+            # generate cross compiled source code
             out_dir = f'''{self.out_dir}/{lang_name}'''
             console.log(f'''Generating {lang_name} code...''')
             files = generator.generate(compiler.project_pkg)
             for file in files:
                 OneFile.write_text(f'''{out_dir}/{proj_template.meta.destination_dir or ""}/{file.path}''', file.content)
             
+            # copy implementation native sources
             one_deps = []
             native_deps = {}
             for dep in self.project_file.dependencies:
@@ -237,6 +253,7 @@ class ProjectGenerator:
                     for fn in dep_files:
                         OneFile.write_text(f'''{dst_dir}/{fn}''', impl.content.files.get(f'''{src_dir}{fn}'''))
             
+            # generate files from project template
             model = ObjectValue({
                 "dependencies": ArrayValue(list(map(lambda name: ObjectValue({
                     "name": StringValue(name),
@@ -248,3 +265,8 @@ class ProjectGenerator:
                 }), one_deps)))
             })
             proj_template.generate(f'''{out_dir}''', model)
+            
+            # copy native source codes from one project
+            native_src_dir = f'''{self.proj_dir}/{self.project_file.native_source_dir}/{lang_name}'''
+            for fn in OneFile.list_files(native_src_dir, True):
+                OneFile.copy(f'''{native_src_dir}/{fn}''', f'''{out_dir}/{fn}''')

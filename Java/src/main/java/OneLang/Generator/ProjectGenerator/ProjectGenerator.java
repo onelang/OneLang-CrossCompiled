@@ -73,12 +73,14 @@ public class ProjectGenerator {
             for (var trans : generator.getTransforms())
                 trans.visitFiles(compiler.projectPkg.files.values().toArray(SourceFile[]::new));
             
+            // generate cross compiled source code
             var outDir = this.outDir + "/" + langName;
             console.log("Generating " + langName + " code...");
             var files = generator.generate(compiler.projectPkg);
             for (var file : files)
                 OneFile.writeText(outDir + "/" + projTemplate.meta.destinationDir != null ? projTemplate.meta.destinationDir : "" + "/" + file.path, file.content);
             
+            // copy implementation native sources
             var oneDeps = new ArrayList<ImplementationPackage>();
             var nativeDeps = new LinkedHashMap<String, String>();
             for (var dep : this.projectFile.dependencies) {
@@ -102,8 +104,14 @@ public class ProjectGenerator {
                 }
             }
             
+            // generate files from project template
             var model = new ObjectValue(Map.of("dependencies", ((IVMValue)new ArrayValue(Arrays.stream(nativeDeps.keySet().toArray(String[]::new)).map(name -> new ObjectValue(Map.of("name", ((IVMValue)new StringValue(name)), "version", ((IVMValue)new StringValue(nativeDeps.get(name)))))).toArray(ObjectValue[]::new))), "onepackages", ((IVMValue)new ArrayValue(oneDeps.stream().map(dep -> new ObjectValue(Map.of("vendor", ((IVMValue)new StringValue(dep.implementationYaml.vendor)), "id", ((IVMValue)new StringValue(dep.implementationYaml.name))))).toArray(ObjectValue[]::new)))));
             projTemplate.generate(outDir, model);
+            
+            // copy native source codes from one project
+            var nativeSrcDir = this.projDir + "/" + this.projectFile.nativeSourceDir + "/" + langName;
+            for (var fn : OneFile.listFiles(nativeSrcDir, true))
+                OneFile.copy(nativeSrcDir + "/" + fn, outDir + "/" + fn);
         }
     }
 }

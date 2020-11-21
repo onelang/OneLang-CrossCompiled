@@ -143,12 +143,14 @@ namespace Generator
         public string variableName;
         public Expression itemsExpr;
         public TemplateBlock body;
+        public string joiner;
         
-        public ForNode(string variableName, Expression itemsExpr, TemplateBlock body)
+        public ForNode(string variableName, Expression itemsExpr, TemplateBlock body, string joiner)
         {
             this.variableName = variableName;
             this.itemsExpr = itemsExpr;
             this.body = body;
+            this.joiner = joiner;
         }
         
         public string format(ObjectValue model)
@@ -159,6 +161,9 @@ namespace Generator
             
             var result = "";
             foreach (var item in (((ArrayValue)items)).items) {
+                if (this.joiner != null && result != "")
+                    result += this.joiner;
+                
                 model.props.set(this.variableName, item);
                 result += this.body.format(model);
             }
@@ -179,6 +184,17 @@ namespace Generator
             this.exprParser = new ExpressionParser(this.reader);
         }
         
+        public Dictionary<string, string> parseAttributes()
+        {
+            var result = new Dictionary<string, string> {};
+            while (this.reader.readToken(",")) {
+                var key = this.reader.expectIdentifier();
+                var value = this.reader.readToken("=") ? this.reader.expectString() : null;
+                result.set(key, value);
+            }
+            return result;
+        }
+        
         public TemplateBlock parseBlock()
         {
             var items = new List<ITemplateNode>();
@@ -190,10 +206,11 @@ namespace Generator
                         var varName = this.reader.readIdentifier();
                         this.reader.expectToken("of");
                         var itemsExpr = this.exprParser.parse();
+                        var attrs = this.parseAttributes();
                         this.reader.expectToken("}}");
                         var body = this.parseBlock();
                         this.reader.expectToken("{{/for}}");
-                        items.push(new ForNode(varName, itemsExpr, body));
+                        items.push(new ForNode(varName, itemsExpr, body, attrs.get("joiner")));
                     }
                     else {
                         var expr = this.exprParser.parse();
@@ -278,22 +295,24 @@ namespace Generator
         public ProjectDependency[] dependencies;
         public string sourceDir;
         public string sourceLang;
+        public string nativeSourceDir;
         public string outputDir;
         public string[] projectTemplates;
         
-        public OneProjectFile(string name, ProjectDependency[] dependencies, string sourceDir, string sourceLang, string outputDir, string[] projectTemplates)
+        public OneProjectFile(string name, ProjectDependency[] dependencies, string sourceDir, string sourceLang, string nativeSourceDir, string outputDir, string[] projectTemplates)
         {
             this.name = name;
             this.dependencies = dependencies;
             this.sourceDir = sourceDir;
             this.sourceLang = sourceLang;
+            this.nativeSourceDir = nativeSourceDir;
             this.outputDir = outputDir;
             this.projectTemplates = projectTemplates;
         }
         
         public static OneProjectFile fromJson(OneJObject json)
         {
-            return new OneProjectFile(json.get("name").asString(), json.get("dependencies").getArrayItems().map(dep => dep.asObject()).map(dep => new ProjectDependency(dep.get("name").asString(), dep.get("version").asString())), json.get("sourceDir").asString(), json.get("sourceLang").asString(), json.get("outputDir").asString(), json.get("projectTemplates").getArrayItems().map(x => x.asString()));
+            return new OneProjectFile(json.get("name").asString(), json.get("dependencies").getArrayItems().map(dep => dep.asObject()).map(dep => new ProjectDependency(dep.get("name").asString(), dep.get("version").asString())), json.get("sourceDir").asString(), json.get("sourceLang").asString(), json.get("nativeSourceDir").asString(), json.get("outputDir").asString(), json.get("projectTemplates").getArrayItems().map(x => x.asString()));
         }
     }
     
@@ -329,12 +348,14 @@ namespace Generator
                 foreach (var trans in generator.getTransforms())
                     trans.visitFiles(Object.values(compiler.projectPkg.files));
                 
+                // generate cross compiled source code
                 var outDir = $"{this.outDir}/{langName}";
                 console.log($"Generating {langName} code...");
                 var files = generator.generate(compiler.projectPkg);
                 foreach (var file in files)
                     OneFile.writeText($"{outDir}/{projTemplate.meta.destinationDir ?? ""}/{file.path}", file.content);
                 
+                // copy implementation native sources
                 var oneDeps = new List<ImplementationPackage>();
                 var nativeDeps = new Dictionary<string, string> {};
                 foreach (var dep in this.projectFile.dependencies) {
@@ -358,6 +379,7 @@ namespace Generator
                     }
                 }
                 
+                // generate files from project template
                 var model = new ObjectValue(new Dictionary<string, IVMValue> {
                     ["dependencies"] = ((IVMValue)new ArrayValue(Object.keys(nativeDeps).map(name => new ObjectValue(new Dictionary<string, IVMValue> {
                         ["name"] = ((IVMValue)new StringValue(name)),
@@ -369,6 +391,11 @@ namespace Generator
                     }))))
                 });
                 projTemplate.generate($"{outDir}", model);
+                
+                // copy native source codes from one project
+                var nativeSrcDir = $"{this.projDir}/{this.projectFile.nativeSourceDir}/{langName}";
+                foreach (var fn in OneFile.listFiles(nativeSrcDir, true))
+                    OneFile.copy($"{nativeSrcDir}/{fn}", $"{outDir}/{fn}");
             }
         }
     }
