@@ -377,7 +377,7 @@ namespace Generator
                         if (projTemplate.meta.packageDir == null)
                             throw new Error("Package directory is empty in project template!");
                         var srcDir = langData.nativeSrcDir + (langData.nativeSrcDir.endsWith("/") ? "" : "/");
-                        var dstDir = $"{outDir}/{projTemplate.meta.packageDir}/{impl.content.id.name}";
+                        var dstDir = $"{outDir}/{projTemplate.meta.packageDir}/{langData.packageDir ?? impl.content.id.name}";
                         var depFiles = Object.keys(impl.content.files).filter(x => x.startsWith(srcDir)).map(x => x.substr(srcDir.length()));
                         foreach (var fn in depFiles)
                             OneFile.writeText($"{dstDir}/{fn}", impl.content.files.get($"{srcDir}{fn}"));

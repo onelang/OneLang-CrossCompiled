@@ -7,6 +7,7 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'OneLang\\Yaml\\' => array($baseDir . '/onepkg/OneLang-Yaml'),
+    'OneLang\\Reflect\\' => array($baseDir . '/onepkg/OneLang-Reflect'),
     'OneLang\\Json\\' => array($baseDir . '/onepkg/OneLang-Json'),
     'OneLang\\File\\' => array($baseDir . '/onepkg/OneLang-File'),
     'OneLang\\Core\\' => array($baseDir . '/onepkg/OneLang-Core'),

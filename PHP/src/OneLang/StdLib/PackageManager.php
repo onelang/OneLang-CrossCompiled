@@ -147,17 +147,19 @@ class ImplPkgNativeDependency {
 
 class ImplPkgLanguage {
     public $id;
+    public $packageDir;
     public $nativeSrcDir;
     public $nativeDependencies;
     
-    function __construct($id, $nativeSrcDir, $nativeDependencies) {
+    function __construct($id, $packageDir, $nativeSrcDir, $nativeDependencies) {
         $this->id = $id;
+        $this->packageDir = $packageDir;
         $this->nativeSrcDir = $nativeSrcDir;
         $this->nativeDependencies = $nativeDependencies;
     }
     
     static function fromYaml($obj) {
-        return new ImplPkgLanguage($obj->str("id"), $obj->str("native-src-dir"), array_map(function ($impl) { return ImplPkgNativeDependency::fromYaml($impl); }, $obj->arr("native-dependencies")));
+        return new ImplPkgLanguage($obj->str("id"), $obj->str("package-dir"), $obj->str("native-src-dir"), array_map(function ($impl) { return ImplPkgNativeDependency::fromYaml($impl); }, $obj->arr("native-dependencies")));
     }
 }
 

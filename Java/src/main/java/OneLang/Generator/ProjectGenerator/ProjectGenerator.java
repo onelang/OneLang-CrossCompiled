@@ -102,7 +102,7 @@ public class ProjectGenerator {
                     if (projTemplate.meta.packageDir == null)
                         throw new Error("Package directory is empty in project template!");
                     var srcDir = langData.nativeSrcDir + (langData.nativeSrcDir.endsWith("/") ? "" : "/");
-                    var dstDir = outDir + "/" + projTemplate.meta.packageDir + "/" + impl.content.id.name;
+                    var dstDir = outDir + "/" + projTemplate.meta.packageDir + "/" + langData.packageDir != null ? langData.packageDir : impl.content.id.name;
                     var depFiles = Arrays.stream(Arrays.stream(impl.content.files.keySet().toArray(String[]::new)).filter(x -> x.startsWith(srcDir)).toArray(String[]::new)).map(x -> x.substring(srcDir.length())).toArray(String[]::new);
                     for (var fn : depFiles)
                         OneFile.writeText(dstDir + "/" + fn, impl.content.files.get(srcDir + fn));

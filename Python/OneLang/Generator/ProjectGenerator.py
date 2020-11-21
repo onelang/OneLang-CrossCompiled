@@ -253,7 +253,7 @@ class ProjectGenerator:
                     if proj_template.meta.package_dir == None:
                         raise Error("Package directory is empty in project template!")
                     src_dir = lang_data.native_src_dir + ("" if lang_data.native_src_dir.endswith("/") else "/")
-                    dst_dir = f'''{out_dir}/{proj_template.meta.package_dir}/{impl.content.id.name}'''
+                    dst_dir = f'''{out_dir}/{proj_template.meta.package_dir}/{lang_data.package_dir or impl.content.id.name}'''
                     dep_files = list(map(lambda x: x[len(src_dir):], list(filter(lambda x: x.startswith(src_dir), impl.content.files.keys()))))
                     for fn in dep_files:
                         OneFile.write_text(f'''{dst_dir}/{fn}''', impl.content.files.get(f'''{src_dir}{fn}'''))

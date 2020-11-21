@@ -360,7 +360,7 @@ class ProjectGenerator {
                     if ($projTemplate->meta->packageDir === null)
                         throw new \OneLang\Core\Error("Package directory is empty in project template!");
                     $srcDir = $langData->nativeSrcDir . (substr_compare($langData->nativeSrcDir, "/", strlen($langData->nativeSrcDir) - strlen("/"), strlen("/")) === 0 ? "" : "/");
-                    $dstDir = $outDir . "/" . $projTemplate->meta->packageDir . "/" . $impl->content->id->name;
+                    $dstDir = $outDir . "/" . $projTemplate->meta->packageDir . "/" . $langData->packageDir ?? $impl->content->id->name;
                     $depFiles = array_map(function ($x) use ($srcDir) { return substr($x, strlen($srcDir)); }, array_values(array_filter(array_keys($impl->content->files), function ($x) use ($srcDir) { return substr_compare($x, $srcDir, 0, strlen($srcDir)) === 0; })));
                     foreach ($depFiles as $fn)
                         OneFile::writeText($dstDir . "/" . $fn, @$impl->content->files[$srcDir . $fn] ?? null);

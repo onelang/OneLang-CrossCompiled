@@ -4,12 +4,13 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit15f485076d463538d72d3242446a2e2e
+class ComposerStaticInit7eb7fcce2b844f632dac41373d9a036a
 {
     public static $prefixLengthsPsr4 = array (
         'O' => 
         array (
             'OneLang\\Yaml\\' => 13,
+            'OneLang\\Reflect\\' => 16,
             'OneLang\\Json\\' => 13,
             'OneLang\\File\\' => 13,
             'OneLang\\Core\\' => 13,
@@ -20,6 +21,10 @@ class ComposerStaticInit15f485076d463538d72d3242446a2e2e
         'OneLang\\Yaml\\' => 
         array (
             0 => __DIR__ . '/../..' . '/onepkg/OneLang-Yaml',
+        ),
+        'OneLang\\Reflect\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/onepkg/OneLang-Reflect',
         ),
         'OneLang\\Json\\' => 
         array (
@@ -42,9 +47,9 @@ class ComposerStaticInit15f485076d463538d72d3242446a2e2e
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit15f485076d463538d72d3242446a2e2e::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit15f485076d463538d72d3242446a2e2e::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit15f485076d463538d72d3242446a2e2e::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit7eb7fcce2b844f632dac41373d9a036a::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit7eb7fcce2b844f632dac41373d9a036a::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit7eb7fcce2b844f632dac41373d9a036a::$classMap;
 
         }, null, ClassLoader::class);
     }

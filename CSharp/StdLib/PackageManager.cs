@@ -156,19 +156,21 @@ namespace StdLib
     
     public class ImplPkgLanguage {
         public string id;
+        public string packageDir;
         public string nativeSrcDir;
         public ImplPkgNativeDependency[] nativeDependencies;
         
-        public ImplPkgLanguage(string id, string nativeSrcDir, ImplPkgNativeDependency[] nativeDependencies)
+        public ImplPkgLanguage(string id, string packageDir, string nativeSrcDir, ImplPkgNativeDependency[] nativeDependencies)
         {
             this.id = id;
+            this.packageDir = packageDir;
             this.nativeSrcDir = nativeSrcDir;
             this.nativeDependencies = nativeDependencies;
         }
         
         public static ImplPkgLanguage fromYaml(YamlValue obj)
         {
-            return new ImplPkgLanguage(obj.str("id"), obj.str("native-src-dir"), obj.arr("native-dependencies").map(impl => ImplPkgNativeDependency.fromYaml(impl)));
+            return new ImplPkgLanguage(obj.str("id"), obj.str("package-dir"), obj.str("native-src-dir"), obj.arr("native-dependencies").map(impl => ImplPkgNativeDependency.fromYaml(impl)));
         }
     }
     
