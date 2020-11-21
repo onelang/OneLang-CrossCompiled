@@ -39,13 +39,13 @@ class ResolveMethodCalls extends InferTypesPlugin {
             }
         
         if (count($methods) === 0)
-            throw new \OneCore\Error("Method '" . $methodName . "' was not found on type '" . $cls->name . "' with " . count($args) . " arguments");
+            throw new \OneLang\Core\Error("Method '" . $methodName . "' was not found on type '" . $cls->name . "' with " . count($args) . " arguments");
         else if (count($methods) > 1) {
             // TODO: actually we should implement proper method shadowing here...
             $thisMethods = array_values(array_filter($methods, function ($x) use ($cls) { return $x->parentInterface === $cls; }));
             if (count($thisMethods) === 1)
                 return $thisMethods[0];
-            throw new \OneCore\Error("Multiple methods found with name '" . $methodName . "' and " . count($args) . " arguments on type '" . $cls->name . "'");
+            throw new \OneLang\Core\Error("Multiple methods found with name '" . $methodName . "' and " . count($args) . " arguments on type '" . $cls->name . "'");
         }
         return $methods[0];
     }

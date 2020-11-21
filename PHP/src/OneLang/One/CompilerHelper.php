@@ -2,7 +2,7 @@
 
 namespace OneLang\One\CompilerHelper;
 
-use OneFile\OneFile;
+use OneLang\File\OneFile;
 use OneLang\One\Compiler\Compiler;
 
 class CompilerHelper {
@@ -10,7 +10,7 @@ class CompilerHelper {
     
     static function initProject($projectName, $sourceDir, $lang = "ts", $packagesDir = null) {
         if ($lang !== "ts")
-            throw new \OneCore\Error("Only typescript is supported.");
+            throw new \OneLang\Core\Error("Only typescript is supported.");
         
         $compiler = new Compiler();
         $compiler->init($packagesDir ?? CompilerHelper::$baseDir . "packages/");

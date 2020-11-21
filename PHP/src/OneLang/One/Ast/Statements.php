@@ -217,7 +217,7 @@ class TryStatement extends Statement {
         $this->catchBody = $catchBody;
         $this->finallyBody = $finallyBody;
         if ($this->catchBody === null && $this->finallyBody === null)
-            throw new \OneCore\Error("try without catch and finally is not allowed");
+            throw new \OneLang\Core\Error("try without catch and finally is not allowed");
     }
 }
 

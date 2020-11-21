@@ -22,11 +22,11 @@ class CollectInheritanceInfo implements ITransformer {
         $clses = array_values(array_filter(array_map(function ($x) { return $x instanceof Class_ ? $x : null; }, $allBaseIIntfs), function ($x) use ($cls) { return $x !== null && $x !== $cls; }));
         
         foreach ($cls->fields as $field)
-            $field->interfaceDeclarations = array_values(array_filter(array_map(function ($x) use ($field) { return \OneCore\ArrayHelper::find($x->fields, function ($f) use ($field) { return $f->name === $field->name; }); }, $intfs), function ($x) { return $x !== null; }));
+            $field->interfaceDeclarations = array_values(array_filter(array_map(function ($x) use ($field) { return \OneLang\Core\ArrayHelper::find($x->fields, function ($f) use ($field) { return $f->name === $field->name; }); }, $intfs), function ($x) { return $x !== null; }));
         
         foreach ($cls->methods as $method) {
-            $method->interfaceDeclarations = array_values(array_filter(array_map(function ($x) use ($method) { return \OneCore\ArrayHelper::find($x->methods, function ($m) use ($method) { return $m->name === $method->name; }); }, $intfs), function ($x) { return $x !== null; }));
-            $method->overrides = \OneCore\ArrayHelper::find(array_map(function ($x) use ($method) { return \OneCore\ArrayHelper::find($x->methods, function ($m) use ($method) { return $m->name === $method->name; }); }, $clses), function ($x) { return $x !== null; });
+            $method->interfaceDeclarations = array_values(array_filter(array_map(function ($x) use ($method) { return \OneLang\Core\ArrayHelper::find($x->methods, function ($m) use ($method) { return $m->name === $method->name; }); }, $intfs), function ($x) { return $x !== null; }));
+            $method->overrides = \OneLang\Core\ArrayHelper::find(array_map(function ($x) use ($method) { return \OneLang\Core\ArrayHelper::find($x->methods, function ($m) use ($method) { return $m->name === $method->name; }); }, $clses), function ($x) { return $x !== null; });
             if ($method->overrides !== null)
                 $method->overrides->overriddenBy[] = $method;
         }

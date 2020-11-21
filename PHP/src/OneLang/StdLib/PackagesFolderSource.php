@@ -2,7 +2,7 @@
 
 namespace OneLang\StdLib\PackagesFolderSource;
 
-use OneFile\OneFile;
+use OneLang\File\OneFile;
 use OneLang\StdLib\PackageManager\PackageSource;
 use OneLang\StdLib\PackageManager\PackageId;
 use OneLang\StdLib\PackageManager\PackageBundle;
@@ -17,18 +17,17 @@ class PackagesFolderSource implements PackageSource {
     }
     
     function getPackageBundle($ids, $cachedOnly) {
-        throw new \OneCore\Error("Method not implemented.");
+        throw new \OneLang\Core\Error("Method not implemented.");
     }
     
     function getAllCached() {
         $packages = Array();
         $allFiles = OneFile::listFiles($this->packagesDir, true);
         foreach ($allFiles as $fn) {
-            if ($fn === "bundle.json")
-                continue;
-            // TODO: hack
             $pathParts = preg_split("/\\//", $fn);
             // [0]=implementations/interfaces, [1]=package-name, [2:]=path
+            if (count($pathParts) < 3)
+                continue;
             $type = array_shift($pathParts);
             $pkgDir = array_shift($pathParts);
             if ($type !== "implementations" && $type !== "interfaces")

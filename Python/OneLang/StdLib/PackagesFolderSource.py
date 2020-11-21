@@ -14,11 +14,10 @@ class PackagesFolderSource:
         packages = {}
         all_files = OneFile.list_files(self.packages_dir, True)
         for fn in all_files:
-            if fn == "bundle.json":
-                continue
-            # TODO: hack
             path_parts = re.split("/", fn)
             # [0]=implementations/interfaces, [1]=package-name, [2:]=path
+            if len(path_parts) < 3:
+                continue
             type = path_parts.pop(0)
             pkg_dir = path_parts.pop(0)
             if type != "implementations" and type != "interfaces":

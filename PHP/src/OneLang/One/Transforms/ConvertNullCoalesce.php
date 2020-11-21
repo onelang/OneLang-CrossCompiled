@@ -37,7 +37,7 @@ class VariableNameHandler {
     
     function __construct()
     {
-        $this->usageCount = new \OneCore\Map();
+        $this->usageCount = new \OneLang\Core\Map();
     }
     
     function useName($name) {
@@ -53,7 +53,7 @@ class VariableNameHandler {
     }
     
     function resetScope() {
-        $this->usageCount = new \OneCore\Map();
+        $this->usageCount = new \OneLang\Core\Map();
     }
 }
 

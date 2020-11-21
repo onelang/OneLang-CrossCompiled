@@ -14,7 +14,7 @@ class PackageBundleSource implements PackageSource {
     }
     
     function getPackageBundle($ids, $cachedOnly) {
-        throw new \OneCore\Error("Method not implemented.");
+        throw new \OneLang\Core\Error("Method not implemented.");
     }
     
     function getAllCached() {

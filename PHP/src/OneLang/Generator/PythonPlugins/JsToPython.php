@@ -23,7 +23,7 @@ class JsToPython implements IGeneratorPlugin {
     
     function __construct($main) {
         $this->main = $main;
-        $this->unhandledMethods = new \OneCore\Set();
+        $this->unhandledMethods = new \OneLang\Core\Set();
     }
     
     function convertMethod($cls, $obj, $method, $args) {
@@ -149,7 +149,7 @@ class JsToPython implements IGeneratorPlugin {
         
         $methodName = $cls->name . "." . $method->name;
         if (!$this->unhandledMethods->has($methodName)) {
-            \OneCore\console::error("[JsToPython] Method was not handled: " . $cls->name . "." . $method->name);
+            \OneLang\Core\console::error("[JsToPython] Method was not handled: " . $cls->name . "." . $method->name);
             $this->unhandledMethods->add($methodName);
         }
         //debugger;

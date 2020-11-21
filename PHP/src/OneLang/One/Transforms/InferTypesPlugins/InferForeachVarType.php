@@ -23,7 +23,7 @@ class InferForeachVarType extends InferTypesPlugin {
             $found = false;
             if ($arrayType instanceof ClassType || $arrayType instanceof InterfaceType) {
                 $intfType = $arrayType;
-                $isArrayType = \OneCore\ArrayHelper::some($this->main->currentFile->arrayTypes, function ($x) use ($intfType) { return $x->decl === $intfType->getDecl(); });
+                $isArrayType = \OneLang\Core\ArrayHelper::some($this->main->currentFile->arrayTypes, function ($x) use ($intfType) { return $x->decl === $intfType->getDecl(); });
                 if ($isArrayType && count($intfType->typeArguments) > 0) {
                     $stmt->itemVar->type = $intfType->typeArguments[0];
                     $found = true;

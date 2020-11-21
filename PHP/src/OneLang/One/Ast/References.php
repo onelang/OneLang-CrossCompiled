@@ -40,7 +40,7 @@ class Reference extends Expression {
 
 class VariableReference extends Reference {
     function getVariable() {
-        throw new \OneCore\Error("Abstract method");
+        throw new \OneLang\Core\Error("Abstract method");
     }
 }
 
@@ -54,7 +54,7 @@ class ClassReference extends Reference {
     }
     
     function setActualType($type, $allowVoid = false, $allowGeneric = false) {
-        throw new \OneCore\Error("ClassReference cannot have a type!");
+        throw new \OneLang\Core\Error("ClassReference cannot have a type!");
     }
 }
 
@@ -68,7 +68,7 @@ class GlobalFunctionReference extends Reference implements IGetMethodBase {
     }
     
     function setActualType($type, $allowVoid = false, $allowGeneric = false) {
-        throw new \OneCore\Error("GlobalFunctionReference cannot have a type!");
+        throw new \OneLang\Core\Error("GlobalFunctionReference cannot have a type!");
     }
     
     function getMethodBase() {
@@ -86,7 +86,7 @@ class MethodParameterReference extends VariableReference {
     }
     
     function setActualType($type, $allowVoid = false, $allowGeneric = false) {
-        parent::setActualType($type, false, $this->decl->parentMethod instanceof Lambda ? \OneCore\ArrayHelper::some($this->decl->parentMethod->parameters, function ($x) { return TypeHelper::isGeneric($x->type); }) : ($this->decl->parentMethod instanceof Constructor ? count($this->decl->parentMethod->parentClass->typeArguments) > 0 : ($this->decl->parentMethod instanceof Method ? count($this->decl->parentMethod->typeArguments) > 0 || count($this->decl->parentMethod->parentInterface->typeArguments) > 0 : false)));
+        parent::setActualType($type, false, $this->decl->parentMethod instanceof Lambda ? \OneLang\Core\ArrayHelper::some($this->decl->parentMethod->parameters, function ($x) { return TypeHelper::isGeneric($x->type); }) : ($this->decl->parentMethod instanceof Constructor ? count($this->decl->parentMethod->parentClass->typeArguments) > 0 : ($this->decl->parentMethod instanceof Method ? count($this->decl->parentMethod->typeArguments) > 0 || count($this->decl->parentMethod->parentInterface->typeArguments) > 0 : false)));
     }
     
     function getVariable() {
@@ -104,7 +104,7 @@ class EnumReference extends Reference {
     }
     
     function setActualType($type, $allowVoid = false, $allowGeneric = false) {
-        throw new \OneCore\Error("EnumReference cannot have a type!");
+        throw new \OneLang\Core\Error("EnumReference cannot have a type!");
     }
 }
 
@@ -119,7 +119,7 @@ class EnumMemberReference extends Reference {
     
     function setActualType($type, $allowVoid = false, $allowGeneric = false) {
         if (!($type instanceof EnumType))
-            throw new \OneCore\Error("Expected EnumType!");
+            throw new \OneLang\Core\Error("Expected EnumType!");
         parent::setActualType($type);
     }
 }
@@ -134,7 +134,7 @@ class StaticThisReference extends Reference {
     }
     
     function setActualType($type, $allowVoid = false, $allowGeneric = false) {
-        throw new \OneCore\Error("StaticThisReference cannot have a type!");
+        throw new \OneLang\Core\Error("StaticThisReference cannot have a type!");
     }
 }
 
@@ -149,7 +149,7 @@ class ThisReference extends Reference {
     
     function setActualType($type, $allowVoid = false, $allowGeneric = false) {
         if (!($type instanceof ClassType))
-            throw new \OneCore\Error("Expected ClassType!");
+            throw new \OneLang\Core\Error("Expected ClassType!");
         parent::setActualType($type, false, count($this->cls->typeArguments) > 0);
     }
 }
@@ -165,7 +165,7 @@ class SuperReference extends Reference {
     
     function setActualType($type, $allowVoid = false, $allowGeneric = false) {
         if (!($type instanceof ClassType))
-            throw new \OneCore\Error("Expected ClassType!");
+            throw new \OneLang\Core\Error("Expected ClassType!");
         parent::setActualType($type, false, count($this->cls->typeArguments) > 0);
     }
 }
@@ -237,7 +237,7 @@ class StaticFieldReference extends VariableReference {
     
     function setActualType($type, $allowVoid = false, $allowGeneric = false) {
         if (TypeHelper::isGeneric($type))
-            throw new \OneCore\Error("StaticField's type cannot be Generic");
+            throw new \OneLang\Core\Error("StaticField's type cannot be Generic");
         parent::setActualType($type);
     }
     
@@ -257,7 +257,7 @@ class StaticPropertyReference extends VariableReference {
     
     function setActualType($type, $allowVoid = false, $allowGeneric = false) {
         if (TypeHelper::isGeneric($type))
-            throw new \OneCore\Error("StaticProperty's type cannot be Generic");
+            throw new \OneLang\Core\Error("StaticProperty's type cannot be Generic");
         parent::setActualType($type);
     }
     

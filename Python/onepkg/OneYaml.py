@@ -19,6 +19,16 @@ class YamlValue:
     def obj(self, key):
         return YamlValue(self.value.get(key))
 
+    def dict(self, key):
+        obj = self.value.get(key)
+        if obj is None:
+            return None
+
+        res = {}
+        for key, value in obj.items():
+            res[key] = YamlValue(value)
+        return res
+
 class OneYaml:
     @staticmethod
     def load(content):

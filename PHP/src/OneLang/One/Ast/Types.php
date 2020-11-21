@@ -93,13 +93,13 @@ class ExportedScope {
     
     function __construct()
     {
-        $this->exports = new \OneCore\Map();
+        $this->exports = new \OneLang\Core\Map();
     }
     
     function getExport($name) {
         $exp = $this->exports->get($name);
         if ($exp === null)
-            throw new \OneCore\Error("Export " . $name . " was not found in exported symbols.");
+            throw new \OneLang\Core\Error("Export " . $name . " was not found in exported symbols.");
         return $exp;
     }
     
@@ -108,7 +108,7 @@ class ExportedScope {
     }
     
     function getAllExports() {
-        return \OneCore\Array_::from($this->exports->values());
+        return \OneLang\Core\Array_::from($this->exports->values());
     }
 }
 
@@ -147,7 +147,7 @@ class Package {
     
     function addFile($file, $exportAll = false) {
         if ($file->sourcePath->pkg !== $this || $file->exportScope->packageName !== $this->name)
-            throw new \OneCore\Error("This file belongs to another package!");
+            throw new \OneLang\Core\Error("This file belongs to another package!");
         
         $this->files[$file->sourcePath->path] = $file;
         $scopeName = $file->exportScope->scopeName;
@@ -157,7 +157,7 @@ class Package {
     function getExportedScope($name) {
         $scope = @$this->exportedScopes[$name] ?? null;
         if ($scope === null)
-            throw new \OneCore\Error("Scope \"" . $name . "\" was not found in package \"" . $this->name . "\"");
+            throw new \OneLang\Core\Error("Scope \"" . $name . "\" was not found in package \"" . $this->name . "\"");
         return $scope;
     }
 }
@@ -177,7 +177,7 @@ class Workspace {
     function getPackage($name) {
         $pkg = @$this->packages[$name] ?? null;
         if ($pkg === null)
-            throw new \OneCore\Error("Package was not found: \"" . $name . "\"");
+            throw new \OneLang\Core\Error("Package was not found: \"" . $name . "\"");
         return $pkg;
     }
 }
@@ -240,7 +240,7 @@ class SourceFile {
         $this->mainBlock = $mainBlock;
         $this->sourcePath = $sourcePath;
         $this->exportScope = $exportScope;
-        $this->availableSymbols = new \OneCore\Map();
+        $this->availableSymbols = new \OneLang\Core\Map();
         $this->arrayTypes = array();
         $fileScope = Package::collectExportsFromFile($this, true);
         $this->addAvailableSymbols($fileScope->getAllExports());
@@ -282,7 +282,7 @@ class Import implements IHasAttributesAndTrivia, ISourceFileMember {
         $this->importAs = $importAs;
         $this->leadingTrivia = $leadingTrivia;
         if ($importAs !== null && !$importAll)
-            throw new \OneCore\Error("importAs only supported with importAll!");
+            throw new \OneLang\Core\Error("importAs only supported with importAll!");
     }
 }
 

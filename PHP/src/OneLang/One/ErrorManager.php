@@ -117,11 +117,11 @@ class ErrorManager {
             $text .= "\n  Context: " . $this->lastContextInfo;
         
         if ($type === LogType::INFO)
-            \OneCore\console::log($text);
+            \OneLang\Core\console::log($text);
         else if ($type === LogType::WARNING)
-            \OneCore\console::error("[WARNING] " . $text . "\n");
+            \OneLang\Core\console::error("[WARNING] " . $text . "\n");
         else if ($type === LogType::ERROR)
-            \OneCore\console::error($text . "\n");
+            \OneLang\Core\console::error($text . "\n");
         else { }
         
         if ($type === LogType::ERROR || $type === LogType::WARNING)

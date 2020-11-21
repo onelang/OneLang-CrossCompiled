@@ -2,7 +2,7 @@
 
 namespace OneLang\StdLib\PackageManager;
 
-use OneYaml\OneYaml;
+use OneLang\Yaml\OneYaml;
 
 class PackageType {
     const INTERFACE_ = 1;
@@ -147,15 +147,17 @@ class ImplPkgNativeDependency {
 
 class ImplPkgLanguage {
     public $id;
+    public $nativeSrcDir;
     public $nativeDependencies;
     
-    function __construct($id, $nativeDependencies) {
+    function __construct($id, $nativeSrcDir, $nativeDependencies) {
         $this->id = $id;
+        $this->nativeSrcDir = $nativeSrcDir;
         $this->nativeDependencies = $nativeDependencies;
     }
     
     static function fromYaml($obj) {
-        return new ImplPkgLanguage($obj->str("id"), array_map(function ($impl) { return ImplPkgNativeDependency::fromYaml($impl); }, $obj->arr("native-dependencies")));
+        return new ImplPkgLanguage($obj->str("id"), $obj->str("native-src-dir"), array_map(function ($impl) { return ImplPkgNativeDependency::fromYaml($impl); }, $obj->arr("native-dependencies")));
     }
 }
 
@@ -181,7 +183,13 @@ class ImplPackageYaml {
     }
     
     static function fromYaml($obj) {
-        return new ImplPackageYaml($obj->dbl("file-version"), $obj->str("vendor"), $obj->str("name"), $obj->str("description"), $obj->str("version"), $obj->strArr("includes"), array_map(function ($impl) { return ImplPkgImplementation::fromYaml($impl); }, $obj->arr("implements")), array_map(function ($impl) { return ImplPkgLanguage::fromYaml($impl); }, $obj->arr("languages")));
+        $languages = Array();
+        $langDict = $obj->dict("languages");
+        if ($langDict !== null)
+            foreach (array_keys($langDict) as $langName)
+                $languages[$langName] = ImplPkgLanguage::fromYaml(@$langDict[$langName] ?? null);
+        
+        return new ImplPackageYaml($obj->dbl("file-version"), $obj->str("vendor"), $obj->str("name"), $obj->str("description"), $obj->str("version"), $obj->strArr("includes"), array_map(function ($impl) { return ImplPkgImplementation::fromYaml($impl); }, $obj->arr("implements")), $languages);
     }
 }
 
@@ -259,7 +267,7 @@ class PackageManager {
                     $path = @$fileNamePaths[$fileName] ?? null;
                     $code = @$pkg->content->files[$path] ?? null;
                     if ($code === null)
-                        throw new \OneCore\Error("File '" . $fileName . "' was not found for package '" . $pkg->implementationYaml->name . "'");
+                        throw new \OneLang\Core\Error("File '" . $fileName . "' was not found for package '" . $pkg->implementationYaml->name . "'");
                     $impl = new PackageNativeImpl();
                     $impl->pkgName = $pkg->implementationYaml->name;
                     $impl->pkgVendor = $pkg->implementationYaml->vendor;

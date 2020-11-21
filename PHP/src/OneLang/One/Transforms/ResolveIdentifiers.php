@@ -41,7 +41,7 @@ class SymbolLookup {
         $this->errorMan = new ErrorManager();
         $this->levelStack = array();
         $this->levelNames = array();
-        $this->symbols = new \OneCore\Map();
+        $this->symbols = new \OneLang\Core\Map();
     }
     
     function throw($msg) {

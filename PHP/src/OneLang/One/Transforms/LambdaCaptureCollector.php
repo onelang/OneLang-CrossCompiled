@@ -32,8 +32,8 @@ class LambdaCaptureCollector extends AstTransformer {
         if ($this->scopeVars !== null)
             $this->scopeVarStack[] = $this->scopeVars;
         
-        $this->scopeVars = new \OneCore\Set();
-        $this->capturedVars = new \OneCore\Set();
+        $this->scopeVars = new \OneLang\Core\Set();
+        $this->capturedVars = new \OneLang\Core\Set();
         
         parent::visitLambda($lambda);
         $lambda->captures = array();

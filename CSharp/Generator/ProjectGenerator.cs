@@ -2,6 +2,7 @@ using Generator;
 using One.Ast;
 using One;
 using Parsers.Common;
+using StdLib;
 using System.Collections.Generic;
 using Utils;
 
@@ -17,19 +18,21 @@ namespace Generator
     
     public class ProjectTemplateMeta {
         public string language;
-        public string destionationDir;
+        public string destinationDir;
+        public string packageDir;
         public string[] templateFiles;
         
-        public ProjectTemplateMeta(string language, string destionationDir, string[] templateFiles)
+        public ProjectTemplateMeta(string language, string destinationDir, string packageDir, string[] templateFiles)
         {
             this.language = language;
-            this.destionationDir = destionationDir;
+            this.destinationDir = destinationDir;
+            this.packageDir = packageDir;
             this.templateFiles = templateFiles;
         }
         
         public static ProjectTemplateMeta fromYaml(YamlValue obj)
         {
-            return new ProjectTemplateMeta(obj.str("language"), obj.str("destination-dir"), obj.strArr("template-files"));
+            return new ProjectTemplateMeta(obj.str("language"), obj.str("destination-dir"), obj.str("package-dir"), obj.strArr("template-files"));
         }
     }
     
@@ -200,7 +203,7 @@ namespace Generator
                 }
                 else {
                     var literal = this.reader.readUntil("{{", true);
-                    if (literal.endsWith("\\"))
+                    if (literal.endsWith("\\") && !literal.endsWith("\\\\"))
                         literal = literal.substring(0, literal.length() - 1) + "{{";
                     if (literal != "")
                         items.push(new LiteralNode(literal));
@@ -261,10 +264,12 @@ namespace Generator
     
     public class ProjectDependency {
         public string name;
+        public string version;
         
-        public ProjectDependency(string name)
+        public ProjectDependency(string name, string version)
         {
             this.name = name;
+            this.version = version;
         }
     }
     
@@ -288,7 +293,7 @@ namespace Generator
         
         public static OneProjectFile fromJson(OneJObject json)
         {
-            return new OneProjectFile(json.get("name").asString(), json.get("dependencies").getArrayItems().map(dep => dep.asObject()).map(dep => new ProjectDependency(dep.get("name").asString())), json.get("sourceDir").asString(), json.get("sourceLang").asString(), json.get("outputDir").asString(), json.get("projectTemplates").getArrayItems().map(x => x.asString()));
+            return new OneProjectFile(json.get("name").asString(), json.get("dependencies").getArrayItems().map(dep => dep.asObject()).map(dep => new ProjectDependency(dep.get("name").asString(), dep.get("version").asString())), json.get("sourceDir").asString(), json.get("sourceLang").asString(), json.get("outputDir").asString(), json.get("projectTemplates").getArrayItems().map(x => x.asString()));
         }
     }
     
@@ -324,35 +329,46 @@ namespace Generator
                 foreach (var trans in generator.getTransforms())
                     trans.visitFiles(Object.values(compiler.projectPkg.files));
                 
+                var outDir = $"{this.outDir}/{langName}";
                 console.log($"Generating {langName} code...");
                 var files = generator.generate(compiler.projectPkg);
                 foreach (var file in files)
-                    OneFile.writeText($"{this.outDir}/{langName}/{projTemplate.meta.destionationDir ?? ""}/{file.path}", file.content);
+                    OneFile.writeText($"{outDir}/{projTemplate.meta.destinationDir ?? ""}/{file.path}", file.content);
                 
+                var oneDeps = new List<ImplementationPackage>();
                 var nativeDeps = new Dictionary<string, string> {};
                 foreach (var dep in this.projectFile.dependencies) {
                     var impl = compiler.pacMan.implementationPkgs.find(x => x.content.id.name == dep.name);
-                    var langData = impl.implementationYaml.languages.find(x => x.id == langId);
+                    oneDeps.push(impl);
+                    var langData = impl.implementationYaml.languages.get(langId);
                     if (langData == null)
                         continue;
+                    
                     foreach (var natDep in langData.nativeDependencies ?? new ImplPkgNativeDependency[0])
                         nativeDeps.set(natDep.name, natDep.version);
+                    
+                    if (langData.nativeSrcDir != null) {
+                        if (projTemplate.meta.packageDir == null)
+                            throw new Error("Package directory is empty in project template!");
+                        var srcDir = langData.nativeSrcDir + (langData.nativeSrcDir.endsWith("/") ? "" : "/");
+                        var dstDir = $"{outDir}/{projTemplate.meta.packageDir}/{impl.content.id.name}";
+                        var depFiles = Object.keys(impl.content.files).filter(x => x.startsWith(srcDir)).map(x => x.substr(srcDir.length()));
+                        foreach (var fn in depFiles)
+                            OneFile.writeText($"{dstDir}/{fn}", impl.content.files.get($"{srcDir}{fn}"));
+                    }
                 }
                 
-                var oneDeps = new Set<string>();
-                oneDeps.add("OneCore");
-                foreach (var file in Object.values(compiler.projectPkg.files))
-                    foreach (var imp in file.imports.filter(x => x.exportScope.packageName != compiler.projectPkg.name))
-                        oneDeps.add(imp.exportScope.packageName.split(new RegExp("-")).get(0).replace(new RegExp("\\."), ""));
-                
-                var model = new ObjectValue(new Dictionary<string, ArrayValue> {
-                    ["dependencies"] = new ArrayValue(Object.keys(nativeDeps).map(name => new ObjectValue(new Dictionary<string, StringValue> {
-                        ["name"] = new StringValue(name),
-                        ["version"] = new StringValue(nativeDeps.get(name))
-                    }))),
-                    ["onepackages"] = new ArrayValue(Array.from(oneDeps.values()).map(dep => new ObjectValue(new Dictionary<string, StringValue> { ["name"] = new StringValue(dep) })))
+                var model = new ObjectValue(new Dictionary<string, IVMValue> {
+                    ["dependencies"] = ((IVMValue)new ArrayValue(Object.keys(nativeDeps).map(name => new ObjectValue(new Dictionary<string, IVMValue> {
+                        ["name"] = ((IVMValue)new StringValue(name)),
+                        ["version"] = ((IVMValue)new StringValue(nativeDeps.get(name)))
+                    })))),
+                    ["onepackages"] = ((IVMValue)new ArrayValue(oneDeps.map(dep => new ObjectValue(new Dictionary<string, IVMValue> {
+                        ["vendor"] = ((IVMValue)new StringValue(dep.implementationYaml.vendor)),
+                        ["id"] = ((IVMValue)new StringValue(dep.implementationYaml.name))
+                    }))))
                 });
-                projTemplate.generate($"{this.outDir}/{langName}", model);
+                projTemplate.generate($"{outDir}", model);
             }
         }
     }

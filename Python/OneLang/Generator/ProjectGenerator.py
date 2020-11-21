@@ -13,17 +13,18 @@ import OneLang.Generator.CsharpGenerator as cshGen
 import OneLang.Generator.PythonGenerator as pythGen
 import OneLang.Generator.PhpGenerator as phpGen
 import OneLang.One.CompilerHelper as compHelp
-import re
+import OneLang.StdLib.PackageManager as packMan
 
 class ProjectTemplateMeta:
-    def __init__(self, language, destionation_dir, template_files):
+    def __init__(self, language, destination_dir, package_dir, template_files):
         self.language = language
-        self.destionation_dir = destionation_dir
+        self.destination_dir = destination_dir
+        self.package_dir = package_dir
         self.template_files = template_files
     
     @classmethod
     def from_yaml(cls, obj):
-        return ProjectTemplateMeta(obj.str("language"), obj.str("destination-dir"), obj.str_arr("template-files"))
+        return ProjectTemplateMeta(obj.str("language"), obj.str("destination-dir"), obj.str("package-dir"), obj.str_arr("template-files"))
 
 class ObjectValue:
     def __init__(self, props):
@@ -129,7 +130,7 @@ class TemplateParser:
                     self.reader.expect_token("}}")
             else:
                 literal = self.reader.read_until("{{", True)
-                if literal.endswith("\\"):
+                if literal.endswith("\\") and not literal.endswith("\\\\"):
                     literal = literal[0:len(literal) - 1] + "{{"
                 if literal != "":
                     items.append(LiteralNode(literal))
@@ -167,8 +168,9 @@ class ProjectTemplate:
                 OneFile.copy(src_fn, dst_fn)
 
 class ProjectDependency:
-    def __init__(self, name):
+    def __init__(self, name, version):
         self.name = name
+        self.version = version
 
 class OneProjectFile:
     def __init__(self, name, dependencies, source_dir, source_lang, output_dir, project_templates):
@@ -181,7 +183,7 @@ class OneProjectFile:
     
     @classmethod
     def from_json(cls, json):
-        return OneProjectFile(json.get("name").as_string(), list(map(lambda dep: ProjectDependency(dep.get("name").as_string()), list(map(lambda dep: dep.as_object(), json.get("dependencies").get_array_items())))), json.get("sourceDir").as_string(), json.get("sourceLang").as_string(), json.get("outputDir").as_string(), list(map(lambda x: x.as_string(), json.get("projectTemplates").get_array_items())))
+        return OneProjectFile(json.get("name").as_string(), list(map(lambda dep: ProjectDependency(dep.get("name").as_string(), dep.get("version").as_string()), list(map(lambda dep: dep.as_object(), json.get("dependencies").get_array_items())))), json.get("sourceDir").as_string(), json.get("sourceLang").as_string(), json.get("outputDir").as_string(), list(map(lambda x: x.as_string(), json.get("projectTemplates").get_array_items())))
 
 class ProjectGenerator:
     def __init__(self, base_dir, proj_dir):
@@ -208,25 +210,32 @@ class ProjectGenerator:
             for trans in generator.get_transforms():
                 trans.visit_files(compiler.project_pkg.files.values())
             
+            out_dir = f'''{self.out_dir}/{lang_name}'''
             console.log(f'''Generating {lang_name} code...''')
             files = generator.generate(compiler.project_pkg)
             for file in files:
-                OneFile.write_text(f'''{self.out_dir}/{lang_name}/{proj_template.meta.destionation_dir or ""}/{file.path}''', file.content)
+                OneFile.write_text(f'''{out_dir}/{proj_template.meta.destination_dir or ""}/{file.path}''', file.content)
             
+            one_deps = []
             native_deps = {}
             for dep in self.project_file.dependencies:
                 impl = next(filter(lambda x: x.content.id.name == dep.name, compiler.pac_man.implementation_pkgs), None)
-                lang_data = next(filter(lambda x: x.id == lang_id, impl.implementation_yaml.languages), None)
+                one_deps.append(impl)
+                lang_data = impl.implementation_yaml.languages.get(lang_id)
                 if lang_data == None:
                     continue
+                
                 for nat_dep in lang_data.native_dependencies or []:
                     native_deps[nat_dep.name] = nat_dep.version
-            
-            one_deps = dict()
-            one_deps["OneCore"] = None
-            for file in compiler.project_pkg.files.values():
-                for imp in list(filter(lambda x: x.export_scope.package_name != compiler.project_pkg.name, file.imports)):
-                    one_deps[re.sub("\\.", "", re.split("-", imp.export_scope.package_name)[0])] = None
+                
+                if lang_data.native_src_dir != None:
+                    if proj_template.meta.package_dir == None:
+                        raise Error("Package directory is empty in project template!")
+                    src_dir = lang_data.native_src_dir + ("" if lang_data.native_src_dir.endswith("/") else "/")
+                    dst_dir = f'''{out_dir}/{proj_template.meta.package_dir}/{impl.content.id.name}'''
+                    dep_files = list(map(lambda x: x[len(src_dir):], list(filter(lambda x: x.startswith(src_dir), impl.content.files.keys()))))
+                    for fn in dep_files:
+                        OneFile.write_text(f'''{dst_dir}/{fn}''', impl.content.files.get(f'''{src_dir}{fn}'''))
             
             model = ObjectValue({
                 "dependencies": ArrayValue(list(map(lambda name: ObjectValue({
@@ -234,7 +243,8 @@ class ProjectGenerator:
                     "version": StringValue(native_deps.get(name))
                 }), native_deps.keys()))),
                 "onepackages": ArrayValue(list(map(lambda dep: ObjectValue({
-                    "name": StringValue(dep)
-                }), Array.from_(one_deps.keys()))))
+                    "vendor": StringValue(dep.implementation_yaml.vendor),
+                    "id": StringValue(dep.implementation_yaml.name)
+                }), one_deps)))
             })
-            proj_template.generate(f'''{self.out_dir}/{lang_name}''', model)
+            proj_template.generate(f'''{out_dir}''', model)

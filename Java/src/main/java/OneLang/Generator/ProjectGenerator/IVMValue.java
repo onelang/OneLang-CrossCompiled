@@ -19,6 +19,7 @@ import OneLang.Generator.CsharpGenerator.CsharpGenerator;
 import OneLang.Generator.PythonGenerator.PythonGenerator;
 import OneLang.Generator.PhpGenerator.PhpGenerator;
 import OneLang.One.CompilerHelper.CompilerHelper;
+import OneLang.StdLib.PackageManager.ImplementationPackage;
 
 public interface IVMValue {
     

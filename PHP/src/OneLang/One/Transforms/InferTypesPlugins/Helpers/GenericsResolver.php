@@ -19,7 +19,7 @@ class GenericsResolver {
     
     function __construct()
     {
-        $this->resolutionMap = new \OneCore\Map();
+        $this->resolutionMap = new \OneLang\Core\Map();
     }
     
     static function fromObject($object) {
@@ -31,7 +31,7 @@ class GenericsResolver {
     function addResolution($typeVarName, $actualType) {
         $prevRes = $this->resolutionMap->get($typeVarName);
         if ($prevRes !== null && !TypeHelper::equals($prevRes, $actualType))
-            throw new \OneCore\Error("Resolving '" . $typeVarName . "' is ambiguous, " . $prevRes->repr() . " <> " . $actualType->repr());
+            throw new \OneLang\Core\Error("Resolving '" . $typeVarName . "' is ambiguous, " . $prevRes->repr() . " <> " . $actualType->repr());
         $this->resolutionMap->set($typeVarName, $actualType);
     }
     
@@ -39,7 +39,7 @@ class GenericsResolver {
         if (count($methodCall->typeArgs) === 0)
             return;
         if (count($methodCall->typeArgs) !== count($methodCall->method->typeArguments))
-            throw new \OneCore\Error("Expected " . count($methodCall->method->typeArguments) . " type argument(s) for method call, but got " . count($methodCall->typeArgs));
+            throw new \OneLang\Core\Error("Expected " . count($methodCall->method->typeArguments) . " type argument(s) for method call, but got " . count($methodCall->typeArgs));
         for ($i = 0; $i < count($methodCall->typeArgs); $i++)
             $this->addResolution($methodCall->method->typeArguments[$i], $methodCall->typeArgs[$i]);
     }
@@ -53,7 +53,7 @@ class GenericsResolver {
             if (!$this->collectResolutionsFromActualType($actualType->decl->type, $actualType)) { }
         }
         else
-            throw new \OneCore\Error("Expected ClassType or InterfaceType, got " . ($actualType !== null ? $actualType->repr() : "<null>"));
+            throw new \OneLang\Core\Error("Expected ClassType or InterfaceType, got " . ($actualType !== null ? $actualType->repr() : "<null>"));
     }
     
     function collectResolutionsFromActualType($genericType, $actualType) {
@@ -65,25 +65,25 @@ class GenericsResolver {
         }
         else if ($genericType instanceof ClassType && $actualType instanceof ClassType && $genericType->decl === $actualType->decl) {
             if (count($genericType->typeArguments) !== count($actualType->typeArguments))
-                throw new \OneCore\Error("Same class (" . $genericType->repr() . ") used with different number of type arguments (" . count($genericType->typeArguments) . " <> " . count($actualType->typeArguments) . ")");
-            return \OneCore\ArrayHelper::every($genericType->typeArguments, function ($x, $i) use ($actualType) { return $this->collectResolutionsFromActualType($x, $actualType->typeArguments[$i]); });
+                throw new \OneLang\Core\Error("Same class (" . $genericType->repr() . ") used with different number of type arguments (" . count($genericType->typeArguments) . " <> " . count($actualType->typeArguments) . ")");
+            return \OneLang\Core\ArrayHelper::every($genericType->typeArguments, function ($x, $i) use ($actualType) { return $this->collectResolutionsFromActualType($x, $actualType->typeArguments[$i]); });
         }
         else if ($genericType instanceof InterfaceType && $actualType instanceof InterfaceType && $genericType->decl === $actualType->decl) {
             if (count($genericType->typeArguments) !== count($actualType->typeArguments))
-                throw new \OneCore\Error("Same class (" . $genericType->repr() . ") used with different number of type arguments (" . count($genericType->typeArguments) . " <> " . count($actualType->typeArguments) . ")");
-            return \OneCore\ArrayHelper::every($genericType->typeArguments, function ($x, $i) use ($actualType) { return $this->collectResolutionsFromActualType($x, $actualType->typeArguments[$i]); });
+                throw new \OneLang\Core\Error("Same class (" . $genericType->repr() . ") used with different number of type arguments (" . count($genericType->typeArguments) . " <> " . count($actualType->typeArguments) . ")");
+            return \OneLang\Core\ArrayHelper::every($genericType->typeArguments, function ($x, $i) use ($actualType) { return $this->collectResolutionsFromActualType($x, $actualType->typeArguments[$i]); });
         }
         else if ($genericType instanceof LambdaType && $actualType instanceof LambdaType) {
             if (count($genericType->parameters) !== count($actualType->parameters))
-                throw new \OneCore\Error("Generic lambda type has " . count($genericType->parameters) . " parameters while the actual type has " . count($actualType->parameters));
-            $paramsOk = \OneCore\ArrayHelper::every($genericType->parameters, function ($x, $i) use ($actualType) { return $this->collectResolutionsFromActualType($x->type, $actualType->parameters[$i]->type); });
+                throw new \OneLang\Core\Error("Generic lambda type has " . count($genericType->parameters) . " parameters while the actual type has " . count($actualType->parameters));
+            $paramsOk = \OneLang\Core\ArrayHelper::every($genericType->parameters, function ($x, $i) use ($actualType) { return $this->collectResolutionsFromActualType($x->type, $actualType->parameters[$i]->type); });
             $resultOk = $this->collectResolutionsFromActualType($genericType->returnType, $actualType->returnType);
             return $paramsOk && $resultOk;
         }
         else if ($genericType instanceof EnumType && $actualType instanceof EnumType && $genericType->decl === $actualType->decl) { }
         else if ($genericType instanceof AnyType || $actualType instanceof AnyType) { }
         else
-            throw new \OneCore\Error("Generic type " . $genericType->repr() . " is not compatible with actual type " . $actualType->repr());
+            throw new \OneLang\Core\Error("Generic type " . $genericType->repr() . " is not compatible with actual type " . $actualType->repr());
         return false;
     }
     
@@ -91,7 +91,7 @@ class GenericsResolver {
         if ($type instanceof GenericsType) {
             $resolvedType = $this->resolutionMap->get($type->typeVarName);
             if ($resolvedType === null && $mustResolveAllGenerics)
-                throw new \OneCore\Error("Could not resolve generics type: " . $type->repr());
+                throw new \OneLang\Core\Error("Could not resolve generics type: " . $type->repr());
             return $resolvedType !== null ? $resolvedType : $type;
         }
         else if ($type instanceof ClassType)

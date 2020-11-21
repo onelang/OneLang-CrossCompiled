@@ -23,11 +23,10 @@ namespace StdLib
             var packages = new Dictionary<string, PackageContent> {};
             var allFiles = OneFile.listFiles(this.packagesDir, true);
             foreach (var fn in allFiles) {
-                if (fn == "bundle.json")
-                    continue;
-                // TODO: hack
                 var pathParts = fn.split(new RegExp("/")).ToList();
                 // [0]=implementations/interfaces, [1]=package-name, [2:]=path
+                if (pathParts.length() < 3)
+                    continue;
                 var type = pathParts.shift();
                 var pkgDir = pathParts.shift();
                 if (type != "implementations" && type != "interfaces")

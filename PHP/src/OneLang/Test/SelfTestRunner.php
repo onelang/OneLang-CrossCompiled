@@ -2,7 +2,7 @@
 
 namespace OneLang\Test\SelfTestRunner;
 
-use OneFile\OneFile;
+use OneLang\File\OneFile;
 use OneLang\One\CompilerHelper\CompilerHelper;
 use OneLang\Generator\IGenerator\IGenerator;
 use OneLang\One\Compiler\Compiler;
@@ -27,10 +27,10 @@ class CompilerHooks implements ICompilerHooks {
         $expected = OneFile::readText($stageFn);
         if ($stageSummary !== $expected) {
             OneFile::writeText($stageFn . "_diff.txt", $stageSummary);
-            throw new \OneCore\Error("Stage result differs from expected: " . $stageName . " -> " . $stageFn);
+            throw new \OneLang\Core\Error("Stage result differs from expected: " . $stageName . " -> " . $stageFn);
         }
         else
-            \OneCore\console::log("[+] Stage passed: " . $stageName);
+            \OneLang\Core\console::log("[+] Stage passed: " . $stageName);
     }
 }
 
@@ -43,7 +43,7 @@ class SelfTestRunner {
     }
     
     function runTest($generator) {
-        \OneCore\console::log("[-] SelfTestRunner :: START");
+        \OneLang\Core\console::log("[-] SelfTestRunner :: START");
         $compiler = CompilerHelper::initProject("OneLang", $this->baseDir . "src/");
         $compiler->hooks = new CompilerHooks($compiler, $this->baseDir);
         $compiler->processWorkspace();
@@ -62,15 +62,15 @@ class SelfTestRunner {
             
             if ($tsGenContent !== $reGenContent) {
                 OneFile::writeText($reGenPath, $genFile->content);
-                \OneCore\console::error("Content does not match: " . $genFile->path);
+                \OneLang\Core\console::error("Content does not match: " . $genFile->path);
                 $allMatch = false;
             }
             else
-                \OneCore\console::log("[+] Content matches: " . $genFile->path);
+                \OneLang\Core\console::log("[+] Content matches: " . $genFile->path);
         }
         
-        \OneCore\console::log($allMatch ? "[+} SUCCESS! All generated files are the same" : "[!] FAIL! Not all files are the same");
-        \OneCore\console::log("[-] SelfTestRunner :: DONE");
+        \OneLang\Core\console::log($allMatch ? "[+} SUCCESS! All generated files are the same" : "[!] FAIL! Not all files are the same");
+        \OneLang\Core\console::log("[-] SelfTestRunner :: DONE");
         return $allMatch;
     }
 }

@@ -185,7 +185,7 @@ class PhpGenerator implements IGenerator {
                 return "Dictionary";
             
             if ($t->decl->parentFile->exportScope === null)
-                return "\\OneCore\\" . $this->name_($t->decl->name);
+                return "\\OneLang\\Core\\" . $this->name_($t->decl->name);
             else
                 return $this->name_($t->decl->name);
         }
@@ -288,7 +288,7 @@ class PhpGenerator implements IGenerator {
     }
     
     function inferExprNameForType($type) {
-        if ($type instanceof ClassType && \OneCore\ArrayHelper::every($type->typeArguments, function ($x, $_) { return $x instanceof ClassType; })) {
+        if ($type instanceof ClassType && \OneLang\Core\ArrayHelper::every($type->typeArguments, function ($x, $_) { return $x instanceof ClassType; })) {
             $fullName = implode("", array_map(function ($x) { return ($x)->decl->name; }, $type->typeArguments)) . $type->decl->name;
             return NameUtils::shortName($fullName);
         }
@@ -326,7 +326,7 @@ class PhpGenerator implements IGenerator {
         else if ($expr instanceof StaticMethodCallExpression) {
             $res = $this->name_($expr->method->parentInterface->name) . "::" . $this->methodCall($expr);
             if ($expr->method->parentInterface->parentFile->exportScope === null)
-                $res = "\\OneCore\\" . $res;
+                $res = "\\OneLang\\Core\\" . $res;
         }
         else if ($expr instanceof GlobalFunctionCallExpression)
             $res = "Global." . $this->name_($expr->func->name) . $this->exprCall(array(), $expr->args);
@@ -364,7 +364,7 @@ class PhpGenerator implements IGenerator {
                             if (32 <= $chrCode && $chrCode <= 126)
                                 $lit .= $chr;
                             else
-                                throw new \OneCore\Error("invalid char in template string (code=" . $chrCode . ")");
+                                throw new \OneLang\Core\Error("invalid char in template string (code=" . $chrCode . ")");
                         }
                     }
                     $parts[] = "\"" . $lit . "\"";
@@ -410,7 +410,7 @@ class PhpGenerator implements IGenerator {
         else if ($expr instanceof ParenthesizedExpression)
             $res = "(" . $this->expr($expr->expression) . ")";
         else if ($expr instanceof RegexLiteral)
-            $res = "new \\OneCore\\RegExp(" . json_encode($expr->pattern, JSON_UNESCAPED_SLASHES) . ")";
+            $res = "new \\OneLang\\Core\\RegExp(" . json_encode($expr->pattern, JSON_UNESCAPED_SLASHES) . ")";
         else if ($expr instanceof Lambda) {
             $params = array_map(function ($x) { return "$" . $this->name_($x->name); }, $expr->parameters);
             // TODO: captures should not be null
@@ -635,7 +635,7 @@ class PhpGenerator implements IGenerator {
     }
     
     function genFile($projName, $sourceFile) {
-        $this->usings = new \OneCore\Set();
+        $this->usings = new \OneLang\Core\Set();
         
         $enums = array();
         foreach ($sourceFile->enums as $enum_) {
@@ -653,7 +653,7 @@ class PhpGenerator implements IGenerator {
         
         $main = $this->rawBlock($sourceFile->mainBlock);
         
-        $usingsSet = new \OneCore\Set();
+        $usingsSet = new \OneLang\Core\Set();
         foreach ($sourceFile->imports as $imp) {
             if (array_key_exists("php-use", $imp->attributes))
                 $usingsSet->add(@$imp->attributes["php-use"] ?? null);

@@ -19,23 +19,26 @@ import OneLang.Generator.CsharpGenerator.CsharpGenerator;
 import OneLang.Generator.PythonGenerator.PythonGenerator;
 import OneLang.Generator.PhpGenerator.PhpGenerator;
 import OneLang.One.CompilerHelper.CompilerHelper;
+import OneLang.StdLib.PackageManager.ImplementationPackage;
 
 import OneLang.Generator.ProjectGenerator.ProjectTemplateMeta;
 import OneStd.YamlValue;
 
 public class ProjectTemplateMeta {
     public String language;
-    public String destionationDir;
+    public String destinationDir;
+    public String packageDir;
     public String[] templateFiles;
     
-    public ProjectTemplateMeta(String language, String destionationDir, String[] templateFiles)
+    public ProjectTemplateMeta(String language, String destinationDir, String packageDir, String[] templateFiles)
     {
         this.language = language;
-        this.destionationDir = destionationDir;
+        this.destinationDir = destinationDir;
+        this.packageDir = packageDir;
         this.templateFiles = templateFiles;
     }
     
     public static ProjectTemplateMeta fromYaml(YamlValue obj) {
-        return new ProjectTemplateMeta(obj.str("language"), obj.str("destination-dir"), obj.strArr("template-files"));
+        return new ProjectTemplateMeta(obj.str("language"), obj.str("destination-dir"), obj.str("package-dir"), obj.strArr("template-files"));
     }
 }

@@ -10,15 +10,17 @@ import OneStd.YamlValue;
 
 public class ImplPkgLanguage {
     public String id;
+    public String nativeSrcDir;
     public ImplPkgNativeDependency[] nativeDependencies;
     
-    public ImplPkgLanguage(String id, ImplPkgNativeDependency[] nativeDependencies)
+    public ImplPkgLanguage(String id, String nativeSrcDir, ImplPkgNativeDependency[] nativeDependencies)
     {
         this.id = id;
+        this.nativeSrcDir = nativeSrcDir;
         this.nativeDependencies = nativeDependencies;
     }
     
     public static ImplPkgLanguage fromYaml(YamlValue obj) {
-        return new ImplPkgLanguage(obj.str("id"), Arrays.stream(obj.arr("native-dependencies")).map(impl -> ImplPkgNativeDependency.fromYaml(impl)).toArray(ImplPkgNativeDependency[]::new));
+        return new ImplPkgLanguage(obj.str("id"), obj.str("native-src-dir"), Arrays.stream(obj.arr("native-dependencies")).map(impl -> ImplPkgNativeDependency.fromYaml(impl)).toArray(ImplPkgNativeDependency[]::new));
     }
 }

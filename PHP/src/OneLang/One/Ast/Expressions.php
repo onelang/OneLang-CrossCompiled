@@ -41,23 +41,23 @@ class Expression implements IAstNode, IExpression {
     
     protected function typeCheck($type, $allowVoid) {
         if ($type === null)
-            throw new \OneCore\Error("New type cannot be null!");
+            throw new \OneLang\Core\Error("New type cannot be null!");
         
         if ($type instanceof VoidType && !$allowVoid)
-            throw new \OneCore\Error("Expression's type cannot be VoidType!");
+            throw new \OneLang\Core\Error("Expression's type cannot be VoidType!");
         
         if ($type instanceof UnresolvedType)
-            throw new \OneCore\Error("Expression's type cannot be UnresolvedType!");
+            throw new \OneLang\Core\Error("Expression's type cannot be UnresolvedType!");
     }
     
     function setActualType($actualType, $allowVoid = false, $allowGeneric = false) {
         if ($this->actualType !== null)
-            throw new \OneCore\Error("Expression already has actual type (current type = " . $this->actualType->repr() . ", new type = " . $actualType->repr() . ")");
+            throw new \OneLang\Core\Error("Expression already has actual type (current type = " . $this->actualType->repr() . ", new type = " . $actualType->repr() . ")");
         
         $this->typeCheck($actualType, $allowVoid);
         
         if ($this->expectedType !== null && !TypeHelper::isAssignableTo($actualType, $this->expectedType))
-            throw new \OneCore\Error("Actual type (" . $actualType->repr() . ") is not assignable to the declared type (" . $this->expectedType->repr() . ")!");
+            throw new \OneLang\Core\Error("Actual type (" . $actualType->repr() . ") is not assignable to the declared type (" . $this->expectedType->repr() . ")!");
         
         // TODO: decide if this check needed or not
         //if (!allowGeneric && TypeHelper.isGeneric(actualType))
@@ -68,10 +68,10 @@ class Expression implements IAstNode, IExpression {
     
     function setExpectedType($type, $allowVoid = false) {
         if ($this->actualType !== null)
-            throw new \OneCore\Error("Cannot set expected type after actual type was already set!");
+            throw new \OneLang\Core\Error("Cannot set expected type after actual type was already set!");
         
         if ($this->expectedType !== null)
-            throw new \OneCore\Error("Expression already has a expected type!");
+            throw new \OneLang\Core\Error("Expression already has a expected type!");
         
         $this->typeCheck($type, $allowVoid);
         

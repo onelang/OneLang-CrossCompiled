@@ -33,7 +33,7 @@ class FillAttributesFromTrivia extends AstTransformer {
     static function processTrivia($trivia) {
         $result = Array();
         if ($trivia !== null && $trivia !== "") {
-            $regex = new \OneCore\RegExp("(?:\\n|^)\\s*(?://|#|/\\*\\*?)\\s*@([A-Za-z0-9_.-]+) ?((?!\\n|\\*/|$).+)?");
+            $regex = new \OneLang\Core\RegExp("(?:\\n|^)\\s*(?://|#|/\\*\\*?)\\s*@([A-Za-z0-9_.-]+) ?((?!\\n|\\*/|$).+)?");
             while (true) {
                 $match = $regex->exec($trivia);
                 if ($match === null)

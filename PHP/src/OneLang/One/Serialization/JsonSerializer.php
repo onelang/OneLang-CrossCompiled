@@ -18,7 +18,7 @@ class JsonSerializer {
     
     function __construct($litTypes) {
         $this->litTypes = $litTypes;
-        $this->circleDetector = new \OneCore\Map();
+        $this->circleDetector = new \OneLang\Core\Map();
     }
     
     function pad($str) {

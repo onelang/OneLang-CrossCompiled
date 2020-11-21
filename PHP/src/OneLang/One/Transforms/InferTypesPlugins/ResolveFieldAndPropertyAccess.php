@@ -32,11 +32,11 @@ class ResolveFieldAndPropertyAccess extends InferTypesPlugin {
     }
     
     protected function getStaticRef($cls, $memberName) {
-        $field = \OneCore\ArrayHelper::find($cls->fields, function ($x) use ($memberName) { return $x->name === $memberName; });
+        $field = \OneLang\Core\ArrayHelper::find($cls->fields, function ($x) use ($memberName) { return $x->name === $memberName; });
         if ($field !== null && $field->isStatic)
             return new StaticFieldReference($field);
         
-        $prop = \OneCore\ArrayHelper::find($cls->properties, function ($x) use ($memberName) { return $x->name === $memberName; });
+        $prop = \OneLang\Core\ArrayHelper::find($cls->properties, function ($x) use ($memberName) { return $x->name === $memberName; });
         if ($prop !== null && $prop->isStatic)
             return new StaticPropertyReference($prop);
         
@@ -46,11 +46,11 @@ class ResolveFieldAndPropertyAccess extends InferTypesPlugin {
     
     protected function getInstanceRef($cls, $memberName, $obj) {
         while (true) {
-            $field = \OneCore\ArrayHelper::find($cls->fields, function ($x) use ($memberName) { return $x->name === $memberName; });
+            $field = \OneLang\Core\ArrayHelper::find($cls->fields, function ($x) use ($memberName) { return $x->name === $memberName; });
             if ($field !== null && !$field->isStatic)
                 return new InstanceFieldReference($obj, $field);
             
-            $prop = \OneCore\ArrayHelper::find($cls->properties, function ($x) use ($memberName) { return $x->name === $memberName; });
+            $prop = \OneLang\Core\ArrayHelper::find($cls->properties, function ($x) use ($memberName) { return $x->name === $memberName; });
             if ($prop !== null && !$prop->isStatic)
                 return new InstancePropertyReference($obj, $prop);
             
@@ -65,7 +65,7 @@ class ResolveFieldAndPropertyAccess extends InferTypesPlugin {
     }
     
     protected function getInterfaceRef($intf, $memberName, $obj) {
-        $field = \OneCore\ArrayHelper::find($intf->fields, function ($x) use ($memberName) { return $x->name === $memberName; });
+        $field = \OneLang\Core\ArrayHelper::find($intf->fields, function ($x) use ($memberName) { return $x->name === $memberName; });
         if ($field !== null && !$field->isStatic)
             return new InstanceFieldReference($obj, $field);
         

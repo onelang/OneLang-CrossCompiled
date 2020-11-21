@@ -110,7 +110,7 @@ namespace Generator
                     return $"Dictionary";
                 
                 if (classType.decl.parentFile.exportScope == null)
-                    return $"\\OneCore\\{this.name_(classType.decl.name)}";
+                    return $"\\OneLang\\Core\\{this.name_(classType.decl.name)}";
                 else
                     return this.name_(classType.decl.name);
             }
@@ -262,7 +262,7 @@ namespace Generator
             else if (expr is StaticMethodCallExpression statMethCallExpr) {
                 res = $"{this.name_(statMethCallExpr.method.parentInterface.name)}::{this.methodCall(statMethCallExpr)}";
                 if (statMethCallExpr.method.parentInterface.parentFile.exportScope == null)
-                    res = $"\\OneCore\\{res}";
+                    res = $"\\OneLang\\Core\\{res}";
             }
             else if (expr is GlobalFunctionCallExpression globFunctCallExpr)
                 res = $"Global.{this.name_(globFunctCallExpr.func.name)}{this.exprCall(new IType[0], globFunctCallExpr.args)}";
@@ -346,7 +346,7 @@ namespace Generator
             else if (expr is ParenthesizedExpression parExpr)
                 res = $"({this.expr(parExpr.expression)})";
             else if (expr is RegexLiteral regexLit)
-                res = $"new \\OneCore\\RegExp({JSON.stringify(regexLit.pattern)})";
+                res = $"new \\OneLang\\Core\\RegExp({JSON.stringify(regexLit.pattern)})";
             else if (expr is Lambda lambd) {
                 var params_ = lambd.parameters.map(x => $"${this.name_(x.name)}");
                 // TODO: captures should not be null

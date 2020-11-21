@@ -39,9 +39,9 @@ class ReturnTypeInferer {
         
         $returnType = $returnValue->actualType;
         if ($returnType === null)
-            throw new \OneCore\Error("Return type cannot be null");
+            throw new \OneLang\Core\Error("Return type cannot be null");
         
-        if (!\OneCore\ArrayHelper::some($this->returnTypes, function ($x) use ($returnType) { return TypeHelper::equals($x, $returnType); }))
+        if (!\OneLang\Core\ArrayHelper::some($this->returnTypes, function ($x) use ($returnType) { return TypeHelper::equals($x, $returnType); }))
             $this->returnTypes[] = $returnType;
     }
     
@@ -62,7 +62,7 @@ class ReturnTypeInferer {
         }
         else if (count($this->returnTypes) === 1)
             $inferredType = $this->returnTypes[0];
-        else if ($declaredType !== null && \OneCore\ArrayHelper::every($this->returnTypes, function ($x, $i) use ($declaredType) { return TypeHelper::isAssignableTo($x, $declaredType); }))
+        else if ($declaredType !== null && \OneLang\Core\ArrayHelper::every($this->returnTypes, function ($x, $i) use ($declaredType) { return TypeHelper::isAssignableTo($x, $declaredType); }))
             $inferredType = $declaredType;
         else {
             $this->errorMan->throw($errorContext . " returns different types: " . implode(", ", array_map(function ($x) { return $x->repr(); }, $this->returnTypes)));

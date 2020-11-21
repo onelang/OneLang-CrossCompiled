@@ -6,7 +6,8 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'OneYaml\\' => array($baseDir . '/onepkg/OneYaml'),
-    'OneFile\\' => array($baseDir . '/onepkg/OneFile'),
-    'OneCore\\' => array($baseDir . '/onepkg/OneCore'),
+    'OneLang\\Yaml\\' => array($baseDir . '/onepkg/OneLang-Yaml'),
+    'OneLang\\Json\\' => array($baseDir . '/onepkg/OneLang-Json'),
+    'OneLang\\File\\' => array($baseDir . '/onepkg/OneLang-File'),
+    'OneLang\\Core\\' => array($baseDir . '/onepkg/OneLang-Core'),
 );

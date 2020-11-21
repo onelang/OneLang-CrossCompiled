@@ -89,7 +89,7 @@ class Reader {
         if ($this->hooks !== null)
             $this->hooks->errorCallback($error);
         else
-            throw new \OneCore\Error($message . " at " . $error->cursor->line . ":" . $error->cursor->column . "\n" . $this->linePreview($error->cursor));
+            throw new \OneLang\Core\Error($message . " at " . $error->cursor->line . ":" . $error->cursor->column . "\n" . $this->linePreview($error->cursor));
     }
     
     function skipWhitespace($includeInTrivia = false) {
@@ -208,7 +208,7 @@ class Reader {
     }
     
     static function matchFromIndex($pattern, $input, $offset) {
-        $regex = new \OneCore\RegExp($pattern, "gy");
+        $regex = new \OneLang\Core\RegExp($pattern, "gy");
         $regex->lastIndex = $offset;
         $matches = $regex->exec($input);
         if ($matches === null)
@@ -386,7 +386,7 @@ class CursorPositionSearch {
         $lineEnd = $this->lineOffsets[$lineIdx + 1];
         $column = $offset - $lineStart + 1;
         if ($column < 1)
-            throw new \OneCore\Error("Column should not be < 1");
+            throw new \OneLang\Core\Error("Column should not be < 1");
         return new Cursor($offset, $lineIdx + 1, $offset - $lineStart + 1, $lineStart, $lineEnd);
     }
 }

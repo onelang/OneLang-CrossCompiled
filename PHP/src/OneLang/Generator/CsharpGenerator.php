@@ -292,7 +292,7 @@ class CsharpGenerator implements IGenerator {
     }
     
     function inferExprNameForType($type) {
-        if ($type instanceof ClassType && \OneCore\ArrayHelper::every($type->typeArguments, function ($x, $_) { return $x instanceof ClassType; })) {
+        if ($type instanceof ClassType && \OneLang\Core\ArrayHelper::every($type->typeArguments, function ($x, $_) { return $x instanceof ClassType; })) {
             $fullName = implode("", array_map(function ($x) { return ($x)->decl->name; }, $type->typeArguments)) . $type->decl->name;
             return NameUtils::shortName($fullName);
         }
@@ -358,7 +358,7 @@ class CsharpGenerator implements IGenerator {
                             if (32 <= $chrCode && $chrCode <= 126)
                                 $lit .= $chr;
                             else
-                                throw new \OneCore\Error("invalid char in template string (code=" . $chrCode . ")");
+                                throw new \OneLang\Core\Error("invalid char in template string (code=" . $chrCode . ")");
                         }
                     }
                     $parts[] = $lit;
@@ -602,7 +602,7 @@ class CsharpGenerator implements IGenerator {
     
     function genFile($sourceFile) {
         $this->instanceOfIds = Array();
-        $this->usings = new \OneCore\Set();
+        $this->usings = new \OneLang\Core\Set();
         $enums = array_map(function ($enum_) { return "public enum " . $this->name_($enum_->name) . " { " . implode(", ", array_map(function ($x) { return $this->name_($x->name); }, $enum_->values)) . " }"; }, $sourceFile->enums);
         
         $intfs = array_map(function ($intf) { return "public interface " . $this->name_($intf->name) . $this->typeArgs($intf->typeArguments) . $this->preArr(" : ", array_map(function ($x) { return $this->type($x); }, $intf->baseInterfaces)) . " {\n" . $this->classLike($intf) . "\n}"; }, $sourceFile->interfaces);
@@ -621,7 +621,7 @@ class CsharpGenerator implements IGenerator {
         
         // @java var usingsSet = new LinkedHashSet<String>(Arrays.stream(sourceFile.imports).map(x -> this.pathToNs(x.exportScope.scopeName)).filter(x -> x != "").collect(Collectors.toList()));
         // @java-import java.util.LinkedHashSet
-        $usingsSet = new \OneCore\Set(array_values(array_filter(array_map(function ($x) { return $this->pathToNs($x->exportScope->scopeName); }, $sourceFile->imports), function ($x) { return $x !== ""; })));
+        $usingsSet = new \OneLang\Core\Set(array_values(array_filter(array_map(function ($x) { return $this->pathToNs($x->exportScope->scopeName); }, $sourceFile->imports), function ($x) { return $x !== ""; })));
         foreach ($this->usings->values() as $using)
             $usingsSet->add($using);
         

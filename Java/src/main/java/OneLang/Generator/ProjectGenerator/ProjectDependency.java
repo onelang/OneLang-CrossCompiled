@@ -19,12 +19,15 @@ import OneLang.Generator.CsharpGenerator.CsharpGenerator;
 import OneLang.Generator.PythonGenerator.PythonGenerator;
 import OneLang.Generator.PhpGenerator.PhpGenerator;
 import OneLang.One.CompilerHelper.CompilerHelper;
+import OneLang.StdLib.PackageManager.ImplementationPackage;
 
 public class ProjectDependency {
     public String name;
+    public String version;
     
-    public ProjectDependency(String name)
+    public ProjectDependency(String name, String version)
     {
         this.name = name;
+        this.version = version;
     }
 }

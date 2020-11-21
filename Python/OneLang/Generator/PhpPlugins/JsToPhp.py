@@ -35,15 +35,15 @@ class JsToPhp:
             elif method.name == "filter":
                 return f'''array_values(array_filter({obj_r}, {args_r[0]}))'''
             elif method.name == "every":
-                return f'''\\OneCore\\ArrayHelper::every({obj_r}, {args_r[0]})'''
+                return f'''\\OneLang\\Core\\ArrayHelper::every({obj_r}, {args_r[0]})'''
             elif method.name == "some":
-                return f'''\\OneCore\\ArrayHelper::some({obj_r}, {args_r[0]})'''
+                return f'''\\OneLang\\Core\\ArrayHelper::some({obj_r}, {args_r[0]})'''
             elif method.name == "concat":
                 return f'''array_merge({obj_r}, {args_r[0]})'''
             elif method.name == "shift":
                 return f'''array_shift({obj_r})'''
             elif method.name == "find":
-                return f'''\\OneCore\\ArrayHelper::find({obj_r}, {args_r[0]})'''
+                return f'''\\OneLang\\Core\\ArrayHelper::find({obj_r}, {args_r[0]})'''
             elif method.name == "sort":
                 return f'''sort({obj_r})'''
         elif cls_.name == "TsString":
@@ -112,7 +112,7 @@ class JsToPhp:
         elif cls_.name == "ArrayHelper":
             args_r = list(map(lambda x: self.main.expr(x), args))
             if method.name == "sortBy":
-                return f'''\\OneCore\\ArrayHelper::sortBy({args_r[0]}, {args_r[1]})'''
+                return f'''\\OneLang\\Core\\ArrayHelper::sortBy({args_r[0]}, {args_r[1]})'''
             elif method.name == "removeLastN":
                 return f'''array_splice({args_r[0]}, -{args_r[1]})'''
         elif cls_.name == "Math":

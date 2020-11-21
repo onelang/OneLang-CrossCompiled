@@ -107,7 +107,7 @@ class JavaGenerator implements IGenerator {
     public $plugins;
     
     function __construct() {
-        $this->imports = new \OneCore\Set();
+        $this->imports = new \OneLang\Core\Set();
         $this->reservedWords = array("class", "interface", "throws", "package", "throw", "boolean");
         $this->fieldToMethodHack = array();
         $this->plugins = array();
@@ -322,7 +322,7 @@ class JavaGenerator implements IGenerator {
     }
     
     function inferExprNameForType($type) {
-        if ($type instanceof ClassType && \OneCore\ArrayHelper::every($type->typeArguments, function ($x, $_) { return $x instanceof ClassType; })) {
+        if ($type instanceof ClassType && \OneLang\Core\ArrayHelper::every($type->typeArguments, function ($x, $_) { return $x instanceof ClassType; })) {
             $fullName = implode("", array_map(function ($x) { return ($x)->decl->name; }, $type->typeArguments)) . $type->decl->name;
             return NameUtils::shortName($fullName);
         }
@@ -393,7 +393,7 @@ class JavaGenerator implements IGenerator {
                             if (32 <= $chrCode && $chrCode <= 126)
                                 $lit .= $chr;
                             else
-                                throw new \OneCore\Error("invalid char in template string (code=" . $chrCode . ")");
+                                throw new \OneLang\Core\Error("invalid char in template string (code=" . $chrCode . ")");
                         }
                     }
                     $parts[] = "\"" . $lit . "\"";
@@ -462,7 +462,7 @@ class JavaGenerator implements IGenerator {
             $res = $this->expr($expr->operand) . $expr->operator;
         else if ($expr instanceof MapLiteral) {
             if (count($expr->items) > 10)
-                throw new \OneCore\Error("MapLiteral is only supported with maximum of 10 items");
+                throw new \OneLang\Core\Error("MapLiteral is only supported with maximum of 10 items");
             if (count($expr->items) === 0)
                 $res = "new " . $this->type($expr->actualType, true, true) . "()";
             else {
@@ -722,7 +722,7 @@ class JavaGenerator implements IGenerator {
         $imports = array();
         foreach ($this->imports->values() as $imp)
             $imports[] = $imp;
-        $this->imports = new \OneCore\Set();
+        $this->imports = new \OneLang\Core\Set();
         return count($imports) === 0 ? "" : implode("\n", array_map(function ($x) { return "import " . $x . ";"; }, $imports)) . "\n\n";
     }
     
@@ -738,14 +738,14 @@ class JavaGenerator implements IGenerator {
             $dstDir = "src/main/java/" . $packagePath;
             $packageName = preg_replace("///", ".", $packagePath);
             
-            $imports = new \OneCore\Set();
+            $imports = new \OneLang\Core\Set();
             foreach ($file->imports as $impList) {
                 $impPkg = $this->toImport($impList->exportScope);
                 foreach ($impList->imports as $imp)
                     $imports->add($impPkg . "." . $imp->name);
             }
             
-            $head = "package " . $packageName . ";\n\n" . implode("\n", array_map(function ($x) { return "import " . $x . ";"; }, \OneCore\Array_::from($imports->values()))) . "\n\n";
+            $head = "package " . $packageName . ";\n\n" . implode("\n", array_map(function ($x) { return "import " . $x . ";"; }, \OneLang\Core\Array_::from($imports->values()))) . "\n\n";
             
             foreach ($file->enums as $enum_)
                 $result[] = new GeneratedFile($dstDir . "/" . $enum_->name . ".java", $head . "public enum " . $this->name_($enum_->name) . " { " . implode(", ", array_map(function ($x) { return $this->name_($x->name); }, $enum_->values)) . " }");

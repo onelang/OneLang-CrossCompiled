@@ -21,7 +21,7 @@ class ResolveEnumMemberAccess extends InferTypesPlugin {
     function transform($expr) {
         $pa = $expr;
         $enumMemberRef = $pa->object;
-        $member = \OneCore\ArrayHelper::find($enumMemberRef->decl->values, function ($x) use ($pa) { return $x->name === $pa->propertyName; });
+        $member = \OneLang\Core\ArrayHelper::find($enumMemberRef->decl->values, function ($x) use ($pa) { return $x->name === $pa->propertyName; });
         if ($member === null) {
             $this->errorMan->throw("Enum member was not found: " . $enumMemberRef->decl->name . "::" . $pa->propertyName);
             return $expr;

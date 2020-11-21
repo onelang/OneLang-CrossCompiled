@@ -105,7 +105,7 @@ class BasicTypeInfer extends InferTypesPlugin {
                 if (TypeHelper::isAssignableTo($rightType, $leftType))
                     $expr->setActualType($leftType, false, true);
                 else
-                    throw new \OneCore\Error("Right-side expression (" . $rightType->repr() . ") is not assignable to left-side (" . $leftType->repr() . ").");
+                    throw new \OneLang\Core\Error("Right-side expression (" . $rightType->repr() . ") is not assignable to left-side (" . $leftType->repr() . ").");
             }
             else if ($isEqOrNeq)
                 $expr->setActualType($litTypes->boolean);
@@ -138,9 +138,9 @@ class BasicTypeInfer extends InferTypesPlugin {
             $falseType = $expr->whenFalse->getType();
             if ($expr->expectedType !== null) {
                 if (!TypeHelper::isAssignableTo($trueType, $expr->expectedType))
-                    throw new \OneCore\Error("Conditional expression expects " . $expr->expectedType->repr() . " but got " . $trueType->repr() . " as true branch");
+                    throw new \OneLang\Core\Error("Conditional expression expects " . $expr->expectedType->repr() . " but got " . $trueType->repr() . " as true branch");
                 if (!TypeHelper::isAssignableTo($falseType, $expr->expectedType))
-                    throw new \OneCore\Error("Conditional expression expects " . $expr->expectedType->repr() . " but got " . $falseType->repr() . " as false branch");
+                    throw new \OneLang\Core\Error("Conditional expression expects " . $expr->expectedType->repr() . " but got " . $falseType->repr() . " as false branch");
                 $expr->setActualType($expr->expectedType);
             }
             else if (TypeHelper::isAssignableTo($trueType, $falseType))
@@ -148,7 +148,7 @@ class BasicTypeInfer extends InferTypesPlugin {
             else if (TypeHelper::isAssignableTo($falseType, $trueType))
                 $expr->setActualType($trueType);
             else
-                throw new \OneCore\Error("Different types in the whenTrue (" . $trueType->repr() . ") and whenFalse (" . $falseType->repr() . ") expressions of a conditional expression");
+                throw new \OneLang\Core\Error("Different types in the whenTrue (" . $trueType->repr() . ") and whenFalse (" . $falseType->repr() . ") expressions of a conditional expression");
         }
         else if ($expr instanceof NullCoalesceExpression) {
             $defaultType = $expr->defaultExpr->getType();

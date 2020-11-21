@@ -106,7 +106,7 @@ class ExpressionParser {
     }
     
     function reconfigure() {
-        \OneCore\ArrayHelper::find($this->config->precedenceLevels, function ($x) { return $x->name === "propertyAccess"; })->operators = $this->config->propertyAccessOps;
+        \OneLang\Core\ArrayHelper::find($this->config->precedenceLevels, function ($x) { return $x->name === "propertyAccess"; })->operators = $this->config->propertyAccessOps;
         
         $this->operatorMap = Array();
         
@@ -126,7 +126,7 @@ class ExpressionParser {
             }
         }
         
-        $this->operators = \OneCore\ArrayHelper::sortBy(array_keys($this->operatorMap), function ($x) { return -strlen($x); });
+        $this->operators = \OneLang\Core\ArrayHelper::sortBy(array_keys($this->operatorMap), function ($x) { return -strlen($x); });
     }
     
     function parseMapLiteral($keySeparator = ":", $startToken = "{", $endToken = "}") {

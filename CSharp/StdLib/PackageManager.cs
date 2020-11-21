@@ -156,17 +156,19 @@ namespace StdLib
     
     public class ImplPkgLanguage {
         public string id;
+        public string nativeSrcDir;
         public ImplPkgNativeDependency[] nativeDependencies;
         
-        public ImplPkgLanguage(string id, ImplPkgNativeDependency[] nativeDependencies)
+        public ImplPkgLanguage(string id, string nativeSrcDir, ImplPkgNativeDependency[] nativeDependencies)
         {
             this.id = id;
+            this.nativeSrcDir = nativeSrcDir;
             this.nativeDependencies = nativeDependencies;
         }
         
         public static ImplPkgLanguage fromYaml(YamlValue obj)
         {
-            return new ImplPkgLanguage(obj.str("id"), obj.arr("native-dependencies").map(impl => ImplPkgNativeDependency.fromYaml(impl)));
+            return new ImplPkgLanguage(obj.str("id"), obj.str("native-src-dir"), obj.arr("native-dependencies").map(impl => ImplPkgNativeDependency.fromYaml(impl)));
         }
     }
     
@@ -178,9 +180,9 @@ namespace StdLib
         public string version;
         public string[] includes;
         public ImplPkgImplementation[] implements_;
-        public ImplPkgLanguage[] languages;
+        public Dictionary<string, ImplPkgLanguage> languages;
         
-        public ImplPackageYaml(double fileVersion, string vendor, string name, string description, string version, string[] includes, ImplPkgImplementation[] implements_, ImplPkgLanguage[] languages)
+        public ImplPackageYaml(double fileVersion, string vendor, string name, string description, string version, string[] includes, ImplPkgImplementation[] implements_, Dictionary<string, ImplPkgLanguage> languages)
         {
             this.fileVersion = fileVersion;
             this.vendor = vendor;
@@ -194,7 +196,13 @@ namespace StdLib
         
         public static ImplPackageYaml fromYaml(YamlValue obj)
         {
-            return new ImplPackageYaml(obj.dbl("file-version"), obj.str("vendor"), obj.str("name"), obj.str("description"), obj.str("version"), obj.strArr("includes"), obj.arr("implements").map(impl => ImplPkgImplementation.fromYaml(impl)), obj.arr("languages").map(impl => ImplPkgLanguage.fromYaml(impl)));
+            var languages = new Dictionary<string, ImplPkgLanguage> {};
+            var langDict = obj.dict("languages");
+            if (langDict != null)
+                foreach (var langName in Object.keys(langDict))
+                    languages.set(langName, ImplPkgLanguage.fromYaml(langDict.get(langName)));
+            
+            return new ImplPackageYaml(obj.dbl("file-version"), obj.str("vendor"), obj.str("name"), obj.str("description"), obj.str("version"), obj.strArr("includes"), obj.arr("implements").map(impl => ImplPkgImplementation.fromYaml(impl)), languages);
         }
     }
     

@@ -29,7 +29,7 @@ class GraphCycleDetector {
     }
     
     function findCycles($nodes) {
-        $this->nodeIsInPath = new \OneCore\Map();
+        $this->nodeIsInPath = new \OneLang\Core\Map();
         foreach ($nodes as $node)
             $this->visitNode($node);
     }
@@ -62,7 +62,7 @@ class CircularDependencyDetector implements IGraphVisitor<SourceFile> {
         foreach ($intfs as $intf)
             foreach ($intf->getAllBaseInterfaces() as $baseIntf) {
                 if ($baseIntf->parentFile !== $file && $this->detector->visitNode($baseIntf->parentFile))
-                    \OneCore\console::error("Circular dependency found in file '" . $file->exportScope->getId() . "': " . $type . " '" . $intf->name . "' inherited from '" . $baseIntf->name . "' (from '" . $baseIntf->parentFile->exportScope->getId() . "')");
+                    \OneLang\Core\console::error("Circular dependency found in file '" . $file->exportScope->getId() . "': " . $type . " '" . $intf->name . "' inherited from '" . $baseIntf->name . "' (from '" . $baseIntf->parentFile->exportScope->getId() . "')");
             }
     }
     
@@ -72,7 +72,7 @@ class CircularDependencyDetector implements IGraphVisitor<SourceFile> {
                 foreach ($imp->imports as $impSym) {
                     $impFile = ($impSym)->parentFile;
                     if ($this->detector->visitNode($impFile))
-                        \OneCore\console::error("Circular dependency found in file '" . $file->exportScope->getId() . "' via the import '" . $impSym->name . "' imported from '" . $impFile->exportScope->getId() . "'");
+                        \OneLang\Core\console::error("Circular dependency found in file '" . $file->exportScope->getId() . "' via the import '" . $impSym->name . "' imported from '" . $impFile->exportScope->getId() . "'");
                 }
         else if ($this->detectionMode === DetectionMode::ALLINHERITENCE) {
             $this->processIntfs($file, "class", $file->classes);
@@ -82,7 +82,7 @@ class CircularDependencyDetector implements IGraphVisitor<SourceFile> {
             foreach ($file->classes as $cls) {
                 $baseClass = ($cls->baseClass)->decl;
                 if ($baseClass->parentFile !== $file && $this->detector->visitNode($baseClass->parentFile))
-                    \OneCore\console::error("Circular dependency found in file '" . $file->exportScope->getId() . "': class '" . $cls->name . "' inherited from '" . $baseClass->name . "' (from '" . $baseClass->parentFile->exportScope->getId() . "')");
+                    \OneLang\Core\console::error("Circular dependency found in file '" . $file->exportScope->getId() . "': class '" . $cls->name . "' inherited from '" . $baseClass->name . "' (from '" . $baseClass->parentFile->exportScope->getId() . "')");
             }
     }
     

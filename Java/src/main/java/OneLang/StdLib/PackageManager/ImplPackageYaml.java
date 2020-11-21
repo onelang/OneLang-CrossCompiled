@@ -5,7 +5,9 @@ import OneStd.YamlValue;
 
 import OneLang.StdLib.PackageManager.ImplPkgImplementation;
 import OneLang.StdLib.PackageManager.ImplPkgLanguage;
+import java.util.Map;
 import OneLang.StdLib.PackageManager.ImplPackageYaml;
+import java.util.LinkedHashMap;
 import java.util.Arrays;
 import OneStd.YamlValue;
 
@@ -17,9 +19,9 @@ public class ImplPackageYaml {
     public String version;
     public String[] includes;
     public ImplPkgImplementation[] implements_;
-    public ImplPkgLanguage[] languages;
+    public Map<String, ImplPkgLanguage> languages;
     
-    public ImplPackageYaml(Double fileVersion, String vendor, String name, String description, String version, String[] includes, ImplPkgImplementation[] implements_, ImplPkgLanguage[] languages)
+    public ImplPackageYaml(Double fileVersion, String vendor, String name, String description, String version, String[] includes, ImplPkgImplementation[] implements_, Map<String, ImplPkgLanguage> languages)
     {
         this.fileVersion = fileVersion;
         this.vendor = vendor;
@@ -32,6 +34,12 @@ public class ImplPackageYaml {
     }
     
     public static ImplPackageYaml fromYaml(YamlValue obj) {
-        return new ImplPackageYaml(obj.dbl("file-version"), obj.str("vendor"), obj.str("name"), obj.str("description"), obj.str("version"), obj.strArr("includes"), Arrays.stream(obj.arr("implements")).map(impl -> ImplPkgImplementation.fromYaml(impl)).toArray(ImplPkgImplementation[]::new), Arrays.stream(obj.arr("languages")).map(impl -> ImplPkgLanguage.fromYaml(impl)).toArray(ImplPkgLanguage[]::new));
+        var languages = new LinkedHashMap<String, ImplPkgLanguage>();
+        var langDict = obj.dict("languages");
+        if (langDict != null)
+            for (var langName : langDict.keySet().toArray(String[]::new))
+                languages.put(langName, ImplPkgLanguage.fromYaml(langDict.get(langName)));
+        
+        return new ImplPackageYaml(obj.dbl("file-version"), obj.str("vendor"), obj.str("name"), obj.str("description"), obj.str("version"), obj.strArr("includes"), Arrays.stream(obj.arr("implements")).map(impl -> ImplPkgImplementation.fromYaml(impl)).toArray(ImplPkgImplementation[]::new), languages);
     }
 }

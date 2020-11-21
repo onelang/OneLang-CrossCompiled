@@ -19,6 +19,7 @@ import OneLang.Generator.CsharpGenerator.CsharpGenerator;
 import OneLang.Generator.PythonGenerator.PythonGenerator;
 import OneLang.Generator.PhpGenerator.PhpGenerator;
 import OneLang.One.CompilerHelper.CompilerHelper;
+import OneLang.StdLib.PackageManager.ImplementationPackage;
 
 import OneLang.Parsers.Common.Reader.Reader;
 import OneLang.Parsers.Common.ExpressionParser.ExpressionParser;
@@ -65,7 +66,7 @@ public class TemplateParser {
             }
             else {
                 var literal = this.reader.readUntil("{{", true);
-                if (literal.endsWith("\\"))
+                if (literal.endsWith("\\") && !literal.endsWith("\\\\"))
                     literal = literal.substring(0, literal.length() - 1) + "{{";
                 if (!Objects.equals(literal, ""))
                     items.add(new LiteralNode(literal));

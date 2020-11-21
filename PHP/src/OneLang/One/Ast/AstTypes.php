@@ -30,18 +30,18 @@ class TypeHelper {
         if ($type instanceof GenericsType)
             return true;
         else if ($type instanceof ClassType)
-            return \OneCore\ArrayHelper::some($type->typeArguments, function ($x) { return TypeHelper::isGeneric($x); });
+            return \OneLang\Core\ArrayHelper::some($type->typeArguments, function ($x) { return TypeHelper::isGeneric($x); });
         else if ($type instanceof InterfaceType)
-            return \OneCore\ArrayHelper::some($type->typeArguments, function ($x) { return TypeHelper::isGeneric($x); });
+            return \OneLang\Core\ArrayHelper::some($type->typeArguments, function ($x) { return TypeHelper::isGeneric($x); });
         else if ($type instanceof LambdaType)
-            return \OneCore\ArrayHelper::some($type->parameters, function ($x) { return TypeHelper::isGeneric($x->type); }) || TypeHelper::isGeneric($type->returnType);
+            return \OneLang\Core\ArrayHelper::some($type->parameters, function ($x) { return TypeHelper::isGeneric($x->type); }) || TypeHelper::isGeneric($type->returnType);
         else
             return false;
     }
     
     static function equals($type1, $type2) {
         if ($type1 === null || $type2 === null)
-            throw new \OneCore\Error("Type is missing!");
+            throw new \OneLang\Core\Error("Type is missing!");
         if ($type1 instanceof VoidType && $type2 instanceof VoidType)
             return true;
         if ($type1 instanceof AnyType && $type2 instanceof AnyType)
@@ -51,11 +51,11 @@ class TypeHelper {
         if ($type1 instanceof EnumType && $type2 instanceof EnumType)
             return $type1->decl === $type2->decl;
         if ($type1 instanceof LambdaType && $type2 instanceof LambdaType)
-            return TypeHelper::equals($type1->returnType, $type2->returnType) && count($type1->parameters) === count($type2->parameters) && \OneCore\ArrayHelper::every($type1->parameters, function ($t, $i) use ($type2) { return TypeHelper::equals($t->type, $type2->parameters[$i]->type); });
+            return TypeHelper::equals($type1->returnType, $type2->returnType) && count($type1->parameters) === count($type2->parameters) && \OneLang\Core\ArrayHelper::every($type1->parameters, function ($t, $i) use ($type2) { return TypeHelper::equals($t->type, $type2->parameters[$i]->type); });
         if ($type1 instanceof ClassType && $type2 instanceof ClassType)
-            return $type1->decl === $type2->decl && count($type1->typeArguments) === count($type2->typeArguments) && \OneCore\ArrayHelper::every($type1->typeArguments, function ($t, $i) use ($type2) { return TypeHelper::equals($t, $type2->typeArguments[$i]); });
+            return $type1->decl === $type2->decl && count($type1->typeArguments) === count($type2->typeArguments) && \OneLang\Core\ArrayHelper::every($type1->typeArguments, function ($t, $i) use ($type2) { return TypeHelper::equals($t, $type2->typeArguments[$i]); });
         if ($type1 instanceof InterfaceType && $type2 instanceof InterfaceType)
-            return $type1->decl === $type2->decl && count($type1->typeArguments) === count($type2->typeArguments) && \OneCore\ArrayHelper::every($type1->typeArguments, function ($t, $i) use ($type2) { return TypeHelper::equals($t, $type2->typeArguments[$i]); });
+            return $type1->decl === $type2->decl && count($type1->typeArguments) === count($type2->typeArguments) && \OneLang\Core\ArrayHelper::every($type1->typeArguments, function ($t, $i) use ($type2) { return TypeHelper::equals($t, $type2->typeArguments[$i]); });
         return false;
     }
     
@@ -78,13 +78,13 @@ class TypeHelper {
             return true;
         
         if ($toBeAssigned instanceof ClassType && $whereTo instanceof ClassType)
-            return ($toBeAssigned->decl->baseClass !== null && TypeHelper::isAssignableTo($toBeAssigned->decl->baseClass, $whereTo)) || $toBeAssigned->decl === $whereTo->decl && \OneCore\ArrayHelper::every($toBeAssigned->typeArguments, function ($x, $i) use ($whereTo) { return TypeHelper::isAssignableTo($x, $whereTo->typeArguments[$i]); });
+            return ($toBeAssigned->decl->baseClass !== null && TypeHelper::isAssignableTo($toBeAssigned->decl->baseClass, $whereTo)) || $toBeAssigned->decl === $whereTo->decl && \OneLang\Core\ArrayHelper::every($toBeAssigned->typeArguments, function ($x, $i) use ($whereTo) { return TypeHelper::isAssignableTo($x, $whereTo->typeArguments[$i]); });
         if ($toBeAssigned instanceof ClassType && $whereTo instanceof InterfaceType)
-            return ($toBeAssigned->decl->baseClass !== null && TypeHelper::isAssignableTo($toBeAssigned->decl->baseClass, $whereTo)) || \OneCore\ArrayHelper::some($toBeAssigned->decl->baseInterfaces, function ($x) use ($whereTo) { return TypeHelper::isAssignableTo($x, $whereTo); });
+            return ($toBeAssigned->decl->baseClass !== null && TypeHelper::isAssignableTo($toBeAssigned->decl->baseClass, $whereTo)) || \OneLang\Core\ArrayHelper::some($toBeAssigned->decl->baseInterfaces, function ($x) use ($whereTo) { return TypeHelper::isAssignableTo($x, $whereTo); });
         if ($toBeAssigned instanceof InterfaceType && $whereTo instanceof InterfaceType)
-            return \OneCore\ArrayHelper::some($toBeAssigned->decl->baseInterfaces, function ($x) use ($whereTo) { return TypeHelper::isAssignableTo($x, $whereTo); }) || $toBeAssigned->decl === $whereTo->decl && \OneCore\ArrayHelper::every($toBeAssigned->typeArguments, function ($x, $i) use ($whereTo) { return TypeHelper::isAssignableTo($x, $whereTo->typeArguments[$i]); });
+            return \OneLang\Core\ArrayHelper::some($toBeAssigned->decl->baseInterfaces, function ($x) use ($whereTo) { return TypeHelper::isAssignableTo($x, $whereTo); }) || $toBeAssigned->decl === $whereTo->decl && \OneLang\Core\ArrayHelper::every($toBeAssigned->typeArguments, function ($x, $i) use ($whereTo) { return TypeHelper::isAssignableTo($x, $whereTo->typeArguments[$i]); });
         if ($toBeAssigned instanceof LambdaType && $whereTo instanceof LambdaType)
-            return count($toBeAssigned->parameters) === count($whereTo->parameters) && \OneCore\ArrayHelper::every($toBeAssigned->parameters, function ($p, $i) use ($whereTo) { return TypeHelper::isAssignableTo($p->type, $whereTo->parameters[$i]->type); }) && (TypeHelper::isAssignableTo($toBeAssigned->returnType, $whereTo->returnType) || $whereTo->returnType instanceof GenericsType);
+            return count($toBeAssigned->parameters) === count($whereTo->parameters) && \OneLang\Core\ArrayHelper::every($toBeAssigned->parameters, function ($p, $i) use ($whereTo) { return TypeHelper::isAssignableTo($p->type, $whereTo->parameters[$i]->type); }) && (TypeHelper::isAssignableTo($toBeAssigned->returnType, $whereTo->returnType) || $whereTo->returnType instanceof GenericsType);
         
         return false;
     }

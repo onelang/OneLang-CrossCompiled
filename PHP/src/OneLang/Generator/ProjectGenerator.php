@@ -2,9 +2,9 @@
 
 namespace OneLang\Generator\ProjectGenerator;
 
-use OneFile\OneFile;
-use OneYaml\OneYaml;
-use OneJson\OneJson;
+use OneLang\File\OneFile;
+use OneLang\Yaml\OneYaml;
+use OneLang\Json\OneJson;
 use OneLang\Parsers\Common\Reader\Reader;
 use OneLang\One\Ast\Expressions\Expression;
 use OneLang\One\Ast\Expressions\Identifier;
@@ -18,6 +18,7 @@ use OneLang\Generator\CsharpGenerator\CsharpGenerator;
 use OneLang\Generator\PythonGenerator\PythonGenerator;
 use OneLang\Generator\PhpGenerator\PhpGenerator;
 use OneLang\One\CompilerHelper\CompilerHelper;
+use OneLang\StdLib\PackageManager\ImplementationPackage;
 
 interface IVMValue {
     
@@ -29,17 +30,19 @@ interface ITemplateNode {
 
 class ProjectTemplateMeta {
     public $language;
-    public $destionationDir;
+    public $destinationDir;
+    public $packageDir;
     public $templateFiles;
     
-    function __construct($language, $destionationDir, $templateFiles) {
+    function __construct($language, $destinationDir, $packageDir, $templateFiles) {
         $this->language = $language;
-        $this->destionationDir = $destionationDir;
+        $this->destinationDir = $destinationDir;
+        $this->packageDir = $packageDir;
         $this->templateFiles = $templateFiles;
     }
     
     static function fromYaml($obj) {
-        return new ProjectTemplateMeta($obj->str("language"), $obj->str("destination-dir"), $obj->strArr("template-files"));
+        return new ProjectTemplateMeta($obj->str("language"), $obj->str("destination-dir"), $obj->str("package-dir"), $obj->strArr("template-files"));
     }
 }
 
@@ -100,9 +103,9 @@ class ExprVM {
     
     static function propAccess($obj, $propName) {
         if (!($obj instanceof ObjectValue))
-            throw new \OneCore\Error("You can only access a property of an object!");
+            throw new \OneLang\Core\Error("You can only access a property of an object!");
         if (!(array_key_exists($propName, ($obj)->props)))
-            throw new \OneCore\Error("Property '" . $propName . "' does not exists on this object!");
+            throw new \OneLang\Core\Error("Property '" . $propName . "' does not exists on this object!");
         return @($obj)->props[$propName] ?? null;
     }
     
@@ -114,7 +117,7 @@ class ExprVM {
             return ExprVM::propAccess($objValue, $expr->propertyName);
         }
         else
-            throw new \OneCore\Error("Unsupported expression!");
+            throw new \OneLang\Core\Error("Unsupported expression!");
     }
 }
 
@@ -130,7 +133,7 @@ class ExpressionNode implements ITemplateNode {
         if ($result instanceof StringValue)
             return $result->value;
         else
-            throw new \OneCore\Error("ExpressionNode (" . TSOverviewGenerator::$preview->expr($this->expr) . ") return a non-string result!");
+            throw new \OneLang\Core\Error("ExpressionNode (" . TSOverviewGenerator::$preview->expr($this->expr) . ") return a non-string result!");
     }
 }
 
@@ -148,7 +151,7 @@ class ForNode implements ITemplateNode {
     function format($model) {
         $items = (new ExprVM($model))->evaluate($this->itemsExpr);
         if (!($items instanceof ArrayValue))
-            throw new \OneCore\Error("ForNode items (" . TSOverviewGenerator::$preview->expr($this->itemsExpr) . ") return a non-array result!");
+            throw new \OneLang\Core\Error("ForNode items (" . TSOverviewGenerator::$preview->expr($this->itemsExpr) . ") return a non-array result!");
         
         $result = "";
         foreach (($items)->items as $item) {
@@ -194,7 +197,7 @@ class TemplateParser {
             }
             else {
                 $literal = $this->reader->readUntil("{{", true);
-                if (substr_compare($literal, "\\", strlen($literal) - strlen("\\"), strlen("\\")) === 0)
+                if (substr_compare($literal, "\\", strlen($literal) - strlen("\\"), strlen("\\")) === 0 && !substr_compare($literal, "\\\\", strlen($literal) - strlen("\\\\"), strlen("\\\\")) === 0)
                     $literal = substr($literal, 0, strlen($literal) - 1 - (0)) . "{{";
                 if ($literal !== "")
                     $items[] = new LiteralNode($literal);
@@ -250,9 +253,11 @@ class ProjectTemplate {
 
 class ProjectDependency {
     public $name;
+    public $version;
     
-    function __construct($name) {
+    function __construct($name, $version) {
         $this->name = $name;
+        $this->version = $version;
     }
 }
 
@@ -274,7 +279,7 @@ class OneProjectFile {
     }
     
     static function fromJson($json) {
-        return new OneProjectFile($json->get("name")->asString(), array_map(function ($dep) { return new ProjectDependency($dep->get("name")->asString()); }, array_map(function ($dep) { return $dep->asObject(); }, $json->get("dependencies")->getArrayItems())), $json->get("sourceDir")->asString(), $json->get("sourceLang")->asString(), $json->get("outputDir")->asString(), array_map(function ($x) { return $x->asString(); }, $json->get("projectTemplates")->getArrayItems()));
+        return new OneProjectFile($json->get("name")->asString(), array_map(function ($dep) { return new ProjectDependency($dep->get("name")->asString(), $dep->get("version")->asString()); }, array_map(function ($dep) { return $dep->asObject(); }, $json->get("dependencies")->getArrayItems())), $json->get("sourceDir")->asString(), $json->get("sourceLang")->asString(), $json->get("outputDir")->asString(), array_map(function ($x) { return $x->asString(); }, $json->get("projectTemplates")->getArrayItems()));
     }
 }
 
@@ -302,41 +307,52 @@ class ProjectGenerator {
             
             $projTemplate = new ProjectTemplate($this->baseDir . "/project-templates/" . $tmplName);
             $langId = $projTemplate->meta->language;
-            $generator = \OneCore\ArrayHelper::find($generators, function ($x) use ($langId) { return strtolower($x->getLangName()) === $langId; });
+            $generator = \OneLang\Core\ArrayHelper::find($generators, function ($x) use ($langId) { return strtolower($x->getLangName()) === $langId; });
             $langName = $generator->getLangName();
             
             foreach ($generator->getTransforms() as $trans)
                 $trans->visitFiles(array_values($compiler->projectPkg->files));
             
-            \OneCore\console::log("Generating " . $langName . " code...");
+            $outDir = $this->outDir . "/" . $langName;
+            \OneLang\Core\console::log("Generating " . $langName . " code...");
             $files = $generator->generate($compiler->projectPkg);
             foreach ($files as $file)
-                OneFile::writeText($this->outDir . "/" . $langName . "/" . $projTemplate->meta->destionationDir ?? "" . "/" . $file->path, $file->content);
+                OneFile::writeText($outDir . "/" . $projTemplate->meta->destinationDir ?? "" . "/" . $file->path, $file->content);
             
+            $oneDeps = array();
             $nativeDeps = Array();
             foreach ($this->projectFile->dependencies as $dep) {
-                $impl = \OneCore\ArrayHelper::find($compiler->pacMan->implementationPkgs, function ($x) use ($dep) { return $x->content->id->name === $dep->name; });
-                $langData = \OneCore\ArrayHelper::find($impl->implementationYaml->languages, function ($x) use ($langId) { return $x->id === $langId; });
+                $impl = \OneLang\Core\ArrayHelper::find($compiler->pacMan->implementationPkgs, function ($x) use ($dep) { return $x->content->id->name === $dep->name; });
+                $oneDeps[] = $impl;
+                $langData = @$impl->implementationYaml->languages[$langId] ?? null;
                 if ($langData === null)
                     continue;
+                
                 foreach ($langData->nativeDependencies ?? array() as $natDep)
                     $nativeDeps[$natDep->name] = $natDep->version;
+                
+                if ($langData->nativeSrcDir !== null) {
+                    if ($projTemplate->meta->packageDir === null)
+                        throw new \OneLang\Core\Error("Package directory is empty in project template!");
+                    $srcDir = $langData->nativeSrcDir . (substr_compare($langData->nativeSrcDir, "/", strlen($langData->nativeSrcDir) - strlen("/"), strlen("/")) === 0 ? "" : "/");
+                    $dstDir = $outDir . "/" . $projTemplate->meta->packageDir . "/" . $impl->content->id->name;
+                    $depFiles = array_map(function ($x) use ($srcDir) { return substr($x, strlen($srcDir)); }, array_values(array_filter(array_keys($impl->content->files), function ($x) use ($srcDir) { return substr_compare($x, $srcDir, 0, strlen($srcDir)) === 0; })));
+                    foreach ($depFiles as $fn)
+                        OneFile::writeText($dstDir . "/" . $fn, @$impl->content->files[$srcDir . $fn] ?? null);
+                }
             }
-            
-            $oneDeps = new \OneCore\Set();
-            $oneDeps->add("OneCore");
-            foreach (array_values($compiler->projectPkg->files) as $file)
-                foreach (array_values(array_filter($file->imports, function ($x) use ($compiler) { return $x->exportScope->packageName !== $compiler->projectPkg->name; })) as $imp)
-                    $oneDeps->add(preg_replace("/\\./", "", preg_split("/-/", $imp->exportScope->packageName)[0]));
             
             $model = new ObjectValue(Array(
                 "dependencies" => new ArrayValue(array_map(function ($name) use ($nativeDeps) { return new ObjectValue(Array(
                     "name" => new StringValue($name),
                     "version" => new StringValue(@$nativeDeps[$name] ?? null)
                 )); }, array_keys($nativeDeps))),
-                "onepackages" => new ArrayValue(array_map(function ($dep) { return new ObjectValue(Array(("name" => new StringValue($dep))); }, \OneCore\Array_::from($oneDeps->values())))
+                "onepackages" => new ArrayValue(array_map(function ($dep) { return new ObjectValue(Array(
+                    "vendor" => new StringValue($dep->implementationYaml->vendor),
+                    "id" => new StringValue($dep->implementationYaml->name)
+                )); }, $oneDeps))
             ));
-            $projTemplate->generate($this->outDir . "/" . $langName, $model);
+            $projTemplate->generate($outDir, $model);
         }
     }
 }

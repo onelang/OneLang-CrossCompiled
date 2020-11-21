@@ -286,7 +286,7 @@ public class PhpGenerator implements IGenerator {
                 return "Dictionary";
             
             if (((ClassType)t).decl.getParentFile().exportScope == null)
-                return "\\OneCore\\" + this.name_(((ClassType)t).decl.getName());
+                return "\\OneLang\\Core\\" + this.name_(((ClassType)t).decl.getName());
             else
                 return this.name_(((ClassType)t).decl.getName());
         }
@@ -427,7 +427,7 @@ public class PhpGenerator implements IGenerator {
         else if (expr instanceof StaticMethodCallExpression) {
             res = this.name_(((StaticMethodCallExpression)expr).getMethod().parentInterface.getName()) + "::" + this.methodCall(((StaticMethodCallExpression)expr));
             if (((StaticMethodCallExpression)expr).getMethod().parentInterface.getParentFile().exportScope == null)
-                res = "\\OneCore\\" + res;
+                res = "\\OneLang\\Core\\" + res;
         }
         else if (expr instanceof GlobalFunctionCallExpression)
             res = "Global." + this.name_(((GlobalFunctionCallExpression)expr).func.getName()) + this.exprCall(new IType[0], ((GlobalFunctionCallExpression)expr).args);
@@ -511,7 +511,7 @@ public class PhpGenerator implements IGenerator {
         else if (expr instanceof ParenthesizedExpression)
             res = "(" + this.expr(((ParenthesizedExpression)expr).expression) + ")";
         else if (expr instanceof RegexLiteral)
-            res = "new \\OneCore\\RegExp(" + JSON.stringify(((RegexLiteral)expr).pattern) + ")";
+            res = "new \\OneLang\\Core\\RegExp(" + JSON.stringify(((RegexLiteral)expr).pattern) + ")";
         else if (expr instanceof Lambda) {
             var params = Arrays.stream(((Lambda)expr).getParameters()).map(x -> "$" + this.name_(x.getName())).toArray(String[]::new);
             // TODO: captures should not be null

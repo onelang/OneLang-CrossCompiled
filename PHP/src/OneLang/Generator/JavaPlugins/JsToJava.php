@@ -31,7 +31,7 @@ class JsToJava implements IGeneratorPlugin {
     
     function __construct($main) {
         $this->main = $main;
-        $this->unhandledMethods = new \OneCore\Set();
+        $this->unhandledMethods = new \OneLang\Core\Set();
     }
     
     function isArray($arrayExpr) {
@@ -171,7 +171,7 @@ class JsToJava implements IGeneratorPlugin {
         
         $methodName = $cls->name . "." . $method->name;
         if (!$this->unhandledMethods->has($methodName)) {
-            \OneCore\console::error("[JsToJava] Method was not handled: " . $cls->name . "." . $method->name);
+            \OneLang\Core\console::error("[JsToJava] Method was not handled: " . $cls->name . "." . $method->name);
             $this->unhandledMethods->add($methodName);
         }
         //debugger;

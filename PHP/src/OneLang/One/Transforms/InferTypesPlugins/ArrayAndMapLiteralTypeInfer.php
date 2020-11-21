@@ -23,7 +23,7 @@ class ArrayAndMapLiteralTypeInfer extends InferTypesPlugin {
     protected function inferArrayOrMapItemType($items, $expectedType, $isMap) {
         $itemTypes = array();
         foreach ($items as $item) {
-            if (!\OneCore\ArrayHelper::some($itemTypes, function ($t) use ($item) { return TypeHelper::equals($t, $item->getType()); }))
+            if (!\OneLang\Core\ArrayHelper::some($itemTypes, function ($t) use ($item) { return TypeHelper::equals($t, $item->getType()); }))
                 $itemTypes[] = $item->getType();
         }
         

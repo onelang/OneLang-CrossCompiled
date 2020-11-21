@@ -91,7 +91,7 @@ class PhpGenerator:
                 return f'''Dictionary'''
             
             if t.decl.parent_file.export_scope == None:
-                return f'''\\OneCore\\{self.name_(t.decl.name)}'''
+                return f'''\\OneLang\\Core\\{self.name_(t.decl.name)}'''
             else:
                 return self.name_(t.decl.name)
         elif isinstance(t, astTypes.InterfaceType):
@@ -218,7 +218,7 @@ class PhpGenerator:
         elif isinstance(expr, exprs.StaticMethodCallExpression):
             res = f'''{self.name_(expr.method.parent_interface.name)}::{self.method_call(expr)}'''
             if expr.method.parent_interface.parent_file.export_scope == None:
-                res = f'''\\OneCore\\{res}'''
+                res = f'''\\OneLang\\Core\\{res}'''
         elif isinstance(expr, exprs.GlobalFunctionCallExpression):
             res = f'''Global.{self.name_(expr.func.name)}{self.expr_call([], expr.args)}'''
         elif isinstance(expr, exprs.LambdaCallExpression):
@@ -295,7 +295,7 @@ class PhpGenerator:
         elif isinstance(expr, exprs.ParenthesizedExpression):
             res = f'''({self.expr(expr.expression)})'''
         elif isinstance(expr, exprs.RegexLiteral):
-            res = f'''new \\OneCore\\RegExp({JSON.stringify(expr.pattern)})'''
+            res = f'''new \\OneLang\\Core\\RegExp({JSON.stringify(expr.pattern)})'''
         elif isinstance(expr, types.Lambda):
             params = list(map(lambda x: f'''${self.name_(x.name)}''', expr.parameters))
             # TODO: captures should not be null

@@ -86,13 +86,14 @@ class ImplPkgNativeDependency:
         return ImplPkgNativeDependency(obj.str("name"), obj.str("version"))
 
 class ImplPkgLanguage:
-    def __init__(self, id, native_dependencies):
+    def __init__(self, id, native_src_dir, native_dependencies):
         self.id = id
+        self.native_src_dir = native_src_dir
         self.native_dependencies = native_dependencies
     
     @classmethod
     def from_yaml(cls, obj):
-        return ImplPkgLanguage(obj.str("id"), list(map(lambda impl: ImplPkgNativeDependency.from_yaml(impl), obj.arr("native-dependencies"))))
+        return ImplPkgLanguage(obj.str("id"), obj.str("native-src-dir"), list(map(lambda impl: ImplPkgNativeDependency.from_yaml(impl), obj.arr("native-dependencies"))))
 
 class ImplPackageYaml:
     def __init__(self, file_version, vendor, name, description, version, includes, implements_, languages):
@@ -107,7 +108,13 @@ class ImplPackageYaml:
     
     @classmethod
     def from_yaml(cls, obj):
-        return ImplPackageYaml(obj.dbl("file-version"), obj.str("vendor"), obj.str("name"), obj.str("description"), obj.str("version"), obj.str_arr("includes"), list(map(lambda impl: ImplPkgImplementation.from_yaml(impl), obj.arr("implements"))), list(map(lambda impl: ImplPkgLanguage.from_yaml(impl), obj.arr("languages"))))
+        languages = {}
+        lang_dict = obj.dict("languages")
+        if lang_dict != None:
+            for lang_name in lang_dict.keys():
+                languages[lang_name] = ImplPkgLanguage.from_yaml(lang_dict.get(lang_name))
+        
+        return ImplPackageYaml(obj.dbl("file-version"), obj.str("vendor"), obj.str("name"), obj.str("description"), obj.str("version"), obj.str_arr("includes"), list(map(lambda impl: ImplPkgImplementation.from_yaml(impl), obj.arr("implements"))), languages)
 
 class ImplementationPackage:
     def __init__(self, content):

@@ -19,6 +19,7 @@ import OneLang.Generator.CsharpGenerator.CsharpGenerator;
 import OneLang.Generator.PythonGenerator.PythonGenerator;
 import OneLang.Generator.PhpGenerator.PhpGenerator;
 import OneLang.One.CompilerHelper.CompilerHelper;
+import OneLang.StdLib.PackageManager.ImplementationPackage;
 
 import OneLang.Generator.ProjectGenerator.OneProjectFile;
 import OneLang.Generator.IGenerator.IGenerator;
@@ -31,14 +32,13 @@ import OneStd.Objects;
 import java.util.Arrays;
 import OneLang.One.Ast.Types.SourceFile;
 import OneStd.console;
+import OneLang.StdLib.PackageManager.ImplementationPackage;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import OneLang.StdLib.PackageManager.ImplPkgNativeDependency;
-import java.util.LinkedHashSet;
-import OneLang.One.Ast.Types.Import;
-import OneStd.RegExp;
-import java.util.regex.Pattern;
 import OneLang.Generator.ProjectGenerator.ObjectValue;
 import java.util.Map;
+import OneLang.Generator.ProjectGenerator.IVMValue;
 import OneLang.Generator.ProjectGenerator.ArrayValue;
 import OneLang.Generator.ProjectGenerator.StringValue;
 
@@ -73,29 +73,37 @@ public class ProjectGenerator {
             for (var trans : generator.getTransforms())
                 trans.visitFiles(compiler.projectPkg.files.values().toArray(SourceFile[]::new));
             
+            var outDir = this.outDir + "/" + langName;
             console.log("Generating " + langName + " code...");
             var files = generator.generate(compiler.projectPkg);
             for (var file : files)
-                OneFile.writeText(this.outDir + "/" + langName + "/" + projTemplate.meta.destionationDir != null ? projTemplate.meta.destionationDir : "" + "/" + file.path, file.content);
+                OneFile.writeText(outDir + "/" + projTemplate.meta.destinationDir != null ? projTemplate.meta.destinationDir : "" + "/" + file.path, file.content);
             
+            var oneDeps = new ArrayList<ImplementationPackage>();
             var nativeDeps = new LinkedHashMap<String, String>();
             for (var dep : this.projectFile.dependencies) {
                 var impl = compiler.pacMan.implementationPkgs.stream().filter(x -> Objects.equals(x.content.id.name, dep.name)).findFirst().orElse(null);
-                var langData = Arrays.stream(impl.implementationYaml.languages).filter(x -> Objects.equals(x.id, langId)).findFirst().orElse(null);
+                oneDeps.add(impl);
+                var langData = impl.implementationYaml.languages.get(langId);
                 if (langData == null)
                     continue;
+                
                 for (var natDep : langData.nativeDependencies != null ? langData.nativeDependencies : new ImplPkgNativeDependency[0])
                     nativeDeps.put(natDep.name, natDep.version);
+                
+                if (langData.nativeSrcDir != null) {
+                    if (projTemplate.meta.packageDir == null)
+                        throw new Error("Package directory is empty in project template!");
+                    var srcDir = langData.nativeSrcDir + (langData.nativeSrcDir.endsWith("/") ? "" : "/");
+                    var dstDir = outDir + "/" + projTemplate.meta.packageDir + "/" + impl.content.id.name;
+                    var depFiles = Arrays.stream(Arrays.stream(impl.content.files.keySet().toArray(String[]::new)).filter(x -> x.startsWith(srcDir)).toArray(String[]::new)).map(x -> x.substring(srcDir.length())).toArray(String[]::new);
+                    for (var fn : depFiles)
+                        OneFile.writeText(dstDir + "/" + fn, impl.content.files.get(srcDir + fn));
+                }
             }
             
-            var oneDeps = new LinkedHashSet<String>();
-            oneDeps.add("OneCore");
-            for (var file : compiler.projectPkg.files.values().toArray(SourceFile[]::new))
-                for (var imp : Arrays.stream(file.imports).filter(x -> !Objects.equals(x.exportScope.packageName, compiler.projectPkg.name)).toArray(Import[]::new))
-                    oneDeps.add(imp.exportScope.packageName.split("-", -1)[0].replaceAll("\\.", ""));
-            
-            var model = new ObjectValue(Map.of("dependencies", new ArrayValue(Arrays.stream(nativeDeps.keySet().toArray(String[]::new)).map(name -> new ObjectValue(Map.of("name", new StringValue(name), "version", new StringValue(nativeDeps.get(name))))).toArray(ObjectValue[]::new)), "onepackages", new ArrayValue(Arrays.stream(oneDeps.toArray(String[]::new)).map(dep -> new ObjectValue(Map.of("name", new StringValue(dep)))).toArray(ObjectValue[]::new))));
-            projTemplate.generate(this.outDir + "/" + langName, model);
+            var model = new ObjectValue(Map.of("dependencies", ((IVMValue)new ArrayValue(Arrays.stream(nativeDeps.keySet().toArray(String[]::new)).map(name -> new ObjectValue(Map.of("name", ((IVMValue)new StringValue(name)), "version", ((IVMValue)new StringValue(nativeDeps.get(name)))))).toArray(ObjectValue[]::new))), "onepackages", ((IVMValue)new ArrayValue(oneDeps.stream().map(dep -> new ObjectValue(Map.of("vendor", ((IVMValue)new StringValue(dep.implementationYaml.vendor)), "id", ((IVMValue)new StringValue(dep.implementationYaml.name))))).toArray(ObjectValue[]::new)))));
+            projTemplate.generate(outDir, model);
         }
     }
 }

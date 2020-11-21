@@ -9,24 +9,29 @@ class ComposerStaticInit15f485076d463538d72d3242446a2e2e
     public static $prefixLengthsPsr4 = array (
         'O' => 
         array (
-            'OneYaml\\' => 8,
-            'OneFile\\' => 8,
-            'OneCore\\' => 8,
+            'OneLang\\Yaml\\' => 13,
+            'OneLang\\Json\\' => 13,
+            'OneLang\\File\\' => 13,
+            'OneLang\\Core\\' => 13,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'OneYaml\\' => 
+        'OneLang\\Yaml\\' => 
         array (
-            0 => __DIR__ . '/../..' . '/onepkg/OneYaml',
+            0 => __DIR__ . '/../..' . '/onepkg/OneLang-Yaml',
         ),
-        'OneFile\\' => 
+        'OneLang\\Json\\' => 
         array (
-            0 => __DIR__ . '/../..' . '/onepkg/OneFile',
+            0 => __DIR__ . '/../..' . '/onepkg/OneLang-Json',
         ),
-        'OneCore\\' => 
+        'OneLang\\File\\' => 
         array (
-            0 => __DIR__ . '/../..' . '/onepkg/OneCore',
+            0 => __DIR__ . '/../..' . '/onepkg/OneLang-File',
+        ),
+        'OneLang\\Core\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/onepkg/OneLang-Core',
         ),
     );
 

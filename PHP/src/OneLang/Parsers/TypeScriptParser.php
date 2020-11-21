@@ -122,7 +122,7 @@ class TypeScriptParser2 implements IParser, IExpressionParserHooks, IReaderHooks
     }
     
     function errorCallback($error) {
-        throw new \OneCore\Error("[TypeScriptParser] " . $error->message . " at " . $error->cursor->line . ":" . $error->cursor->column . " (context: " . implode("/", $this->context) . ")\n" . $this->reader->linePreview($error->cursor));
+        throw new \OneLang\Core\Error("[TypeScriptParser] " . $error->message . " at " . $error->cursor->line . ":" . $error->cursor->column . " (context: " . implode("/", $this->context) . ")\n" . $this->reader->linePreview($error->cursor));
     }
     
     function infixPrehook($left) {
@@ -277,7 +277,7 @@ class TypeScriptParser2 implements IParser, IExpressionParserHooks, IReaderHooks
                 return new UnresolvedNewExpression($type, $args);
             }
             else
-                throw new \OneCore\Error("[TypeScriptParser2] Expected UnresolvedType here!");
+                throw new \OneLang\Core\Error("[TypeScriptParser2] Expected UnresolvedType here!");
         }
         else if ($this->reader->readToken("<")) {
             $newType = $this->parseType();
@@ -728,7 +728,7 @@ class TypeScriptParser2 implements IParser, IExpressionParserHooks, IReaderHooks
             else if ($memberName === "get" || $memberName === "set") {
                 // property
                 $propName = $this->reader->expectIdentifier();
-                $prop = \OneCore\ArrayHelper::find($properties, function ($x) use ($propName) { return $x->name === $propName; });
+                $prop = \OneLang\Core\ArrayHelper::find($properties, function ($x) use ($propName) { return $x->name === $propName; });
                 $propType = null;
                 $getter = null;
                 $setter = null;
@@ -831,21 +831,21 @@ class TypeScriptParser2 implements IParser, IExpressionParserHooks, IReaderHooks
     
     static function calculateRelativePath($currFile, $relPath) {
         if (!substr_compare($relPath, ".", 0, strlen(".")) === 0)
-            throw new \OneCore\Error("relPath must start with '.', but got '" . $relPath . "'");
+            throw new \OneLang\Core\Error("relPath must start with '.', but got '" . $relPath . "'");
         
         $curr = preg_split("/\\//", $currFile);
         array_pop($curr);
         // filename does not matter
         foreach (preg_split("/\\//", $relPath) as $part) {
             if ($part === "")
-                throw new \OneCore\Error("relPath should not contain multiple '/' next to each other (relPath='" . $relPath . "')");
+                throw new \OneLang\Core\Error("relPath should not contain multiple '/' next to each other (relPath='" . $relPath . "')");
             if ($part === ".")
                 // "./" == stay in current directory
                 continue;
             else if ($part === "..") {
                 // "../" == parent directory
                 if (count($curr) === 0)
-                    throw new \OneCore\Error("relPath goes out of root (curr='" . $currFile . "', relPath='" . $relPath . "')");
+                    throw new \OneLang\Core\Error("relPath goes out of root (curr='" . $currFile . "', relPath='" . $relPath . "')");
                 array_pop($curr);
             }
             else

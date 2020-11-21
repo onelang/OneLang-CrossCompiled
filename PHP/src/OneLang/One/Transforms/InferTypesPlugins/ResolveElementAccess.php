@@ -26,7 +26,7 @@ class ResolveElementAccess extends InferTypesPlugin {
     }
     
     function isMapOrArrayType($type) {
-        return TypeHelper::isAssignableTo($type, $this->main->currentFile->literalTypes->map) || \OneCore\ArrayHelper::some($this->main->currentFile->arrayTypes, function ($x) use ($type) { return TypeHelper::isAssignableTo($type, $x); });
+        return TypeHelper::isAssignableTo($type, $this->main->currentFile->literalTypes->map) || \OneLang\Core\ArrayHelper::some($this->main->currentFile->arrayTypes, function ($x) use ($type) { return TypeHelper::isAssignableTo($type, $x); });
     }
     
     function transform($expr) {

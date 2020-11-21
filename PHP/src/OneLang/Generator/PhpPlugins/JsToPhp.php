@@ -23,7 +23,7 @@ class JsToPhp implements IGeneratorPlugin {
     
     function __construct($main) {
         $this->main = $main;
-        $this->unhandledMethods = new \OneCore\Set();
+        $this->unhandledMethods = new \OneLang\Core\Set();
     }
     
     function convertMethod($cls, $obj, $method, $args) {
@@ -47,15 +47,15 @@ class JsToPhp implements IGeneratorPlugin {
             else if ($method->name === "filter")
                 return "array_values(array_filter(" . $objR . ", " . $argsR[0] . "))";
             else if ($method->name === "every")
-                return "\\OneCore\\ArrayHelper::every(" . $objR . ", " . $argsR[0] . ")";
+                return "\\OneLang\\Core\\ArrayHelper::every(" . $objR . ", " . $argsR[0] . ")";
             else if ($method->name === "some")
-                return "\\OneCore\\ArrayHelper::some(" . $objR . ", " . $argsR[0] . ")";
+                return "\\OneLang\\Core\\ArrayHelper::some(" . $objR . ", " . $argsR[0] . ")";
             else if ($method->name === "concat")
                 return "array_merge(" . $objR . ", " . $argsR[0] . ")";
             else if ($method->name === "shift")
                 return "array_shift(" . $objR . ")";
             else if ($method->name === "find")
-                return "\\OneCore\\ArrayHelper::find(" . $objR . ", " . $argsR[0] . ")";
+                return "\\OneLang\\Core\\ArrayHelper::find(" . $objR . ", " . $argsR[0] . ")";
             else if ($method->name === "sort")
                 return "sort(" . $objR . ")";
         }
@@ -134,7 +134,7 @@ class JsToPhp implements IGeneratorPlugin {
         else if ($cls->name === "ArrayHelper") {
             $argsR = array_map(function ($x) { return $this->main->expr($x); }, $args);
             if ($method->name === "sortBy")
-                return "\\OneCore\\ArrayHelper::sortBy(" . $argsR[0] . ", " . $argsR[1] . ")";
+                return "\\OneLang\\Core\\ArrayHelper::sortBy(" . $argsR[0] . ", " . $argsR[1] . ")";
             else if ($method->name === "removeLastN")
                 return "array_splice(" . $argsR[0] . ", -" . $argsR[1] . ")";
         }
@@ -158,7 +158,7 @@ class JsToPhp implements IGeneratorPlugin {
         
         $methodName = $cls->name . "." . $method->name;
         if (!$this->unhandledMethods->has($methodName)) {
-            \OneCore\console::error("[JsToPython] Method was not handled: " . $cls->name . "." . $method->name);
+            \OneLang\Core\console::error("[JsToPython] Method was not handled: " . $cls->name . "." . $method->name);
             $this->unhandledMethods->add($methodName);
         }
         //debugger;

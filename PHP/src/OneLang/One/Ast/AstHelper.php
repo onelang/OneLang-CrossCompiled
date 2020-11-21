@@ -9,7 +9,7 @@ use OneLang\One\Ast\AstTypes\ClassType;
 
 class AstHelper {
     static function collectAllBaseInterfaces($intf) {
-        $result = new \OneCore\Set();
+        $result = new \OneLang\Core\Set();
         $toBeProcessed = array($intf);
         
         while (count($toBeProcessed) > 0) {
@@ -23,6 +23,6 @@ class AstHelper {
                 $toBeProcessed[] = ($baseIntf)->decl;
         }
         
-        return \OneCore\Array_::from($result->values());
+        return \OneLang\Core\Array_::from($result->values());
     }
 }

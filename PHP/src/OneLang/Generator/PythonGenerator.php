@@ -336,7 +336,7 @@ class PythonGenerator implements IGenerator {
                             if (32 <= $chrCode && $chrCode <= 126)
                                 $lit .= $chr;
                             else
-                                throw new \OneCore\Error("invalid char in template string (code=" . $chrCode . ")");
+                                throw new \OneLang\Core\Error("invalid char in template string (code=" . $chrCode . ")");
                         }
                     }
                     $parts[] = $lit;
@@ -371,7 +371,7 @@ class PythonGenerator implements IGenerator {
             if (count($expr->body->statements) === 1 && $expr->body->statements[0] instanceof ReturnStatement)
                 $body = $this->expr(($expr->body->statements[0])->expression);
             else
-                \OneCore\console::error("Multi-line lambda is not yet supported for Python: " . TSOverviewGenerator::$preview->nodeRepr($expr));
+                \OneLang\Core\console::error("Multi-line lambda is not yet supported for Python: " . TSOverviewGenerator::$preview->nodeRepr($expr));
             
             $params = array_map(function ($x) { return $this->name_($x->name); }, $expr->parameters);
             
@@ -590,8 +590,8 @@ class PythonGenerator implements IGenerator {
     
     function genFile($sourceFile) {
         $this->currentFile = $sourceFile;
-        $this->imports = new \OneCore\Set();
-        $this->importAllScopes = new \OneCore\Set();
+        $this->imports = new \OneLang\Core\Set();
+        $this->importAllScopes = new \OneLang\Core\Set();
         $this->imports->add("from OneLangStdLib import *");
         // TODO: do not add this globally, just for nativeResolver methods
                

@@ -19,6 +19,7 @@ import OneLang.Generator.CsharpGenerator.CsharpGenerator;
 import OneLang.Generator.PythonGenerator.PythonGenerator;
 import OneLang.Generator.PhpGenerator.PhpGenerator;
 import OneLang.One.CompilerHelper.CompilerHelper;
+import OneLang.StdLib.PackageManager.ImplementationPackage;
 
 import OneLang.Generator.ProjectGenerator.ProjectDependency;
 import OneLang.Generator.ProjectGenerator.OneProjectFile;
@@ -44,6 +45,6 @@ public class OneProjectFile {
     }
     
     public static OneProjectFile fromJson(OneJObject json) {
-        return new OneProjectFile(json.get("name").asString(), Arrays.stream(Arrays.stream(json.get("dependencies").getArrayItems()).map(dep -> dep.asObject()).toArray(OneJObject[]::new)).map(dep -> new ProjectDependency(dep.get("name").asString())).toArray(ProjectDependency[]::new), json.get("sourceDir").asString(), json.get("sourceLang").asString(), json.get("outputDir").asString(), Arrays.stream(json.get("projectTemplates").getArrayItems()).map(x -> x.asString()).toArray(String[]::new));
+        return new OneProjectFile(json.get("name").asString(), Arrays.stream(Arrays.stream(json.get("dependencies").getArrayItems()).map(dep -> dep.asObject()).toArray(OneJObject[]::new)).map(dep -> new ProjectDependency(dep.get("name").asString(), dep.get("version").asString())).toArray(ProjectDependency[]::new), json.get("sourceDir").asString(), json.get("sourceLang").asString(), json.get("outputDir").asString(), Arrays.stream(json.get("projectTemplates").getArrayItems()).map(x -> x.asString()).toArray(String[]::new));
     }
 }

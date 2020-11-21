@@ -68,15 +68,15 @@ public class JsToPhp implements IGeneratorPlugin {
             else if (Objects.equals(method.name, "filter"))
                 return "array_values(array_filter(" + objR + ", " + argsR[0] + "))";
             else if (Objects.equals(method.name, "every"))
-                return "\\OneCore\\ArrayHelper::every(" + objR + ", " + argsR[0] + ")";
+                return "\\OneLang\\Core\\ArrayHelper::every(" + objR + ", " + argsR[0] + ")";
             else if (Objects.equals(method.name, "some"))
-                return "\\OneCore\\ArrayHelper::some(" + objR + ", " + argsR[0] + ")";
+                return "\\OneLang\\Core\\ArrayHelper::some(" + objR + ", " + argsR[0] + ")";
             else if (Objects.equals(method.name, "concat"))
                 return "array_merge(" + objR + ", " + argsR[0] + ")";
             else if (Objects.equals(method.name, "shift"))
                 return "array_shift(" + objR + ")";
             else if (Objects.equals(method.name, "find"))
-                return "\\OneCore\\ArrayHelper::find(" + objR + ", " + argsR[0] + ")";
+                return "\\OneLang\\Core\\ArrayHelper::find(" + objR + ", " + argsR[0] + ")";
             else if (Objects.equals(method.name, "sort"))
                 return "sort(" + objR + ")";
         }
@@ -155,7 +155,7 @@ public class JsToPhp implements IGeneratorPlugin {
         else if (Objects.equals(cls.getName(), "ArrayHelper")) {
             var argsR = Arrays.stream(args).map(x -> this.main.expr(x)).toArray(String[]::new);
             if (Objects.equals(method.name, "sortBy"))
-                return "\\OneCore\\ArrayHelper::sortBy(" + argsR[0] + ", " + argsR[1] + ")";
+                return "\\OneLang\\Core\\ArrayHelper::sortBy(" + argsR[0] + ", " + argsR[1] + ")";
             else if (Objects.equals(method.name, "removeLastN"))
                 return "array_splice(" + argsR[0] + ", -" + argsR[1] + ")";
         }

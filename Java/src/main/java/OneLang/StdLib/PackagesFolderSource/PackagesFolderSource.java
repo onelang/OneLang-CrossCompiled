@@ -12,10 +12,10 @@ import OneLang.StdLib.PackageManager.PackageBundle;
 import OneLang.StdLib.PackageManager.PackageId;
 import OneLang.StdLib.PackageManager.PackageContent;
 import java.util.LinkedHashMap;
-import OneStd.Objects;
 import java.util.Arrays;
 import java.util.ArrayList;
 import OneStd.RegExp;
+import OneStd.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -35,11 +35,10 @@ public class PackagesFolderSource implements PackageSource {
         var packages = new LinkedHashMap<String, PackageContent>();
         var allFiles = OneFile.listFiles(this.packagesDir, true);
         for (var fn : allFiles) {
-            if (Objects.equals(fn, "bundle.json"))
-                continue;
-            // TODO: hack
             var pathParts = new ArrayList<>(Arrays.asList(fn.split("/", -1)));
             // [0]=implementations/interfaces, [1]=package-name, [2:]=path
+            if (pathParts.size() < 3)
+                continue;
             var type = pathParts.remove(0);
             var pkgDir = pathParts.remove(0);
             if (!Objects.equals(type, "implementations") && !Objects.equals(type, "interfaces"))
