@@ -142,6 +142,13 @@ public class JsToPython implements IGeneratorPlugin {
             else if (Objects.equals(method.name, "values"))
                 return argsR[0] + ".values()";
         }
+        else if (Objects.equals(cls.getName(), "JSON")) {
+            var argsR = Arrays.stream(args).map(x -> this.main.expr(x)).toArray(String[]::new);
+            if (Objects.equals(method.name, "stringify")) {
+                this.main.imports.add("import json");
+                return "json.dumps(" + argsR[0] + ")";
+            }
+        }
         else if (Objects.equals(cls.getName(), "Set")) {
             var objR = this.main.expr(obj);
             var argsR = Arrays.stream(args).map(x -> this.main.expr(x)).toArray(String[]::new);

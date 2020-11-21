@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.One.Ast.Expressions as exprs
 import OneLang.One.Ast.Statements as stats
 import OneLang.One.Ast.Types as types
@@ -14,6 +14,7 @@ import OneLang.One.ITransformer as iTrans
 import OneLang.One.Transforms.ConvertNullCoalesce as convNullCoal
 import OneLang.One.Transforms.UseDefaultCallArgsExplicitly as useDefCallArgsExpl
 import re
+import json
 
 class JavaGenerator:
     def __init__(self):
@@ -242,7 +243,7 @@ class JavaGenerator:
         elif isinstance(expr, exprs.BooleanLiteral):
             res = f'''{("true" if expr.bool_value else "false")}'''
         elif isinstance(expr, exprs.StringLiteral):
-            res = f'''{JSON.stringify(expr.string_value)}'''
+            res = f'''{json.dumps(expr.string_value)}'''
         elif isinstance(expr, exprs.NumericLiteral):
             res = f'''{expr.value_as_text}'''
         elif isinstance(expr, exprs.CharacterLiteral):
@@ -313,7 +314,7 @@ class JavaGenerator:
             res = f'''({self.expr(expr.expression)})'''
         elif isinstance(expr, exprs.RegexLiteral):
             self.imports[f'''OneStd.RegExp'''] = None
-            res = f'''new RegExp({JSON.stringify(expr.pattern)})'''
+            res = f'''new RegExp({json.dumps(expr.pattern)})'''
         elif isinstance(expr, types.Lambda):
             
             if len(expr.body.statements) == 1 and isinstance(expr.body.statements[0], stats.ReturnStatement):
@@ -335,7 +336,7 @@ class JavaGenerator:
                 res = f'''new {self.type(expr.actual_type, True, True)}()'''
             else:
                 self.imports[f'''java.util.Map'''] = None
-                repr = ", ".join(list(map(lambda item: f'''{JSON.stringify(item.key)}, {self.expr(item.value)}''', expr.items)))
+                repr = ", ".join(list(map(lambda item: f'''{json.dumps(item.key)}, {self.expr(item.value)}''', expr.items)))
                 res = f'''Map.of({repr})'''
         elif isinstance(expr, exprs.NullLiteral):
             res = f'''null'''

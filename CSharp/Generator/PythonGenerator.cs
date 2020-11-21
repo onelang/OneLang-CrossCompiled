@@ -216,7 +216,7 @@ namespace Generator
                 res = $"{parent}.{this.methodCall(statMethCallExpr)}";
             }
             else if (expr is GlobalFunctionCallExpression globFunctCallExpr) {
-                this.imports.add("from OneLangStdLib import *");
+                this.imports.add("from onelang_core import *");
                 res = $"{this.name_(globFunctCallExpr.func.name)}{this.exprCall(globFunctCallExpr.args)}";
             }
             else if (expr is LambdaCallExpression lambdCallExpr)
@@ -442,7 +442,7 @@ namespace Generator
             var staticFields = cls.fields.filter(x => x.isStatic);
             
             if (staticFields.length() > 0) {
-                this.imports.add("import OneLangStdLib as one");
+                this.imports.add("import onelang_core as one");
                 classAttributes.push("@one.static_init");
                 var fieldInits = staticFields.map(f => $"cls.{this.vis(f.visibility)}{this.var(f, f).replace(cls.name, "cls")}");
                 resList.push($"@classmethod\ndef static_init(cls):\n" + this.pad(fieldInits.join("\n")));
@@ -523,7 +523,7 @@ namespace Generator
             this.currentFile = sourceFile;
             this.imports = new Set<string>();
             this.importAllScopes = new Set<string>();
-            this.imports.add("from OneLangStdLib import *");
+            this.imports.add("from onelang_core import *");
             // TODO: do not add this globally, just for nativeResolver methods
                    
             if (sourceFile.enums.length() > 0)

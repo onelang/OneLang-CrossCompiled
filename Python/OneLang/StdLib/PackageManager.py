@@ -1,6 +1,6 @@
-from OneLangStdLib import *
+from onelang_core import *
 from enum import Enum
-from OneYaml import *
+from onelang_yaml import *
 
 class PACKAGE_TYPE(Enum):
     INTERFACE = 1

@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.Parsers.Common.Reader as read
 import OneLang.Parsers.Common.ExpressionParser as exprPars
 import OneLang.Parsers.Common.NodeManager as nodeMan

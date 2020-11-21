@@ -1,5 +1,5 @@
-from OneLangStdLib import *
-from OneFile import *
+from onelang_core import *
+from onelang_file import *
 import OneLang.StdLib.PackageManager as packMan
 import re
 

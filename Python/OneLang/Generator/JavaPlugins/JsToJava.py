@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.Generator.IGeneratorPlugin as iGenPlug
 import OneLang.One.Ast.Expressions as exprs
 import OneLang.One.Ast.Statements as stats
@@ -7,6 +7,7 @@ import OneLang.One.Ast.Types as types
 import OneLang.One.Ast.References as refs
 import OneLang.One.Ast.Interfaces as ints
 import OneLang.Generator.JavaGenerator as javaGen
+import json
 
 class JsToJava:
     def __init__(self, main):
@@ -72,7 +73,7 @@ class JsToJava:
             if method.name == "replace":
                 if isinstance(args[0], exprs.RegexLiteral):
                     self.main.imports["java.util.regex.Pattern"] = None
-                    return f'''{obj_r}.replaceAll({JSON.stringify((args[0]).pattern)}, {args_r[1]})'''
+                    return f'''{obj_r}.replaceAll({json.dumps((args[0]).pattern)}, {args_r[1]})'''
                 
                 return f'''{args_r[0]}.replace({obj_r}, {args_r[1]})'''
             elif method.name == "charCodeAt":
@@ -88,7 +89,7 @@ class JsToJava:
             
             if method.name == "split" and isinstance(args[0], exprs.RegexLiteral):
                 pattern = (args[0]).pattern
-                return f'''{obj_r}.split({JSON.stringify(pattern)}, -1)'''
+                return f'''{obj_r}.split({json.dumps(pattern)}, -1)'''
         elif cls_.name == "TsMap" or cls_.name == "Map":
             if method.name == "set":
                 return f'''{obj_r}.put({args_r[0]}, {args_r[1]})'''

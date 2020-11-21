@@ -387,7 +387,7 @@ public class PythonGenerator implements IGenerator {
             res = parent + "." + this.methodCall(((StaticMethodCallExpression)expr));
         }
         else if (expr instanceof GlobalFunctionCallExpression) {
-            this.imports.add("from OneLangStdLib import *");
+            this.imports.add("from onelang_core import *");
             res = this.name_(((GlobalFunctionCallExpression)expr).func.getName()) + this.exprCall(((GlobalFunctionCallExpression)expr).args);
         }
         else if (expr instanceof LambdaCallExpression)
@@ -607,7 +607,7 @@ public class PythonGenerator implements IGenerator {
         var staticFields = Arrays.stream(cls.getFields()).filter(x -> x.getIsStatic()).toArray(Field[]::new);
         
         if (staticFields.length > 0) {
-            this.imports.add("import OneLangStdLib as one");
+            this.imports.add("import onelang_core as one");
             classAttributes.add("@one.static_init");
             var fieldInits = Arrays.stream(staticFields).map(f -> "cls." + this.vis(f.getVisibility()) + cls.getName().replace(this.var(f, f), "cls")).toArray(String[]::new);
             resList.add("@classmethod\ndef static_init(cls):\n" + this.pad(Arrays.stream(fieldInits).collect(Collectors.joining("\n"))));
@@ -684,7 +684,7 @@ public class PythonGenerator implements IGenerator {
         this.currentFile = sourceFile;
         this.imports = new LinkedHashSet<String>();
         this.importAllScopes = new LinkedHashSet<String>();
-        this.imports.add("from OneLangStdLib import *");
+        this.imports.add("from onelang_core import *");
         // TODO: do not add this globally, just for nativeResolver methods
                
         if (sourceFile.enums.length > 0)

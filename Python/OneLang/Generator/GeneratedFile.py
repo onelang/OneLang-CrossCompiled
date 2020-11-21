@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 
 class GeneratedFile:
     def __init__(self, path, content):

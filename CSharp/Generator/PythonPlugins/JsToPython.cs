@@ -110,6 +110,13 @@ namespace Generator.PythonPlugins
                 else if (method.name == "values")
                     return $"{argsR.get(0)}.values()";
             }
+            else if (cls.name == "JSON") {
+                var argsR = args.map(x => this.main.expr(x));
+                if (method.name == "stringify") {
+                    this.main.imports.add("import json");
+                    return $"json.dumps({argsR.get(0)})";
+                }
+            }
             else if (cls.name == "Set") {
                 var objR = this.main.expr(obj);
                 var argsR = args.map(x => this.main.expr(x));

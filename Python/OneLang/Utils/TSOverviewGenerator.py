@@ -1,11 +1,12 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.One.Ast.Expressions as exprs
 import OneLang.One.Ast.Statements as stats
 import OneLang.One.Ast.Types as types
 import OneLang.One.Ast.AstTypes as astTypes
 import OneLang.One.Ast.References as refs
 import OneLang.One.Ast.Interfaces as ints
-import OneLangStdLib as one
+import onelang_core as one
+import json
 import re
 
 @one.static_init
@@ -23,7 +24,7 @@ class TSOverviewGenerator:
         if item.leading_trivia != None and len(item.leading_trivia) > 0:
             result += item.leading_trivia
         if item.attributes != None:
-            result += "".join(list(map(lambda x: f'''/// {{ATTR}} name="{x}", value={JSON.stringify(item.attributes.get(x))}\n''', item.attributes.keys())))
+            result += "".join(list(map(lambda x: f'''/// {{ATTR}} name="{x}", value={json.dumps(item.attributes.get(x))}\n''', item.attributes.keys())))
         return result
     
     def pre_arr(self, prefix, value):
@@ -92,7 +93,7 @@ class TSOverviewGenerator:
         elif isinstance(expr, exprs.BooleanLiteral):
             res = f'''{("true" if expr.bool_value else "false")}'''
         elif isinstance(expr, exprs.StringLiteral):
-            res = f'''{JSON.stringify(expr.string_value)}'''
+            res = f'''{json.dumps(expr.string_value)}'''
         elif isinstance(expr, exprs.NumericLiteral):
             res = f'''{expr.value_as_text}'''
         elif isinstance(expr, exprs.CharacterLiteral):

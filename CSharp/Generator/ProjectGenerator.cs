@@ -335,6 +335,11 @@ namespace Generator
         
         public async void generate()
         {
+            // copy native source codes from one project
+            var nativeSrcDir = $"{this.projDir}/{this.projectFile.nativeSourceDir}";
+            foreach (var fn in OneFile.listFiles(nativeSrcDir, true))
+                OneFile.copy($"{nativeSrcDir}/{fn}", $"{this.outDir}/{fn}");
+            
             var generators = new IGenerator[] { ((IGenerator)new JavaGenerator()), ((IGenerator)new CsharpGenerator()), ((IGenerator)new PythonGenerator()), ((IGenerator)new PhpGenerator()) };
             foreach (var tmplName in this.projectFile.projectTemplates) {
                 var compiler = await CompilerHelper.initProject(this.projectFile.name, this.srcDir, this.projectFile.sourceLang, null);
@@ -391,11 +396,6 @@ namespace Generator
                     }))))
                 });
                 projTemplate.generate($"{outDir}", model);
-                
-                // copy native source codes from one project
-                var nativeSrcDir = $"{this.projDir}/{this.projectFile.nativeSourceDir}/{langName}";
-                foreach (var fn in OneFile.listFiles(nativeSrcDir, true))
-                    OneFile.copy($"{nativeSrcDir}/{fn}", $"{outDir}/{fn}");
             }
         }
     }

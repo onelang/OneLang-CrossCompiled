@@ -1,7 +1,6 @@
 import os.path
 import re
 import math
-import json
 
 def static_init(cls):
     if getattr(cls, "static_init", None):
@@ -84,11 +83,6 @@ class Console:
         print(f"\033[91m{msg}\033[0m")
 
 console = Console()
-
-class JSON:
-    @staticmethod
-    def stringify(obj):
-        return json.dumps(obj)
 
 class ArrayHelper:
     def every(predicate, items):

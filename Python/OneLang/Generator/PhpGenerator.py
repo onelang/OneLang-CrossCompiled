@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.One.Ast.Expressions as exprs
 import OneLang.One.Ast.Statements as stats
 import OneLang.One.Ast.Types as types
@@ -12,6 +12,7 @@ import OneLang.Generator.IGeneratorPlugin as iGenPlug
 import OneLang.Generator.PhpPlugins.JsToPhp as jsToPhp
 import OneLang.One.ITransformer as iTrans
 import re
+import json
 
 class PhpGenerator:
     def __init__(self):
@@ -226,7 +227,7 @@ class PhpGenerator:
         elif isinstance(expr, exprs.BooleanLiteral):
             res = f'''{("true" if expr.bool_value else "false")}'''
         elif isinstance(expr, exprs.StringLiteral):
-            res = f'''{re.sub("\\$", "\\$", JSON.stringify(expr.string_value))}'''
+            res = f'''{re.sub("\\$", "\\$", json.dumps(expr.string_value))}'''
         elif isinstance(expr, exprs.NumericLiteral):
             res = f'''{expr.value_as_text}'''
         elif isinstance(expr, exprs.CharacterLiteral):
@@ -295,7 +296,7 @@ class PhpGenerator:
         elif isinstance(expr, exprs.ParenthesizedExpression):
             res = f'''({self.expr(expr.expression)})'''
         elif isinstance(expr, exprs.RegexLiteral):
-            res = f'''new \\OneLang\\Core\\RegExp({JSON.stringify(expr.pattern)})'''
+            res = f'''new \\OneLang\\Core\\RegExp({json.dumps(expr.pattern)})'''
         elif isinstance(expr, types.Lambda):
             params = list(map(lambda x: f'''${self.name_(x.name)}''', expr.parameters))
             # TODO: captures should not be null
@@ -306,7 +307,7 @@ class PhpGenerator:
         elif isinstance(expr, exprs.UnaryExpression) and expr.unary_type == exprs.UNARY_TYPE.POSTFIX:
             res = f'''{self.expr(expr.operand)}{expr.operator}'''
         elif isinstance(expr, exprs.MapLiteral):
-            repr = ",\n".join(list(map(lambda item: f'''{JSON.stringify(item.key)} => {self.expr(item.value)}''', expr.items)))
+            repr = ",\n".join(list(map(lambda item: f'''{json.dumps(item.key)} => {self.expr(item.value)}''', expr.items)))
             res = "Array(" + ("" if repr == "" else f'''\n{self.pad(repr)}\n''' if "\n" in repr else f'''({repr}''') + ")"
         elif isinstance(expr, exprs.NullLiteral):
             res = f'''null'''

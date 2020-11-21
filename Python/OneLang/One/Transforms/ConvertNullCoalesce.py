@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.Utils.TSOverviewGenerator as tSOvervGen
 import OneLang.One.Ast.Expressions as exprs
 import OneLang.One.Ast.References as refs

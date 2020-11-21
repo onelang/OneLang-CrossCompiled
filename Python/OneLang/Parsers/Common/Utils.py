@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 import re
 
 class Utils:

@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.One.Transforms.InferTypesPlugins.Helpers.InferTypesPlugin as inferTypesPlug
 import OneLang.One.Ast.Types as types
 import OneLang.One.Ast.AstTypes as astTypes

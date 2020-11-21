@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 
 class NameUtils:
     def __init__(self):

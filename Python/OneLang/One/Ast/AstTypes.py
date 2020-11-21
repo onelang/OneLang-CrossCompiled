@@ -1,6 +1,6 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.One.Ast.Interfaces as ints
-import OneLangStdLib as one
+import onelang_core as one
 
 class TypeHelper:
     def __init__(self):

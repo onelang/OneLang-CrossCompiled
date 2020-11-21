@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.Generator.IGeneratorPlugin as iGenPlug
 import OneLang.One.Ast.Expressions as exprs
 import OneLang.One.Ast.Statements as stats
@@ -7,6 +7,7 @@ import OneLang.Generator.PythonGenerator as pythGen
 import OneLang.One.Ast.Types as types
 import OneLang.One.Ast.References as refs
 import OneLang.One.Ast.Interfaces as ints
+import json
 
 class JsToPython:
     def __init__(self, main):
@@ -52,13 +53,13 @@ class JsToPython:
                     if not pattern.startswith("^"):
                         #return `${objR}.split(${JSON.stringify(pattern)})`;
                         self.main.imports["import re"] = None
-                        return f'''re.split({JSON.stringify(pattern)}, {obj_r})'''
+                        return f'''re.split({json.dumps(pattern)}, {obj_r})'''
                 
                 return f'''{args_r[0]}.split({obj_r})'''
             elif method.name == "replace":
                 if isinstance(args[0], exprs.RegexLiteral):
                     self.main.imports["import re"] = None
-                    return f'''re.sub({JSON.stringify((args[0]).pattern)}, {args_r[1]}, {obj_r})'''
+                    return f'''re.sub({json.dumps((args[0]).pattern)}, {args_r[1]}, {obj_r})'''
                 
                 return f'''{args_r[0]}.replace({obj_r}, {args_r[1]})'''
             elif method.name == "includes":
@@ -100,6 +101,11 @@ class JsToPython:
                 return f'''{args_r[0]}.keys()'''
             elif method.name == "values":
                 return f'''{args_r[0]}.values()'''
+        elif cls_.name == "JSON":
+            args_r = list(map(lambda x: self.main.expr(x), args))
+            if method.name == "stringify":
+                self.main.imports["import json"] = None
+                return f'''json.dumps({args_r[0]})'''
         elif cls_.name == "Set":
             obj_r = self.main.expr(obj)
             args_r = list(map(lambda x: self.main.expr(x), args))

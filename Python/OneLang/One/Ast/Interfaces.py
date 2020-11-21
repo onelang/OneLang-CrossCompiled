@@ -1,1 +1,1 @@
-from OneLangStdLib import *
+from onelang_core import *

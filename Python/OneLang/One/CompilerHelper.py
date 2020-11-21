@@ -1,7 +1,7 @@
-from OneLangStdLib import *
-from OneFile import *
+from onelang_core import *
+from onelang_file import *
 import OneLang.One.Compiler as comp
-import OneLangStdLib as one
+import onelang_core as one
 
 @one.static_init
 class CompilerHelper:

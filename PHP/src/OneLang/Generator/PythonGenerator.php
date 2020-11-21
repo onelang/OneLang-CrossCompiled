@@ -295,7 +295,7 @@ class PythonGenerator implements IGenerator {
             $res = $parent . "." . $this->methodCall($expr);
         }
         else if ($expr instanceof GlobalFunctionCallExpression) {
-            $this->imports->add("from OneLangStdLib import *");
+            $this->imports->add("from onelang_core import *");
             $res = $this->name_($expr->func->name) . $this->exprCall($expr->args);
         }
         else if ($expr instanceof LambdaCallExpression)
@@ -515,7 +515,7 @@ class PythonGenerator implements IGenerator {
         $staticFields = array_values(array_filter($cls->fields, function ($x) { return $x->isStatic; }));
         
         if (count($staticFields) > 0) {
-            $this->imports->add("import OneLangStdLib as one");
+            $this->imports->add("import onelang_core as one");
             $classAttributes[] = "@one.static_init";
             $fieldInits = array_map(function ($f) use ($cls) { return "cls." . $this->vis($f->visibility) . $cls->name.replace($this->var($f, $f), "cls"); }, $staticFields);
             $resList[] = "@classmethod\ndef static_init(cls):\n" . $this->pad(implode("\n", $fieldInits));
@@ -592,7 +592,7 @@ class PythonGenerator implements IGenerator {
         $this->currentFile = $sourceFile;
         $this->imports = new \OneLang\Core\Set();
         $this->importAllScopes = new \OneLang\Core\Set();
-        $this->imports->add("from OneLangStdLib import *");
+        $this->imports->add("from onelang_core import *");
         // TODO: do not add this globally, just for nativeResolver methods
                
         if (count($sourceFile->enums) > 0)

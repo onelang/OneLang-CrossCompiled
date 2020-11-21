@@ -1,5 +1,3 @@
-import yaml
-
 class YamlValue:
     def __init__(self, value):
         self.value = value
@@ -28,8 +26,3 @@ class YamlValue:
         for key, value in obj.items():
             res[key] = YamlValue(value)
         return res
-
-class OneYaml:
-    @staticmethod
-    def load(content):
-        return YamlValue(yaml.safe_load(content))

@@ -318,6 +318,11 @@ class ProjectGenerator {
     }
     
     function generate() {
+        // copy native source codes from one project
+        $nativeSrcDir = $this->projDir . "/" . $this->projectFile->nativeSourceDir;
+        foreach (OneFile::listFiles($nativeSrcDir, true) as $fn)
+            OneFile::copy($nativeSrcDir . "/" . $fn, $this->outDir . "/" . $fn);
+        
         $generators = array(new JavaGenerator(), new CsharpGenerator(), new PythonGenerator(), new PhpGenerator());
         foreach ($this->projectFile->projectTemplates as $tmplName) {
             $compiler = CompilerHelper::initProject($this->projectFile->name, $this->srcDir, $this->projectFile->sourceLang, null);
@@ -374,11 +379,6 @@ class ProjectGenerator {
                 )); }, $oneDeps))
             ));
             $projTemplate->generate($outDir, $model);
-            
-            // copy native source codes from one project
-            $nativeSrcDir = $this->projDir . "/" . $this->projectFile->nativeSourceDir . "/" . $langName;
-            foreach (OneFile::listFiles($nativeSrcDir, true) as $fn)
-                OneFile::copy($nativeSrcDir . "/" . $fn, $outDir . "/" . $fn);
         }
     }
 }

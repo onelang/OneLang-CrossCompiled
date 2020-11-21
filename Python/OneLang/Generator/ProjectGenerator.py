@@ -1,7 +1,7 @@
-from OneLangStdLib import *
-from OneFile import *
-from OneYaml import *
-from OneJson import *
+from onelang_core import *
+from onelang_file import *
+from onelang_yaml import *
+from onelang_json import *
 import OneLang.Parsers.Common.Reader as read
 import OneLang.One.Ast.Expressions as exprs
 import OneLang.One.Compiler as comp
@@ -211,6 +211,11 @@ class ProjectGenerator:
         self.out_dir = f'''{self.proj_dir}/{self.project_file.output_dir}'''
     
     def generate(self):
+        # copy native source codes from one project
+        native_src_dir = f'''{self.proj_dir}/{self.project_file.native_source_dir}'''
+        for fn in OneFile.list_files(native_src_dir, True):
+            OneFile.copy(f'''{native_src_dir}/{fn}''', f'''{self.out_dir}/{fn}''')
+        
         generators = [javaGen.JavaGenerator(), cshGen.CsharpGenerator(), pythGen.PythonGenerator(), phpGen.PhpGenerator()]
         for tmpl_name in self.project_file.project_templates:
             compiler = compHelp.CompilerHelper.init_project(self.project_file.name, self.src_dir, self.project_file.source_lang, None)
@@ -265,8 +270,3 @@ class ProjectGenerator:
                 }), one_deps)))
             })
             proj_template.generate(f'''{out_dir}''', model)
-            
-            # copy native source codes from one project
-            native_src_dir = f'''{self.proj_dir}/{self.project_file.native_source_dir}/{lang_name}'''
-            for fn in OneFile.list_files(native_src_dir, True):
-                OneFile.copy(f'''{native_src_dir}/{fn}''', f'''{out_dir}/{fn}''')

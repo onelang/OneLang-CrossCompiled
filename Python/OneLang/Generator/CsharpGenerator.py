@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.One.Ast.Expressions as exprs
 import OneLang.One.Ast.Statements as stats
 import OneLang.One.Ast.Types as types
@@ -10,6 +10,7 @@ import OneLang.Generator.IGenerator as iGen
 import OneLang.One.Ast.Interfaces as ints
 import OneLang.One.ITransformer as iTrans
 import re
+import json
 
 class CsharpGenerator:
     def __init__(self):
@@ -209,7 +210,7 @@ class CsharpGenerator:
         elif isinstance(expr, exprs.BooleanLiteral):
             res = f'''{("true" if expr.bool_value else "false")}'''
         elif isinstance(expr, exprs.StringLiteral):
-            res = f'''{JSON.stringify(expr.string_value)}'''
+            res = f'''{json.dumps(expr.string_value)}'''
         elif isinstance(expr, exprs.NumericLiteral):
             res = f'''{expr.value_as_text}'''
         elif isinstance(expr, exprs.CharacterLiteral):
@@ -278,7 +279,7 @@ class CsharpGenerator:
         elif isinstance(expr, exprs.ParenthesizedExpression):
             res = f'''({self.expr(expr.expression)})'''
         elif isinstance(expr, exprs.RegexLiteral):
-            res = f'''new RegExp({JSON.stringify(expr.pattern)})'''
+            res = f'''new RegExp({json.dumps(expr.pattern)})'''
         elif isinstance(expr, types.Lambda):
             
             if len(expr.body.statements) == 1 and isinstance(expr.body.statements[0], stats.ReturnStatement):
@@ -294,7 +295,7 @@ class CsharpGenerator:
         elif isinstance(expr, exprs.UnaryExpression) and expr.unary_type == exprs.UNARY_TYPE.POSTFIX:
             res = f'''{self.expr(expr.operand)}{expr.operator}'''
         elif isinstance(expr, exprs.MapLiteral):
-            repr = ",\n".join(list(map(lambda item: f'''[{JSON.stringify(item.key)}] = {self.expr(item.value)}''', expr.items)))
+            repr = ",\n".join(list(map(lambda item: f'''[{json.dumps(item.key)}] = {self.expr(item.value)}''', expr.items)))
             res = f'''new {self.type(expr.actual_type)} ''' + ("{}" if repr == "" else f'''{{\n{self.pad(repr)}\n}}''' if "\n" in repr else f'''{{ {repr} }}''')
         elif isinstance(expr, exprs.NullLiteral):
             res = f'''null'''

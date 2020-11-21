@@ -60,6 +60,11 @@ public class ProjectGenerator {
     }
     
     public void generate() {
+        // copy native source codes from one project
+        var nativeSrcDir = this.projDir + "/" + this.projectFile.nativeSourceDir;
+        for (var fn : OneFile.listFiles(nativeSrcDir, true))
+            OneFile.copy(nativeSrcDir + "/" + fn, this.outDir + "/" + fn);
+        
         var generators = new IGenerator[] { ((IGenerator)new JavaGenerator()), ((IGenerator)new CsharpGenerator()), ((IGenerator)new PythonGenerator()), ((IGenerator)new PhpGenerator()) };
         for (var tmplName : this.projectFile.projectTemplates) {
             var compiler = CompilerHelper.initProject(this.projectFile.name, this.srcDir, this.projectFile.sourceLang, null);
@@ -107,11 +112,6 @@ public class ProjectGenerator {
             // generate files from project template
             var model = new ObjectValue(Map.of("dependencies", ((IVMValue)new ArrayValue(Arrays.stream(nativeDeps.keySet().toArray(String[]::new)).map(name -> new ObjectValue(Map.of("name", ((IVMValue)new StringValue(name)), "version", ((IVMValue)new StringValue(nativeDeps.get(name)))))).toArray(ObjectValue[]::new))), "onepackages", ((IVMValue)new ArrayValue(oneDeps.stream().map(dep -> new ObjectValue(Map.of("vendor", ((IVMValue)new StringValue(dep.implementationYaml.vendor)), "id", ((IVMValue)new StringValue(dep.implementationYaml.name))))).toArray(ObjectValue[]::new)))));
             projTemplate.generate(outDir, model);
-            
-            // copy native source codes from one project
-            var nativeSrcDir = this.projDir + "/" + this.projectFile.nativeSourceDir + "/" + langName;
-            for (var fn : OneFile.listFiles(nativeSrcDir, true))
-                OneFile.copy(nativeSrcDir + "/" + fn, outDir + "/" + fn);
         }
     }
 }

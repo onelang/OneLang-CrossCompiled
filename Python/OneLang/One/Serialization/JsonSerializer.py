@@ -1,9 +1,10 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.One.Ast.AstTypes as astTypes
 import OneLang.One.Ast.Interfaces as ints
 import OneLang.One.Ast.Types as types
 import OneLang.index as index
 import re
+import json
 
 class JsonSerializer:
     def __init__(self, lit_types):
@@ -18,7 +19,7 @@ class JsonSerializer:
         if obj.is_null():
             return "null"
         elif astTypes.TypeHelper.equals(decl_type, self.lit_types.string):
-            return JSON.stringify(obj.get_string_value())
+            return json.dumps(obj.get_string_value())
         elif astTypes.TypeHelper.equals(decl_type, self.lit_types.boolean):
             return "true" if obj.get_boolean_value() else "false"
         elif astTypes.TypeHelper.is_assignable_to(decl_type, self.lit_types.array):

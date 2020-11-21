@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.Generator.IGeneratorPlugin as iGenPlug
 import OneLang.One.Ast.Expressions as exprs
 import OneLang.One.Ast.Statements as stats
@@ -8,6 +8,7 @@ import OneLang.One.Ast.References as refs
 import OneLang.One.Ast.Interfaces as ints
 import OneLang.Generator.PhpGenerator as phpGen
 import re
+import json
 
 class JsToPhp:
     def __init__(self, main):
@@ -53,12 +54,12 @@ class JsToPhp:
                 if isinstance(args[0], exprs.RegexLiteral):
                     pattern = (args[0]).pattern
                     mod_pattern = "/" + re.sub("/", "\\/", pattern) + "/"
-                    return f'''preg_split({JSON.stringify(mod_pattern)}, {obj_r})'''
+                    return f'''preg_split({json.dumps(mod_pattern)}, {obj_r})'''
                 
                 return f'''explode({args_r[0]}, {obj_r})'''
             elif method.name == "replace":
                 if isinstance(args[0], exprs.RegexLiteral):
-                    return f'''preg_replace({JSON.stringify(f'/{(args[0]).pattern}/')}, {args_r[1]}, {obj_r})'''
+                    return f'''preg_replace({json.dumps(f'/{(args[0]).pattern}/')}, {args_r[1]}, {obj_r})'''
                 
                 return f'''{args_r[0]}.replace({obj_r}, {args_r[1]})'''
             elif method.name == "includes":

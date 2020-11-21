@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 from enum import Enum
 import OneLang.One.Ast.AstTypes as astTypes
 import OneLang.One.Ast.Types as types

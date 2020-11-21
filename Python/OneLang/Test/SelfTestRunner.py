@@ -1,5 +1,5 @@
-from OneLangStdLib import *
-from OneFile import *
+from onelang_core import *
+from onelang_file import *
 import OneLang.One.CompilerHelper as compHelp
 import OneLang.Generator.IGenerator as iGen
 import OneLang.One.Compiler as comp

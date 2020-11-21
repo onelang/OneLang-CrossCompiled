@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.One.Ast.Expressions as exprs
 import OneLang.One.Ast.Statements as stats
 import OneLang.One.Ast.Types as types
@@ -13,6 +13,7 @@ import OneLang.One.Ast.Interfaces as ints
 import OneLang.Generator.IGenerator as iGen
 import OneLang.One.ITransformer as iTrans
 import re
+import json
 
 class PythonGenerator:
     def __init__(self):
@@ -173,14 +174,14 @@ class PythonGenerator:
             parent = self.cls_name(expr.method.parent_interface)
             res = f'''{parent}.{self.method_call(expr)}'''
         elif isinstance(expr, exprs.GlobalFunctionCallExpression):
-            self.imports["from OneLangStdLib import *"] = None
+            self.imports["from onelang_core import *"] = None
             res = f'''{self.name_(expr.func.name)}{self.expr_call(expr.args)}'''
         elif isinstance(expr, exprs.LambdaCallExpression):
             res = f'''{self.expr(expr.method)}({", ".join(list(map(lambda x: self.expr(x), expr.args)))})'''
         elif isinstance(expr, exprs.BooleanLiteral):
             res = f'''{("True" if expr.bool_value else "False")}'''
         elif isinstance(expr, exprs.StringLiteral):
-            res = f'''{JSON.stringify(expr.string_value)}'''
+            res = f'''{json.dumps(expr.string_value)}'''
         elif isinstance(expr, exprs.NumericLiteral):
             res = f'''{expr.value_as_text}'''
         elif isinstance(expr, exprs.CharacterLiteral):
@@ -238,7 +239,7 @@ class PythonGenerator:
         elif isinstance(expr, exprs.ParenthesizedExpression):
             res = f'''({self.expr(expr.expression)})'''
         elif isinstance(expr, exprs.RegexLiteral):
-            res = f'''RegExp({JSON.stringify(expr.pattern)})'''
+            res = f'''RegExp({json.dumps(expr.pattern)})'''
         elif isinstance(expr, types.Lambda):
             body = "INVALID-BODY"
             if len(expr.body.statements) == 1 and isinstance(expr.body.statements[0], stats.ReturnStatement):
@@ -265,7 +266,7 @@ class PythonGenerator:
             else:
                 res = f'''{self.expr(expr.operand)}{expr.operator}'''
         elif isinstance(expr, exprs.MapLiteral):
-            repr = ",\n".join(list(map(lambda item: f'''{JSON.stringify(item.key)}: {self.expr(item.value)}''', expr.items)))
+            repr = ",\n".join(list(map(lambda item: f'''{json.dumps(item.key)}: {self.expr(item.value)}''', expr.items)))
             res = "{}" if len(expr.items) == 0 else f'''{{\n{self.pad(repr)}\n}}'''
         elif isinstance(expr, exprs.NullLiteral):
             res = f'''None'''
@@ -376,7 +377,7 @@ class PythonGenerator:
         static_fields = list(filter(lambda x: x.is_static, cls_.fields))
         
         if len(static_fields) > 0:
-            self.imports["import OneLangStdLib as one"] = None
+            self.imports["import onelang_core as one"] = None
             class_attributes.append("@one.static_init")
             field_inits = list(map(lambda f: f'''cls.{self.vis(f.visibility)}{cls_.name.replace(self.var(f, f), "cls")}''', static_fields))
             res_list.append(f'''@classmethod\ndef static_init(cls):\n''' + self.pad("\n".join(field_inits)))
@@ -450,7 +451,7 @@ class PythonGenerator:
         self.current_file = source_file
         self.imports = dict()
         self.import_all_scopes = dict()
-        self.imports["from OneLangStdLib import *"] = None
+        self.imports["from onelang_core import *"] = None
         # TODO: do not add this globally, just for nativeResolver methods
                
         if len(source_file.enums) > 0:

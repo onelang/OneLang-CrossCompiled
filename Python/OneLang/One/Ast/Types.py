@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 from enum import Enum
 import OneLang.One.Ast.AstTypes as astTypes
 import OneLang.One.Ast.Expressions as exprs
@@ -6,7 +6,7 @@ import OneLang.One.Ast.References as refs
 import OneLang.One.Ast.AstHelper as astHelp
 import OneLang.One.Ast.Statements as stats
 import OneLang.One.Ast.Interfaces as ints
-import OneLangStdLib as one
+import onelang_core as one
 
 class VISIBILITY(Enum):
     PUBLIC = 1

@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.One.Ast.Types as types
 import OneLang.One.Ast.Statements as stats
 import OneLang.One.Ast.Expressions as exprs

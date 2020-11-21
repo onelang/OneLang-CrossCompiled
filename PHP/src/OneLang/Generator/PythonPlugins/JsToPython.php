@@ -122,6 +122,13 @@ class JsToPython implements IGeneratorPlugin {
             else if ($method->name === "values")
                 return $argsR[0] . ".values()";
         }
+        else if ($cls->name === "JSON") {
+            $argsR = array_map(function ($x) { return $this->main->expr($x); }, $args);
+            if ($method->name === "stringify") {
+                $this->main->imports->add("import json");
+                return "json.dumps(" . $argsR[0] . ")";
+            }
+        }
         else if ($cls->name === "Set") {
             $objR = $this->main->expr($obj);
             $argsR = array_map(function ($x) { return $this->main->expr($x); }, $args);

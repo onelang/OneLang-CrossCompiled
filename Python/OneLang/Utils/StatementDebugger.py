@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 import OneLang.One.AstTransformer as astTrans
 import OneLang.One.Ast.Statements as stats
 import OneLang.Utils.TSOverviewGenerator as tSOvervGen

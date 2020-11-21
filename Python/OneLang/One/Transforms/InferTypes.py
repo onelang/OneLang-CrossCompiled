@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 from enum import Enum
 import OneLang.One.AstTransformer as astTrans
 import OneLang.One.Ast.Expressions as exprs

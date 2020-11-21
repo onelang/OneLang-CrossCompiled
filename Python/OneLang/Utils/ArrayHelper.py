@@ -1,4 +1,4 @@
-from OneLangStdLib import *
+from onelang_core import *
 
 class ArrayHelper:
     def __init__(self):
