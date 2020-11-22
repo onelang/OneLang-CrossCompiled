@@ -9,16 +9,16 @@ import OneLang.One.Ast.Interfaces.IType;
 import OneLang.One.Ast.Types.Class;
 import OneLang.One.Ast.Types.LiteralTypes;
 import OneLang.One.Ast.Types.Package;
-import OneStd.ReflectedValue;
+import io.onelang.std.reflect.ReflectedValue;
 
 import java.util.Map;
 import OneLang.One.Ast.Types.LiteralTypes;
 import java.util.LinkedHashMap;
-import OneStd.RegExp;
+import io.onelang.std.core.RegExp;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import OneLang.One.Ast.Interfaces.IType;
-import OneStd.JSON;
+import io.onelang.std.json.JSON;
 import java.util.ArrayList;
 import OneLang.One.Ast.AstTypes.ClassType;
 import OneLang.One.Ast.AstTypes.InterfaceType;
@@ -26,7 +26,7 @@ import OneLang.One.Ast.AstTypes.IInterfaceType;
 import OneLang.One.Ast.Types.Field;
 import java.util.List;
 import OneLang.One.Ast.AstTypes.EnumType;
-import OneStd.ReflectedValue;
+import io.onelang.std.reflect.ReflectedValue;
 
 public class JsonSerializer {
     public Map<Object, String> circleDetector;

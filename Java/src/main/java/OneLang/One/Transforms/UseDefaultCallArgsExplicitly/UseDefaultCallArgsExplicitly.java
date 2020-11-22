@@ -12,7 +12,7 @@ import OneLang.One.AstTransformer.AstTransformer;
 
 import OneLang.One.AstTransformer.AstTransformer;
 import OneLang.One.Ast.Expressions.Expression;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import java.util.ArrayList;
 import OneLang.One.Ast.Types.IMethodBaseWithTrivia;
 import OneLang.One.Ast.Expressions.NewExpression;

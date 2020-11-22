@@ -32,7 +32,7 @@ namespace Parsers.Common
             
             // @java final var minPadLen2 = minPadLen;
             var minPadLen2 = minPadLen;
-            var newStr = lines.map(x => x.length() != 0 ? x.substr(minPadLen2) : x).join("\n");
+            var newStr = lines.map(x => x.length() >= minPadLen2 ? x.substr(minPadLen2) : x).join("\n");
             return newStr;
         }
     }

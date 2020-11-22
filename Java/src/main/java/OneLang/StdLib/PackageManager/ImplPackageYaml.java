@@ -1,7 +1,7 @@
 package OneLang.StdLib.PackageManager;
 
-import OneStd.OneYaml;
-import OneStd.YamlValue;
+import io.onelang.std.yaml.OneYaml;
+import io.onelang.std.yaml.YamlValue;
 
 import OneLang.StdLib.PackageManager.ImplPkgImplementation;
 import OneLang.StdLib.PackageManager.ImplPkgLanguage;
@@ -9,7 +9,7 @@ import java.util.Map;
 import OneLang.StdLib.PackageManager.ImplPackageYaml;
 import java.util.LinkedHashMap;
 import java.util.Arrays;
-import OneStd.YamlValue;
+import io.onelang.std.yaml.YamlValue;
 
 public class ImplPackageYaml {
     public Double fileVersion;

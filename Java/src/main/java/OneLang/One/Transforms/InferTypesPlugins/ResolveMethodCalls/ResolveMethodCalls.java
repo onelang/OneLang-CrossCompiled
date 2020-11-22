@@ -24,7 +24,7 @@ import java.util.Arrays;
 import OneLang.One.Ast.Types.IInterface;
 import java.util.ArrayList;
 import OneLang.One.Ast.Types.MethodParameter;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Expressions.InstanceMethodCallExpression;
 import OneLang.One.Ast.Expressions.IMethodCallExpression;

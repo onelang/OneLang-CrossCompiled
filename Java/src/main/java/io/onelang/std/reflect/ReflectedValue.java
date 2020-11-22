@@ -1,4 +1,4 @@
-package OneStd;
+package io.onelang.std.reflect;
 
 import OneLang.One.Ast.Interfaces.IType;
 

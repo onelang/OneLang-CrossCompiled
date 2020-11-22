@@ -32,7 +32,7 @@ import OneLang.One.Transforms.ResolveIdentifiers.SymbolLookup;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.References.Reference;
 import OneLang.One.Ast.Types.Class;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Types.Method;
 import OneLang.One.Ast.References.StaticThisReference;
 import OneLang.One.Ast.References.ThisReference;

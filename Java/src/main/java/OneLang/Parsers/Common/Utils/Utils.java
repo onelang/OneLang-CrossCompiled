@@ -2,10 +2,10 @@ package OneLang.Parsers.Common.Utils;
 
 
 
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import java.util.Arrays;
 import java.util.ArrayList;
-import OneStd.RegExp;
+import io.onelang.std.core.RegExp;
 import java.util.stream.Collectors;
 
 public class Utils {
@@ -36,7 +36,7 @@ public class Utils {
         
         // @java final var minPadLen2 = minPadLen;
         final var minPadLen2 = minPadLen;
-        var newStr = Arrays.stream(lines.stream().map(x -> x.length() != 0 ? x.substring(minPadLen2) : x).toArray(String[]::new)).collect(Collectors.joining("\n"));
+        var newStr = Arrays.stream(lines.stream().map(x -> x.length() >= minPadLen2 ? x.substring(minPadLen2) : x).toArray(String[]::new)).collect(Collectors.joining("\n"));
         return newStr;
     }
 }

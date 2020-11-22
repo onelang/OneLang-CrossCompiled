@@ -1,4 +1,4 @@
-package OneStd;
+package io.onelang.std.core;
 
 public class console {
     public static void log(String data) {

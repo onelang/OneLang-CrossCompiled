@@ -9,7 +9,7 @@ import OneLang.One.Ast.AstTypes.ClassType;
 
 import OneLang.One.Transforms.InferTypesPlugins.Helpers.InferTypesPlugin.InferTypesPlugin;
 import OneLang.One.Ast.Expressions.UnaryExpression;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.AstTypes.ClassType;
 import OneLang.One.Ast.Expressions.BinaryExpression;

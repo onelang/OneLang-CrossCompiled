@@ -24,7 +24,7 @@ import OneLang.One.ErrorManager.ErrorManager;
 import java.util.ArrayList;
 import OneLang.One.Ast.Expressions.NullLiteral;
 import OneLang.One.Ast.Expressions.Expression;
-import OneStd.StdArrayHelper;
+import io.onelang.std.core.StdArrayHelper;
 import java.util.stream.Collectors;
 import java.util.Arrays;
 import OneLang.One.Ast.AstTypes.ClassType;

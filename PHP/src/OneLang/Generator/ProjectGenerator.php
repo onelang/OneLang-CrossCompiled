@@ -335,7 +335,7 @@ class ProjectGenerator {
             
             foreach ($generator->getTransforms() as $trans)
                 $trans->visitFiles(array_values($compiler->projectPkg->files));
-            
+                
             // generate cross compiled source code
             $outDir = $this->outDir . "/" . $langName;
             \OneLang\Core\console::log("Generating " . $langName . " code...");

@@ -12,7 +12,7 @@ import OneLang.One.Ast.AstTypes.TypeHelper;
 
 import OneLang.One.Transforms.InferTypesPlugins.Helpers.InferTypesPlugin.InferTypesPlugin;
 import OneLang.One.Ast.Expressions.BinaryExpression;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Expressions.ArrayLiteral;
 import OneLang.One.Ast.AstTypes.ClassType;

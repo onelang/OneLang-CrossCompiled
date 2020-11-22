@@ -1,8 +1,9 @@
-package OneStd;
+package io.onelang.std.yaml;
 
 import java.util.Map;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 public class YamlValue {
     public Map<String, Object> map;
@@ -36,5 +37,14 @@ public class YamlValue {
         var value = this.map.get(key);
         if (value == null) return new String[0];
         return ((ArrayList<String>) value).toArray(String[]::new);
+    }
+
+    public Map<String, YamlValue> dict(String key) {
+        var value = this.map.get(key);
+        var result = new LinkedHashMap<String, YamlValue>();
+        if (value != null)
+            ((Map<String, Object>) value).forEach((k, v) ->
+                result.put(k, new YamlValue((Map<String, Object>)v)));
+        return result;
     }
 }

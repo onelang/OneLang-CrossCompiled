@@ -349,7 +349,7 @@ namespace Generator
                     var rightType = binExpr2.right.getType();
                     var useEquals = TypeHelper.equals(leftType, lit.string_) && rightType != null && TypeHelper.equals(rightType, lit.string_);
                     if (useEquals) {
-                        this.imports.add("OneStd.Objects");
+                        this.imports.add("io.onelang.std.core.Objects");
                         res = $"{(binExpr2.operator_ == "!=" ? "!" : "")}Objects.equals({this.expr(binExpr2.left)}, {this.expr(binExpr2.right)})";
                     }
                     else
@@ -376,7 +376,7 @@ namespace Generator
             else if (expr is ParenthesizedExpression parExpr)
                 res = $"({this.expr(parExpr.expression)})";
             else if (expr is RegexLiteral regexLit) {
-                this.imports.add($"OneStd.RegExp");
+                this.imports.add($"io.onelang.std.core.RegExp");
                 res = $"new RegExp({JSON.stringify(regexLit.pattern)})";
             }
             else if (expr is Lambda lambd) {
@@ -676,7 +676,10 @@ namespace Generator
         
         public string toImport(ExportScopeRef scope)
         {
-            return scope.scopeName == "index" ? $"OneStd" : $"{scope.packageName}.{scope.scopeName.replace(new RegExp("/"), ".")}";
+            // TODO: hack
+            if (scope.scopeName == "index")
+                return $"io.onelang.std.{scope.packageName.split(new RegExp("-")).get(0).replace(new RegExp("One\\."), "").toLowerCase()}";
+            return $"{scope.packageName}.{scope.scopeName.replace(new RegExp("/"), ".")}";
         }
         
         public GeneratedFile[] generate(Package pkg)

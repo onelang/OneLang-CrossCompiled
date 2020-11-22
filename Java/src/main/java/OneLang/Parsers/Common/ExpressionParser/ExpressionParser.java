@@ -30,7 +30,7 @@ import OneLang.Parsers.Common.ExpressionParser.IExpressionParserHooks;
 import OneLang.Parsers.Common.NodeManager.NodeManager;
 import OneLang.Parsers.Common.ExpressionParser.ExpressionParserConfig;
 import OneLang.Parsers.Common.ExpressionParser.PrecedenceLevel;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import OneLang.One.Ast.Expressions.MapLiteral;

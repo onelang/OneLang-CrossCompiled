@@ -1,4 +1,4 @@
-package OneStd;
+package io.onelang.std.core;
 
 public class Objects {
     public static boolean equals(Object o1, Object o2) {

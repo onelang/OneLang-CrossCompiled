@@ -25,7 +25,7 @@ import OneLang.One.Ast.Expressions.InstanceOfExpression;
 import java.util.ArrayList;
 import OneLang.One.Ast.Expressions.CastExpression;
 import OneLang.One.Ast.Expressions.PropertyAccessExpression;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.References.VariableDeclarationReference;
 import OneLang.One.Ast.References.MethodParameterReference;
 import OneLang.One.Ast.References.ForeachVariableReference;

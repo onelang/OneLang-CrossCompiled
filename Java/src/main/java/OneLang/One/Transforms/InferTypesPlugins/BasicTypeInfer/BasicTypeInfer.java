@@ -51,7 +51,7 @@ import OneLang.One.Ast.References.ForVariableReference;
 import OneLang.One.Ast.References.CatchVariableReference;
 import OneLang.One.Ast.Expressions.UnaryExpression;
 import OneLang.One.Ast.AstTypes.ClassType;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.AstTypes.AnyType;
 import OneLang.One.Ast.Expressions.BinaryExpression;
 import java.util.List;

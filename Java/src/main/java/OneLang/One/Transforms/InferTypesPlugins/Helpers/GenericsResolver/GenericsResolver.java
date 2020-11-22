@@ -21,7 +21,7 @@ import OneLang.One.Ast.Expressions.IMethodCallExpression;
 import OneLang.One.Ast.AstTypes.ClassType;
 import OneLang.One.Ast.AstTypes.InterfaceType;
 import OneLang.One.Ast.AstTypes.GenericsType;
-import OneStd.StdArrayHelper;
+import io.onelang.std.core.StdArrayHelper;
 import OneLang.One.Ast.AstTypes.LambdaType;
 import OneLang.One.Ast.AstTypes.EnumType;
 import OneLang.One.Ast.AstTypes.AnyType;

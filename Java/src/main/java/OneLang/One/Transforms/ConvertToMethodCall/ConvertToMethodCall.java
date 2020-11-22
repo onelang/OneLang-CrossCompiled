@@ -11,7 +11,7 @@ import OneLang.One.AstTransformer.AstTransformer;
 import OneLang.One.AstTransformer.AstTransformer;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Expressions.BinaryExpression;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Expressions.UnresolvedCallExpression;
 import OneLang.One.Ast.Expressions.PropertyAccessExpression;
 import OneLang.One.Ast.Interfaces.IType;

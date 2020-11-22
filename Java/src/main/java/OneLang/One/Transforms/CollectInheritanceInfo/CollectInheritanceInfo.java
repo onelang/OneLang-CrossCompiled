@@ -10,7 +10,7 @@ import OneLang.One.ITransformer.ITransformer;
 import OneLang.One.Ast.Types.Interface;
 import java.util.Arrays;
 import OneLang.One.Ast.Types.Class;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Types.Field;
 import OneLang.One.Ast.Types.Method;
 import OneLang.One.Ast.Types.SourceFile;

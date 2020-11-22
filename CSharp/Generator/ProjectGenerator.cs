@@ -352,7 +352,7 @@ namespace Generator
                 
                 foreach (var trans in generator.getTransforms())
                     trans.visitFiles(Object.values(compiler.projectPkg.files));
-                
+                    
                 // generate cross compiled source code
                 var outDir = $"{this.outDir}/{langName}";
                 console.log($"Generating {langName} code...");

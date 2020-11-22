@@ -1,6 +1,6 @@
 package OneLang.StdLib.PackagesFolderSource;
 
-import OneStd.OneFile;
+import io.onelang.std.file.OneFile;
 import OneLang.StdLib.PackageManager.PackageSource;
 import OneLang.StdLib.PackageManager.PackageId;
 import OneLang.StdLib.PackageManager.PackageBundle;
@@ -14,8 +14,8 @@ import OneLang.StdLib.PackageManager.PackageContent;
 import java.util.LinkedHashMap;
 import java.util.Arrays;
 import java.util.ArrayList;
-import OneStd.RegExp;
-import OneStd.Objects;
+import io.onelang.std.core.RegExp;
+import io.onelang.std.core.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 

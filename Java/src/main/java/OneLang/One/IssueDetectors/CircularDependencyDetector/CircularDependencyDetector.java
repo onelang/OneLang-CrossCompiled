@@ -10,7 +10,7 @@ import OneLang.One.Ast.Types.Workspace;
 import OneLang.One.IssueDetectors.CircularDependencyDetector.IGraphVisitor;
 import OneLang.One.Ast.Types.SourceFile;
 import OneLang.One.IssueDetectors.CircularDependencyDetector.GraphCycleDetector;
-import OneStd.console;
+import io.onelang.std.core.console;
 import OneLang.One.Ast.Types.IInterface;
 import OneLang.One.Ast.Types.IResolvedImportable;
 import OneLang.One.Ast.AstTypes.ClassType;

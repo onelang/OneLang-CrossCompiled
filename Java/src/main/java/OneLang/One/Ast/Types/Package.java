@@ -33,7 +33,7 @@ import OneLang.One.Ast.Types.Class;
 import OneLang.One.Ast.Types.Interface;
 import OneLang.One.Ast.Types.Enum;
 import OneLang.One.Ast.Types.GlobalFunction;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 
 public class Package {
     public String name;

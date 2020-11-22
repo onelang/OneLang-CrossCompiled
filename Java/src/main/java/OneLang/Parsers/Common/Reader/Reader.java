@@ -7,10 +7,10 @@ import java.util.List;
 import OneLang.Parsers.Common.Reader.ParseError;
 import OneLang.Parsers.Common.Reader.IReaderHooks;
 import OneLang.Parsers.Common.Reader.Cursor;
-import OneStd.RegExp;
+import io.onelang.std.core.RegExp;
 import java.util.regex.Pattern;
 import java.util.ArrayList;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import java.util.stream.Collectors;
 import java.util.Arrays;
 

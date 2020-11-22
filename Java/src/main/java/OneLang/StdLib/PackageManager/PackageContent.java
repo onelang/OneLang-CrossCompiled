@@ -1,7 +1,7 @@
 package OneLang.StdLib.PackageManager;
 
-import OneStd.OneYaml;
-import OneStd.YamlValue;
+import io.onelang.std.yaml.OneYaml;
+import io.onelang.std.yaml.YamlValue;
 
 import OneLang.StdLib.PackageManager.PackageId;
 import java.util.Map;

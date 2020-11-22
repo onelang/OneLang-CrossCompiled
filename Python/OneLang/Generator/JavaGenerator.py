@@ -291,7 +291,7 @@ class JavaGenerator:
                 right_type = expr.right.get_type()
                 use_equals = astTypes.TypeHelper.equals(left_type, lit.string) and right_type != None and astTypes.TypeHelper.equals(right_type, lit.string)
                 if use_equals:
-                    self.imports["OneStd.Objects"] = None
+                    self.imports["io.onelang.std.core.Objects"] = None
                     res = f'''{("!" if expr.operator == "!=" else "")}Objects.equals({self.expr(expr.left)}, {self.expr(expr.right)})'''
                 else:
                     res = f'''{self.expr(expr.left)} {expr.operator} {self.expr(expr.right)}'''
@@ -313,7 +313,7 @@ class JavaGenerator:
         elif isinstance(expr, exprs.ParenthesizedExpression):
             res = f'''({self.expr(expr.expression)})'''
         elif isinstance(expr, exprs.RegexLiteral):
-            self.imports[f'''OneStd.RegExp'''] = None
+            self.imports[f'''io.onelang.std.core.RegExp'''] = None
             res = f'''new RegExp({json.dumps(expr.pattern)})'''
         elif isinstance(expr, types.Lambda):
             
@@ -567,7 +567,10 @@ class JavaGenerator:
         return "" if len(imports) == 0 else "\n".join(list(map(lambda x: f'''import {x};''', imports))) + "\n\n"
     
     def to_import(self, scope):
-        return f'''OneStd''' if scope.scope_name == "index" else f'''{scope.package_name}.{re.sub("/", ".", scope.scope_name)}'''
+        # TODO: hack
+        if scope.scope_name == "index":
+            return f'''io.onelang.std.{re.sub("One\\.", "", re.split("-", scope.package_name)[0]).lower()}'''
+        return f'''{scope.package_name}.{re.sub("/", ".", scope.scope_name)}'''
     
     def generate(self, pkg):
         result = []

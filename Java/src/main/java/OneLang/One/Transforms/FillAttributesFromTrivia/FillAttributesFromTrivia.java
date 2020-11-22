@@ -19,8 +19,8 @@ import OneLang.One.Ast.Types.IHasAttributesAndTrivia;
 import OneLang.One.Ast.Expressions.Expression;
 import java.util.Map;
 import java.util.LinkedHashMap;
-import OneStd.Objects;
-import OneStd.RegExp;
+import io.onelang.std.core.Objects;
+import io.onelang.std.core.RegExp;
 
 public class FillAttributesFromTrivia extends AstTransformer {
     public FillAttributesFromTrivia()

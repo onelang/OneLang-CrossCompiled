@@ -1,11 +1,11 @@
 package OneLang.Generator.ProjectGenerator;
 
-import OneStd.OneFile;
-import OneStd.OneYaml;
-import OneStd.YamlValue;
-import OneStd.OneJObject;
-import OneStd.OneJson;
-import OneStd.OneJValue;
+import io.onelang.std.file.OneFile;
+import io.onelang.std.yaml.OneYaml;
+import io.onelang.std.yaml.YamlValue;
+import io.onelang.std.json.OneJObject;
+import io.onelang.std.json.OneJson;
+import io.onelang.std.json.OneJValue;
 import OneLang.Parsers.Common.Reader.Reader;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Expressions.Identifier;
@@ -26,7 +26,7 @@ import OneLang.One.Ast.Expressions.Expression;
 import OneLang.Generator.ProjectGenerator.TemplateBlock;
 import OneLang.Generator.ProjectGenerator.ExprVM;
 import OneLang.Generator.ProjectGenerator.ArrayValue;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.Generator.ProjectGenerator.ObjectValue;
 
 public class ForNode implements ITemplateNode {

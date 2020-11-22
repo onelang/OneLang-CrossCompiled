@@ -415,7 +415,7 @@ class JavaGenerator implements IGenerator {
                 $rightType = $expr->right->getType();
                 $useEquals = TypeHelper::equals($leftType, $lit->string) && $rightType !== null && TypeHelper::equals($rightType, $lit->string);
                 if ($useEquals) {
-                    $this->imports->add("OneStd.Objects");
+                    $this->imports->add("io.onelang.std.core.Objects");
                     $res = ($expr->operator === "!=" ? "!" : "") . "Objects.equals(" . $this->expr($expr->left) . ", " . $this->expr($expr->right) . ")";
                 }
                 else
@@ -442,7 +442,7 @@ class JavaGenerator implements IGenerator {
         else if ($expr instanceof ParenthesizedExpression)
             $res = "(" . $this->expr($expr->expression) . ")";
         else if ($expr instanceof RegexLiteral) {
-            $this->imports->add("OneStd.RegExp");
+            $this->imports->add("io.onelang.std.core.RegExp");
             $res = "new RegExp(" . json_encode($expr->pattern, JSON_UNESCAPED_SLASHES) . ")";
         }
         else if ($expr instanceof Lambda) {
@@ -727,7 +727,10 @@ class JavaGenerator implements IGenerator {
     }
     
     function toImport($scope) {
-        return $scope->scopeName === "index" ? "OneStd" : $scope->packageName . "." . preg_replace("///", ".", $scope->scopeName);
+        // TODO: hack
+        if ($scope->scopeName === "index")
+            return "io.onelang.std." . strtolower(preg_replace("/One\\./", "", preg_split("/-/", $scope->packageName)[0]));
+        return $scope->packageName . "." . preg_replace("///", ".", $scope->scopeName);
     }
     
     function generate($pkg) {

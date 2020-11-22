@@ -228,7 +228,7 @@ class ProjectGenerator:
             
             for trans in generator.get_transforms():
                 trans.visit_files(compiler.project_pkg.files.values())
-            
+                
             # generate cross compiled source code
             out_dir = f'''{self.out_dir}/{lang_name}'''
             console.log(f'''Generating {lang_name} code...''')

@@ -10,7 +10,7 @@ import OneLang.One.Transforms.InferTypesPlugins.Helpers.InferTypesPlugin.InferTy
 import OneLang.One.Ast.Expressions.PropertyAccessExpression;
 import OneLang.One.Ast.References.EnumReference;
 import OneLang.One.Ast.Expressions.Expression;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import java.util.Arrays;
 import OneLang.One.Ast.References.EnumMemberReference;
 

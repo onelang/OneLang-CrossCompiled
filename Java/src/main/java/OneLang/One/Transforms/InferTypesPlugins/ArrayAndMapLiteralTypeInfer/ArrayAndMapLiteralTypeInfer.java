@@ -24,7 +24,7 @@ import OneLang.One.Ast.Expressions.ArrayLiteral;
 import OneLang.One.Ast.Expressions.MapLiteral;
 import OneLang.One.Ast.Expressions.CastExpression;
 import OneLang.One.Ast.Expressions.BinaryExpression;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Expressions.ConditionalExpression;
 
 public class ArrayAndMapLiteralTypeInfer extends InferTypesPlugin {

@@ -30,7 +30,7 @@ class Utils {
         
         // @java final var minPadLen2 = minPadLen;
         $minPadLen2 = $minPadLen;
-        $newStr = implode("\n", array_map(function ($x) use ($minPadLen2) { return strlen($x) !== 0 ? substr($x, $minPadLen2) : $x; }, $lines));
+        $newStr = implode("\n", array_map(function ($x) use ($minPadLen2) { return strlen($x) >= $minPadLen2 ? substr($x, $minPadLen2) : $x; }, $lines));
         return $newStr;
     }
 }

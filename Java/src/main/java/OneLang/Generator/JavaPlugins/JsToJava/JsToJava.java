@@ -34,12 +34,12 @@ import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.AstTypes.ClassType;
 import OneLang.One.Ast.Interfaces.IType;
 import java.util.Arrays;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Expressions.RegexLiteral;
-import OneStd.JSON;
+import io.onelang.std.json.JSON;
 import java.util.List;
 import java.util.ArrayList;
-import OneStd.console;
+import io.onelang.std.core.console;
 import OneLang.One.Ast.Types.Class;
 import OneLang.One.Ast.Types.Method;
 import OneLang.One.Ast.References.InstancePropertyReference;
@@ -103,7 +103,7 @@ public class JsToJava implements IGeneratorPlugin {
             else if (Objects.equals(method.name, "filter"))
                 return this.arrayStream(obj) + ".filter(" + argsR[0] + ")." + this.toArray(returnType, 0);
             else if (Objects.equals(method.name, "every")) {
-                this.main.imports.add("OneStd.StdArrayHelper");
+                this.main.imports.add("io.onelang.std.core.StdArrayHelper");
                 return "StdArrayHelper.allMatch(" + objR + ", " + argsR[0] + ")";
             }
             else if (Objects.equals(method.name, "some"))
@@ -185,8 +185,12 @@ public class JsToJava implements IGeneratorPlugin {
             if (Objects.equals(method.name, "get"))
                 return objR + "[" + argsR[0] + "]";
         }
-        else if (new ArrayList<>(List.of("JSON", "console", "RegExp")).stream().anyMatch(cls.getName()::equals)) {
-            this.main.imports.add("OneStd." + cls.getName());
+        else if (new ArrayList<>(List.of("console", "RegExp")).stream().anyMatch(cls.getName()::equals)) {
+            this.main.imports.add("io.onelang.std.core." + cls.getName());
+            return null;
+        }
+        else if (new ArrayList<>(List.of("JSON")).stream().anyMatch(cls.getName()::equals)) {
+            this.main.imports.add("io.onelang.std.json." + cls.getName());
             return null;
         }
         else

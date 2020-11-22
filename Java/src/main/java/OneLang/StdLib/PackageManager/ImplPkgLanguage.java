@@ -1,12 +1,12 @@
 package OneLang.StdLib.PackageManager;
 
-import OneStd.OneYaml;
-import OneStd.YamlValue;
+import io.onelang.std.yaml.OneYaml;
+import io.onelang.std.yaml.YamlValue;
 
 import OneLang.StdLib.PackageManager.ImplPkgNativeDependency;
 import OneLang.StdLib.PackageManager.ImplPkgLanguage;
 import java.util.Arrays;
-import OneStd.YamlValue;
+import io.onelang.std.yaml.YamlValue;
 
 public class ImplPkgLanguage {
     public String id;

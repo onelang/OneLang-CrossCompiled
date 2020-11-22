@@ -25,7 +25,7 @@ import OneLang.One.Transforms.InferTypesPlugins.Helpers.GenericsResolver.Generic
 
 import OneLang.One.Transforms.InferTypesPlugins.Helpers.InferTypesPlugin.InferTypesPlugin;
 import OneLang.One.Ast.References.Reference;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import java.util.Arrays;
 import OneLang.One.Ast.References.StaticFieldReference;
 import OneLang.One.Ast.References.StaticPropertyReference;

@@ -1,10 +1,10 @@
 package OneLang.One.CompilerHelper;
 
-import OneStd.OneFile;
+import io.onelang.std.file.OneFile;
 import OneLang.One.Compiler.Compiler;
 
 import OneLang.One.Compiler.Compiler;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import java.util.Arrays;
 
 public class CompilerHelper {

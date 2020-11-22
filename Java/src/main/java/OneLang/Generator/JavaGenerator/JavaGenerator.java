@@ -109,9 +109,9 @@ import OneLang.One.ITransformer.ITransformer;
 import OneLang.One.Transforms.ConvertNullCoalesce.ConvertNullCoalesce;
 import OneLang.One.Transforms.UseDefaultCallArgsExplicitly.UseDefaultCallArgsExplicitly;
 import java.util.Arrays;
-import OneStd.RegExp;
+import io.onelang.std.core.RegExp;
 import java.util.stream.Collectors;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Statements.Statement;
 import OneLang.One.Ast.Interfaces.IType;
 import OneLang.One.Ast.AstTypes.ClassType;
@@ -133,7 +133,7 @@ import OneLang.One.Ast.Expressions.InstanceMethodCallExpression;
 import OneLang.One.Ast.Expressions.StaticMethodCallExpression;
 import OneLang.One.Ast.Types.MethodParameter;
 import OneLang.One.Ast.Expressions.IMethodCallExpression;
-import OneStd.StdArrayHelper;
+import io.onelang.std.core.StdArrayHelper;
 import OneLang.One.Ast.Expressions.BinaryExpression;
 import OneLang.One.Ast.Expressions.NewExpression;
 import OneLang.One.Ast.Expressions.UnresolvedNewExpression;
@@ -145,7 +145,7 @@ import OneLang.One.Ast.Expressions.GlobalFunctionCallExpression;
 import OneLang.One.Ast.Expressions.LambdaCallExpression;
 import OneLang.One.Ast.Expressions.BooleanLiteral;
 import OneLang.One.Ast.Expressions.StringLiteral;
-import OneStd.JSON;
+import io.onelang.std.json.JSON;
 import OneLang.One.Ast.Expressions.NumericLiteral;
 import OneLang.One.Ast.Expressions.CharacterLiteral;
 import OneLang.One.Ast.Expressions.ElementAccessExpression;
@@ -519,7 +519,7 @@ public class JavaGenerator implements IGenerator {
                 var rightType = ((BinaryExpression)expr).right.getType();
                 var useEquals = TypeHelper.equals(leftType, lit.string) && rightType != null && TypeHelper.equals(rightType, lit.string);
                 if (useEquals) {
-                    this.imports.add("OneStd.Objects");
+                    this.imports.add("io.onelang.std.core.Objects");
                     res = (Objects.equals(((BinaryExpression)expr).operator, "!=") ? "!" : "") + "Objects.equals(" + this.expr(((BinaryExpression)expr).left) + ", " + this.expr(((BinaryExpression)expr).right) + ")";
                 }
                 else
@@ -546,7 +546,7 @@ public class JavaGenerator implements IGenerator {
         else if (expr instanceof ParenthesizedExpression)
             res = "(" + this.expr(((ParenthesizedExpression)expr).expression) + ")";
         else if (expr instanceof RegexLiteral) {
-            this.imports.add("OneStd.RegExp");
+            this.imports.add("io.onelang.std.core.RegExp");
             res = "new RegExp(" + JSON.stringify(((RegexLiteral)expr).pattern) + ")";
         }
         else if (expr instanceof Lambda) {
@@ -831,7 +831,10 @@ public class JavaGenerator implements IGenerator {
     }
     
     public String toImport(ExportScopeRef scope) {
-        return Objects.equals(scope.scopeName, "index") ? "OneStd" : scope.packageName + "." + scope.scopeName.replaceAll("/", ".");
+        // TODO: hack
+        if (Objects.equals(scope.scopeName, "index"))
+            return "io.onelang.std." + scope.packageName.split("-", -1)[0].replaceAll("One\\.", "").toLowerCase();
+        return scope.packageName + "." + scope.scopeName.replaceAll("/", ".");
     }
     
     public GeneratedFile[] generate(Package pkg) {

@@ -1,11 +1,11 @@
 package OneLang.StdLib.PackageManager;
 
-import OneStd.OneYaml;
-import OneStd.YamlValue;
+import io.onelang.std.yaml.OneYaml;
+import io.onelang.std.yaml.YamlValue;
 
 import OneLang.StdLib.PackageManager.ImplPkgImplIntf;
 import OneLang.StdLib.PackageManager.ImplPkgImplementation;
-import OneStd.YamlValue;
+import io.onelang.std.yaml.YamlValue;
 
 public class ImplPkgImplementation {
     public ImplPkgImplIntf interface_;

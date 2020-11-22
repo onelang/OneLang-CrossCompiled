@@ -1,4 +1,4 @@
-package OneStd;
+package io.onelang.std.yaml;
 
 import org.yaml.snakeyaml.Yaml;
 import java.util.Map;

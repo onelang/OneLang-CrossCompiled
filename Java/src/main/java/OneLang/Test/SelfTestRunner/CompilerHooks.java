@@ -1,6 +1,6 @@
 package OneLang.Test.SelfTestRunner;
 
-import OneStd.OneFile;
+import io.onelang.std.file.OneFile;
 import OneLang.One.CompilerHelper.CompilerHelper;
 import OneLang.Generator.IGenerator.IGenerator;
 import OneLang.One.Compiler.Compiler;
@@ -10,8 +10,8 @@ import OneLang.Test.PackageStateCapture.PackageStateCapture;
 import OneLang.One.Compiler.ICompilerHooks;
 import OneLang.One.Compiler.Compiler;
 import OneLang.Test.PackageStateCapture.PackageStateCapture;
-import OneStd.Objects;
-import OneStd.console;
+import io.onelang.std.core.Objects;
+import io.onelang.std.core.console;
 
 public class CompilerHooks implements ICompilerHooks {
     public Integer stage = 0;

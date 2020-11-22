@@ -64,7 +64,7 @@ namespace Generator.JavaPlugins
                 else if (method.name == "filter")
                     return $"{this.arrayStream(obj)}.filter({argsR.get(0)}).{this.toArray(returnType)}";
                 else if (method.name == "every") {
-                    this.main.imports.add("OneStd.StdArrayHelper");
+                    this.main.imports.add("io.onelang.std.core.StdArrayHelper");
                     return $"StdArrayHelper.allMatch({objR}, {argsR.get(0)})";
                 }
                 else if (method.name == "some")
@@ -146,8 +146,12 @@ namespace Generator.JavaPlugins
                 if (method.name == "get")
                     return $"{objR}[{argsR.get(0)}]";
             }
-            else if (new List<string> { "JSON", "console", "RegExp" }.includes(cls.name)) {
-                this.main.imports.add($"OneStd.{cls.name}");
+            else if (new List<string> { "console", "RegExp" }.includes(cls.name)) {
+                this.main.imports.add($"io.onelang.std.core.{cls.name}");
+                return null;
+            }
+            else if (new List<string> { "JSON" }.includes(cls.name)) {
+                this.main.imports.add($"io.onelang.std.json.{cls.name}");
                 return null;
             }
             else

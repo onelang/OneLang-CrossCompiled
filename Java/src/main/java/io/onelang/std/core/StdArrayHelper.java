@@ -1,4 +1,4 @@
-package OneStd;
+package io.onelang.std.core;
 
 import java.util.function.BiFunction;
 import java.util.List;

@@ -1,7 +1,7 @@
 package OneLang.StdLib.PackageManager;
 
-import OneStd.OneYaml;
-import OneStd.YamlValue;
+import io.onelang.std.yaml.OneYaml;
+import io.onelang.std.yaml.YamlValue;
 
 import java.util.List;
 import OneLang.StdLib.PackageManager.InterfacePackage;
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import OneLang.StdLib.PackageManager.PackageContent;
 import OneLang.StdLib.PackageManager.ImplPkgImplementation;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import java.util.stream.Collectors;
 import OneLang.StdLib.PackageManager.PackageNativeImpl;
 import java.util.LinkedHashMap;

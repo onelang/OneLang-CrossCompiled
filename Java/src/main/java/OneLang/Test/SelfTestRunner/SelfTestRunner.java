@@ -1,15 +1,15 @@
 package OneLang.Test.SelfTestRunner;
 
-import OneStd.OneFile;
+import io.onelang.std.file.OneFile;
 import OneLang.One.CompilerHelper.CompilerHelper;
 import OneLang.Generator.IGenerator.IGenerator;
 import OneLang.One.Compiler.Compiler;
 import OneLang.One.Compiler.ICompilerHooks;
 import OneLang.Test.PackageStateCapture.PackageStateCapture;
 
-import OneStd.console;
+import io.onelang.std.core.console;
 import OneLang.Test.SelfTestRunner.CompilerHooks;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.Generator.IGenerator.IGenerator;
 
 public class SelfTestRunner {

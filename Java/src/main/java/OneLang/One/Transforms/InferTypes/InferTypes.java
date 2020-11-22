@@ -62,7 +62,7 @@ import OneLang.One.Ast.Types.Method;
 import OneLang.One.Ast.AstTypes.ClassType;
 import OneLang.One.Ast.Types.Field;
 import OneLang.One.Ast.Types.Property;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Types.Class;
 import OneLang.One.Ast.Types.SourceFile;
 

@@ -26,7 +26,7 @@ import OneLang.One.Ast.Types.Constructor;
 import OneLang.One.Ast.Statements.Statement;
 import OneLang.One.Ast.Types.Lambda;
 import java.util.ArrayList;
-import OneStd.console;
+import io.onelang.std.core.console;
 
 public class ErrorManager {
     public AstTransformer transformer;

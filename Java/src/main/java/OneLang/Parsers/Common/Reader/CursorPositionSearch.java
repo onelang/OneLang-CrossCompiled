@@ -4,7 +4,7 @@ import OneLang.Parsers.Common.Utils.Utils;
 
 import java.util.List;
 import java.util.ArrayList;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.Parsers.Common.Reader.Cursor;
 
 public class CursorPositionSearch {

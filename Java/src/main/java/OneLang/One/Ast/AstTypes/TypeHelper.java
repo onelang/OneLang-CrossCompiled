@@ -16,9 +16,9 @@ import OneLang.One.Ast.AstTypes.InterfaceType;
 import OneLang.One.Ast.AstTypes.LambdaType;
 import OneLang.One.Ast.AstTypes.VoidType;
 import OneLang.One.Ast.AstTypes.AnyType;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.AstTypes.EnumType;
-import OneStd.StdArrayHelper;
+import io.onelang.std.core.StdArrayHelper;
 import OneLang.One.Ast.AstTypes.NullType;
 
 public class TypeHelper {

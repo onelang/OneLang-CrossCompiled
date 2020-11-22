@@ -53,7 +53,7 @@ import OneLang.One.Ast.Types.SourcePath;
 import OneLang.One.Ast.Types.LiteralTypes;
 import OneLang.One.Ast.Types.Class;
 import OneLang.One.Ast.AstTypes.ClassType;
-import OneStd.RegExp;
+import io.onelang.std.core.RegExp;
 import java.util.regex.Pattern;
 import java.util.Arrays;
 

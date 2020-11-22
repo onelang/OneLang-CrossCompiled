@@ -1,11 +1,11 @@
 package OneLang.Generator.ProjectGenerator;
 
-import OneStd.OneFile;
-import OneStd.OneYaml;
-import OneStd.YamlValue;
-import OneStd.OneJObject;
-import OneStd.OneJson;
-import OneStd.OneJValue;
+import io.onelang.std.file.OneFile;
+import io.onelang.std.yaml.OneYaml;
+import io.onelang.std.yaml.YamlValue;
+import io.onelang.std.json.OneJObject;
+import io.onelang.std.json.OneJson;
+import io.onelang.std.json.OneJValue;
 import OneLang.Parsers.Common.Reader.Reader;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Expressions.Identifier;
@@ -28,10 +28,10 @@ import OneLang.Generator.CsharpGenerator.CsharpGenerator;
 import OneLang.Generator.PythonGenerator.PythonGenerator;
 import OneLang.Generator.PhpGenerator.PhpGenerator;
 import OneLang.Generator.ProjectGenerator.ProjectTemplate;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import java.util.Arrays;
 import OneLang.One.Ast.Types.SourceFile;
-import OneStd.console;
+import io.onelang.std.core.console;
 import OneLang.StdLib.PackageManager.ImplementationPackage;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -77,7 +77,7 @@ public class ProjectGenerator {
             
             for (var trans : generator.getTransforms())
                 trans.visitFiles(compiler.projectPkg.files.values().toArray(SourceFile[]::new));
-            
+                
             // generate cross compiled source code
             var outDir = this.outDir + "/" + langName;
             console.log("Generating " + langName + " code...");

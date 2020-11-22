@@ -1,4 +1,4 @@
-package OneStd;
+package io.onelang.std.json;
 
 import com.google.gson.*;
 

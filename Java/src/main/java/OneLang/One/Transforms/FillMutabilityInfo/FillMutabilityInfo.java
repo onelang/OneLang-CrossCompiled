@@ -14,7 +14,7 @@ import OneLang.One.Ast.Types.IVariable;
 import OneLang.One.Ast.Types.MutabilityInfo;
 import OneLang.One.Ast.References.VariableReference;
 import OneLang.One.Ast.Statements.VariableDeclaration;
-import OneStd.Objects;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Expressions.BinaryExpression;
 import OneLang.One.Ast.Expressions.InstanceMethodCallExpression;
