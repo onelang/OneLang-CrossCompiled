@@ -37,6 +37,12 @@ class PythonGenerator:
     def get_transforms(self):
         return []
     
+    def add_plugin(self, plugin):
+        self.plugins.append(plugin)
+    
+    def add_include(self, include):
+        self.imports[include] = None
+    
     def type(self, type):
         if isinstance(type, astTypes.ClassType):
             if type.decl.name == "TsString":

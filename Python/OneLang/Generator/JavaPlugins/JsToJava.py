@@ -34,8 +34,10 @@ class JsToJava:
         args_r = list(map(lambda x: self.main.expr(x), args))
         if cls_.name == "TsArray":
             if method.name == "includes":
+                # TsArray.includes(value): ${toStream(this)}.anyMatch($value}::equals)
                 return f'''{self.array_stream(obj)}.anyMatch({args_r[0]}::equals)'''
             elif method.name == "set":
+                # TsArray.set(key, value): $this[$key] = $value
                 if self.is_array(obj):
                     return f'''{obj_r}[{args_r[0]}] = {args_r[1]}'''
                 else:

@@ -72,6 +72,13 @@ namespace One.Transforms.InferTypesPlugins
                 var intfType = objectType is ClassType classType ? ((IInterface)classType.decl) : objectType is InterfaceType intType ? intType.decl : null;
                 
                 if (intfType != null) {
+                    var lambdaField = intfType.fields.find(x => x.name == expr.methodName && x.type is LambdaType lambdType && lambdType.parameters.length() == expr.args.length());
+                    if (lambdaField != null) {
+                        var lambdaCall = new LambdaCallExpression(new InstanceFieldReference(expr.object_, lambdaField), expr.args);
+                        lambdaCall.setActualType((((LambdaType)lambdaField.type)).returnType);
+                        return lambdaCall;
+                    }
+                    
                     var method = this.findMethod(intfType, expr.methodName, false, expr.args);
                     var result = new InstanceMethodCallExpression(resolvedObject, method, expr.typeArgs, expr.args);
                     this.resolveReturnType(result, GenericsResolver.fromObject(resolvedObject));

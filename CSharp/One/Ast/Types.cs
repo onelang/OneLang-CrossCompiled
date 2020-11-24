@@ -16,8 +16,11 @@ namespace One.Ast
     }
     
     public interface IClassMember {
+        string name { get; set; }
         Visibility visibility { get; set; }
         bool isStatic { get; set; }
+        
+        IInterface getParentInterface();
     }
     
     public interface IVariableWithInitializer : IVariable {
@@ -456,6 +459,11 @@ namespace One.Ast
             this.instanceReferences = new List<InstanceFieldReference>();
             this.interfaceDeclarations = null;
         }
+        
+        public IInterface getParentInterface()
+        {
+            return this.parentInterface;
+        }
     }
     
     public class Property : IVariable, IHasAttributesAndTrivia, IClassMember, IAstNode {
@@ -484,6 +492,11 @@ namespace One.Ast
             this.parentClass = null;
             this.staticReferences = new List<StaticPropertyReference>();
             this.instanceReferences = new List<InstancePropertyReference>();
+        }
+        
+        public IInterface getParentInterface()
+        {
+            return this.parentClass;
         }
     }
     
@@ -535,7 +548,7 @@ namespace One.Ast
     }
     
     public class Method : IMethodBaseWithTrivia, IClassMember {
-        public string name;
+        public string name { get; set; }
         public string[] typeArguments;
         public MethodParameter[] parameters { get; set; }
         public Block body { get; set; }
@@ -566,6 +579,11 @@ namespace One.Ast
             this.interfaceDeclarations = null;
             this.overrides = null;
             this.overriddenBy = new List<Method>();
+        }
+        
+        public IInterface getParentInterface()
+        {
+            return this.parentInterface;
         }
     }
     

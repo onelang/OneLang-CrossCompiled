@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class Method implements IMethodBaseWithTrivia, IClassMember {
-    public String name;
     public String[] typeArguments;
     public IType returns;
     public Boolean async;
@@ -44,6 +43,10 @@ public class Method implements IMethodBaseWithTrivia, IClassMember {
     public Method[] interfaceDeclarations;
     public Method overrides;
     public List<Method> overriddenBy;
+    
+    String name;
+    public String getName() { return this.name; }
+    public void setName(String value) { this.name = value; }
     
     MethodParameter[] parameters;
     public MethodParameter[] getParameters() { return this.parameters; }
@@ -75,7 +78,7 @@ public class Method implements IMethodBaseWithTrivia, IClassMember {
     
     public Method(String name, String[] typeArguments, MethodParameter[] parameters, Block body, Visibility visibility, Boolean isStatic, IType returns, Boolean async, String leadingTrivia)
     {
-        this.name = name;
+        this.setName(name);
         this.typeArguments = typeArguments;
         this.setParameters(parameters);
         this.setBody(body);
@@ -88,5 +91,9 @@ public class Method implements IMethodBaseWithTrivia, IClassMember {
         this.interfaceDeclarations = null;
         this.overrides = null;
         this.overriddenBy = new ArrayList<Method>();
+    }
+    
+    public IInterface getParentInterface() {
+        return this.parentInterface;
     }
 }

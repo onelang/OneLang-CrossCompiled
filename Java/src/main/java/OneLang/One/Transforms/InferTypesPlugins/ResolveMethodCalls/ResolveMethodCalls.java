@@ -6,12 +6,15 @@ import OneLang.One.Ast.Expressions.UnresolvedMethodCallExpression;
 import OneLang.One.Ast.Expressions.InstanceMethodCallExpression;
 import OneLang.One.Ast.Expressions.StaticMethodCallExpression;
 import OneLang.One.Ast.Expressions.IMethodCallExpression;
+import OneLang.One.Ast.Expressions.LambdaCallExpression;
 import OneLang.One.Ast.AstTypes.ClassType;
 import OneLang.One.Ast.AstTypes.InterfaceType;
 import OneLang.One.Ast.AstTypes.AnyType;
 import OneLang.One.Ast.AstTypes.TypeHelper;
+import OneLang.One.Ast.AstTypes.LambdaType;
 import OneLang.One.Transforms.InferTypesPlugins.Helpers.GenericsResolver.GenericsResolver;
 import OneLang.One.Ast.References.ClassReference;
+import OneLang.One.Ast.References.InstanceFieldReference;
 import OneLang.One.Ast.References.StaticThisReference;
 import OneLang.One.Ast.Types.Class;
 import OneLang.One.Ast.Types.IInterface;
@@ -34,6 +37,9 @@ import OneLang.One.Ast.References.StaticThisReference;
 import OneLang.One.Ast.Expressions.StaticMethodCallExpression;
 import OneLang.One.Ast.AstTypes.ClassType;
 import OneLang.One.Ast.AstTypes.InterfaceType;
+import OneLang.One.Ast.AstTypes.LambdaType;
+import OneLang.One.Ast.Expressions.LambdaCallExpression;
+import OneLang.One.Ast.References.InstanceFieldReference;
 import OneLang.One.Ast.AstTypes.AnyType;
 import OneLang.One.Ast.Expressions.UnresolvedMethodCallExpression;
 
@@ -52,7 +58,7 @@ public class ResolveMethodCalls extends InferTypesPlugin {
             for (var m : base.getMethods()) {
                 var minLen = Arrays.stream(m.getParameters()).filter(p -> p.getInitializer() == null).toArray(MethodParameter[]::new).length;
                 var maxLen = m.getParameters().length;
-                var match = Objects.equals(m.name, methodName) && m.getIsStatic() == isStatic && minLen <= args.length && args.length <= maxLen;
+                var match = Objects.equals(m.getName(), methodName) && m.getIsStatic() == isStatic && minLen <= args.length && args.length <= maxLen;
                 if (match)
                     methods.add(m);
             }
@@ -82,7 +88,7 @@ public class ResolveMethodCalls extends InferTypesPlugin {
         }
         
         if (expr.getMethod().returns == null) {
-            this.errorMan.throw_("Method (" + expr.getMethod().parentInterface.getName() + "::" + expr.getMethod().name + ") return type was not specified or infered before the call.");
+            this.errorMan.throw_("Method (" + expr.getMethod().parentInterface.getName() + "::" + expr.getMethod().getName() + ") return type was not specified or infered before the call.");
             return;
         }
         
@@ -103,6 +109,13 @@ public class ResolveMethodCalls extends InferTypesPlugin {
             var intfType = objectType instanceof ClassType ? ((IInterface)((ClassType)objectType).decl) : objectType instanceof InterfaceType ? ((InterfaceType)objectType).decl : null;
             
             if (intfType != null) {
+                var lambdaField = Arrays.stream(intfType.getFields()).filter(x -> Objects.equals(x.getName(), expr.methodName) && x.getType() instanceof LambdaType && ((LambdaType)x.getType()).parameters.length == expr.args.length).findFirst().orElse(null);
+                if (lambdaField != null) {
+                    var lambdaCall = new LambdaCallExpression(new InstanceFieldReference(expr.object, lambdaField), expr.args);
+                    lambdaCall.setActualType((((LambdaType)lambdaField.getType())).returnType, false, false);
+                    return lambdaCall;
+                }
+                
                 var method = this.findMethod(intfType, expr.methodName, false, expr.args);
                 var result = new InstanceMethodCallExpression(resolvedObject, method, expr.typeArgs, expr.args);
                 this.resolveReturnType(result, GenericsResolver.fromObject(resolvedObject));

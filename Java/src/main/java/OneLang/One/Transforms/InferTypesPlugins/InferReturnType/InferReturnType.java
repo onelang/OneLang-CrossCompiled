@@ -82,7 +82,7 @@ public class InferReturnType extends InferTypesPlugin {
         if (method instanceof Method && ((Method)method).getBody() != null) {
             this.start();
             this.main.processMethodBase(((Method)method));
-            ((Method)method).returns = this.finish(((Method)method).returns, "Method \"" + ((Method)method).name + "\"", ((Method)method).async ? this.main.currentFile.literalTypes.promise : null);
+            ((Method)method).returns = this.finish(((Method)method).returns, "Method \"" + ((Method)method).getName() + "\"", ((Method)method).async ? this.main.currentFile.literalTypes.promise : null);
             return true;
         }
         else

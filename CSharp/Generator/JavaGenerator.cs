@@ -5,6 +5,7 @@ using One.Transforms;
 using One;
 using System.Collections.Generic;
 using System.Linq;
+using VM;
 
 namespace Generator
 {
@@ -37,6 +38,41 @@ namespace Generator
         public ITransformer[] getTransforms()
         {
             return new ITransformer[] { ((ITransformer)new ConvertNullCoalesce()), ((ITransformer)new UseDefaultCallArgsExplicitly()) };
+        }
+        
+        public void addInclude(string include)
+        {
+            this.imports.add(include);
+        }
+        
+        public bool isArray(Expression arrayExpr)
+        {
+            // TODO: InstanceMethodCallExpression is a hack, we should introduce real stream handling
+            return arrayExpr is VariableReference varRef && !varRef.getVariable().mutability.mutated || arrayExpr is StaticMethodCallExpression || arrayExpr is InstanceMethodCallExpression;
+        }
+        
+        public string arrayStream(Expression arrayExpr)
+        {
+            var isArray = this.isArray(arrayExpr);
+            var objR = this.expr(arrayExpr);
+            if (isArray)
+                this.imports.add("java.util.Arrays");
+            return isArray ? $"Arrays.stream({objR})" : $"{objR}.stream()";
+        }
+        
+        public string toArray(IType arrayType, int typeArgIdx = 0)
+        {
+            var type = (((ClassType)arrayType)).typeArguments.get(typeArgIdx);
+            return $"toArray({this.type(type)}[]::new)";
+        }
+        
+        public void addPlugin(IGeneratorPlugin plugin)
+        {
+            this.plugins.push(plugin);
+            
+            // TODO: hack?
+            if (plugin is TemplateFileGeneratorPlugin templFileGenPlug)
+                templFileGenPlug.modelGlobals.set("toStream", new LambdaValue(args => new StringValue(this.arrayStream((((ExpressionValue)args.get(0))).value))));
         }
         
         public string name_(string name)
@@ -150,9 +186,9 @@ namespace Generator
                 return $"{genType.typeVarName}";
             else if (t is LambdaType lambdType) {
                 var isFunc = !(lambdType.returnType is VoidType);
-                var paramTypes = lambdType.parameters.map(x => this.type(x.type)).ToList();
+                var paramTypes = lambdType.parameters.map(x => this.type(x.type, false)).ToList();
                 if (isFunc)
-                    paramTypes.push(this.type(lambdType.returnType));
+                    paramTypes.push(this.type(lambdType.returnType, false));
                 this.imports.add("java.util.function." + (isFunc ? "Function" : "Consumer"));
                 return $"{(isFunc ? "Function" : "Consumer")}<{paramTypes.join(", ")}>";
             }
@@ -213,8 +249,8 @@ namespace Generator
                     return arrayLit.items.length() == 0 && !this.isTsArray(itemType) ? $"new {this.type(itemType)}[0]" : $"new {this.type(itemType)}[] {{ {arrayLit.items.map(x => this.expr(x)).join(", ")} }}";
                 
                 var currentlyMutable = shouldBeMutable;
-                if (arg is VariableReference varRef)
-                    currentlyMutable = varRef.getVariable().mutability.mutated;
+                if (arg is VariableReference varRef2)
+                    currentlyMutable = varRef2.getVariable().mutability.mutated;
                 else if (arg is InstanceMethodCallExpression instMethCallExpr || arg is StaticMethodCallExpression)
                     currentlyMutable = false;
                 
@@ -231,8 +267,8 @@ namespace Generator
         
         public string mutatedExpr(Expression expr, Expression toWhere)
         {
-            if (toWhere is VariableReference varRef2) {
-                var v = varRef2.getVariable();
+            if (toWhere is VariableReference varRef3) {
+                var v = varRef3.getVariable();
                 if (this.isTsArray(v.type))
                     return this.mutateArg(expr, v.mutability.mutated);
             }

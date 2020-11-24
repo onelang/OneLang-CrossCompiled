@@ -139,6 +139,14 @@ class PythonGenerator implements IGenerator {
         return array();
     }
     
+    function addPlugin($plugin) {
+        $this->plugins[] = $plugin;
+    }
+    
+    function addInclude($include) {
+        $this->imports->add($include);
+    }
+    
     function type($type) {
         if ($type instanceof ClassType) {
             if ($type->decl->name === "TsString")

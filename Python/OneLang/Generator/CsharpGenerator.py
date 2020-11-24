@@ -9,6 +9,7 @@ import OneLang.Generator.NameUtils as nameUtils
 import OneLang.Generator.IGenerator as iGen
 import OneLang.One.Ast.Interfaces as ints
 import OneLang.One.ITransformer as iTrans
+import OneLang.Generator.IGeneratorPlugin as iGenPlug
 import re
 import json
 
@@ -28,6 +29,12 @@ class CsharpGenerator:
     
     def get_transforms(self):
         return []
+    
+    def add_plugin(self, plugin):
+        pass
+    
+    def add_include(self, include):
+        self.usings[include] = None
     
     def name_(self, name):
         if name in self.reserved_words:
@@ -105,9 +112,9 @@ class CsharpGenerator:
             return f'''{t.type_var_name}'''
         elif isinstance(t, astTypes.LambdaType):
             is_func = not (isinstance(t.return_type, astTypes.VoidType))
-            param_types = list(map(lambda x: self.type(x.type), t.parameters))
+            param_types = list(map(lambda x: self.type(x.type, False), t.parameters))
             if is_func:
-                param_types.append(self.type(t.return_type))
+                param_types.append(self.type(t.return_type, False))
             self.usings["System"] = None
             return f'''{("Func" if is_func else "Action")}<{", ".join(param_types)}>'''
         elif t == None:

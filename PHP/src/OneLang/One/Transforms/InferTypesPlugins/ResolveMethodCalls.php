@@ -8,12 +8,15 @@ use OneLang\One\Ast\Expressions\UnresolvedMethodCallExpression;
 use OneLang\One\Ast\Expressions\InstanceMethodCallExpression;
 use OneLang\One\Ast\Expressions\StaticMethodCallExpression;
 use OneLang\One\Ast\Expressions\IMethodCallExpression;
+use OneLang\One\Ast\Expressions\LambdaCallExpression;
 use OneLang\One\Ast\AstTypes\ClassType;
 use OneLang\One\Ast\AstTypes\InterfaceType;
 use OneLang\One\Ast\AstTypes\AnyType;
 use OneLang\One\Ast\AstTypes\TypeHelper;
+use OneLang\One\Ast\AstTypes\LambdaType;
 use OneLang\One\Transforms\InferTypesPlugins\Helpers\GenericsResolver\GenericsResolver;
 use OneLang\One\Ast\References\ClassReference;
+use OneLang\One\Ast\References\InstanceFieldReference;
 use OneLang\One\Ast\References\StaticThisReference;
 use OneLang\One\Ast\Types\Class_;
 use OneLang\One\Ast\Types\IInterface;
@@ -84,6 +87,13 @@ class ResolveMethodCalls extends InferTypesPlugin {
             $intfType = $objectType instanceof ClassType ? $objectType->decl : ($objectType instanceof InterfaceType ? $objectType->decl : null);
             
             if ($intfType !== null) {
+                $lambdaField = \OneLang\Core\ArrayHelper::find($intfType->fields, function ($x) use ($expr) { return $x->name === $expr->methodName && $x->type instanceof LambdaType && count($x->type->parameters) === count($expr->args); });
+                if ($lambdaField !== null) {
+                    $lambdaCall = new LambdaCallExpression(new InstanceFieldReference($expr->object, $lambdaField), $expr->args);
+                    $lambdaCall->setActualType(($lambdaField->type)->returnType);
+                    return $lambdaCall;
+                }
+                
                 $method = $this->findMethod($intfType, $expr->methodName, false, $expr->args);
                 $result = new InstanceMethodCallExpression($resolvedObject, $method, $expr->typeArgs, $expr->args);
                 $this->resolveReturnType($result, GenericsResolver::fromObject($resolvedObject));

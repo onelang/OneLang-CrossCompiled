@@ -1,21 +1,12 @@
 using Generator;
-using One.Ast;
 using One;
-using Parsers.Common;
 using StdLib;
 using System.Collections.Generic;
-using Utils;
+using Template;
+using VM;
 
 namespace Generator
 {
-    public interface IVMValue {
-        
-    }
-    
-    public interface ITemplateNode {
-        string format(ObjectValue model);
-    }
-    
     public class ProjectTemplateMeta {
         public string language;
         public string destinationDir;
@@ -33,221 +24,6 @@ namespace Generator
         public static ProjectTemplateMeta fromYaml(YamlValue obj)
         {
             return new ProjectTemplateMeta(obj.str("language"), obj.str("destination-dir"), obj.str("package-dir"), obj.strArr("template-files"));
-        }
-    }
-    
-    public class ObjectValue : IVMValue {
-        public Dictionary<string, IVMValue> props;
-        
-        public ObjectValue(Dictionary<string, IVMValue> props)
-        {
-            this.props = props;
-        }
-    }
-    
-    public class StringValue : IVMValue {
-        public string value;
-        
-        public StringValue(string value)
-        {
-            this.value = value;
-        }
-    }
-    
-    public class ArrayValue : IVMValue {
-        public IVMValue[] items;
-        
-        public ArrayValue(IVMValue[] items)
-        {
-            this.items = items;
-        }
-    }
-    
-    public class TemplateBlock : ITemplateNode {
-        public ITemplateNode[] items;
-        
-        public TemplateBlock(ITemplateNode[] items)
-        {
-            this.items = items;
-        }
-        
-        public string format(ObjectValue model)
-        {
-            return this.items.map(x => x.format(model)).join("");
-        }
-    }
-    
-    public class LiteralNode : ITemplateNode {
-        public string value;
-        
-        public LiteralNode(string value)
-        {
-            this.value = value;
-        }
-        
-        public string format(ObjectValue model)
-        {
-            return this.value;
-        }
-    }
-    
-    public class ExprVM {
-        public ObjectValue model;
-        
-        public ExprVM(ObjectValue model)
-        {
-            this.model = model;
-        }
-        
-        public static IVMValue propAccess(IVMValue obj, string propName)
-        {
-            if (!(obj is ObjectValue))
-                throw new Error("You can only access a property of an object!");
-            if (!((((ObjectValue)obj)).props.hasKey(propName)))
-                throw new Error($"Property '{propName}' does not exists on this object!");
-            return (((ObjectValue)obj)).props.get(propName);
-        }
-        
-        public IVMValue evaluate(Expression expr)
-        {
-            if (expr is Identifier ident)
-                return ExprVM.propAccess(this.model, ident.text);
-            else if (expr is PropertyAccessExpression propAccExpr) {
-                var objValue = this.evaluate(propAccExpr.object_);
-                return ExprVM.propAccess(objValue, propAccExpr.propertyName);
-            }
-            else
-                throw new Error("Unsupported expression!");
-        }
-    }
-    
-    public class ExpressionNode : ITemplateNode {
-        public Expression expr;
-        
-        public ExpressionNode(Expression expr)
-        {
-            this.expr = expr;
-        }
-        
-        public string format(ObjectValue model)
-        {
-            var result = new ExprVM(model).evaluate(this.expr);
-            if (result is StringValue strValue)
-                return strValue.value;
-            else
-                throw new Error($"ExpressionNode ({TSOverviewGenerator.preview.expr(this.expr)}) return a non-string result!");
-        }
-    }
-    
-    public class ForNode : ITemplateNode {
-        public string variableName;
-        public Expression itemsExpr;
-        public TemplateBlock body;
-        public string joiner;
-        
-        public ForNode(string variableName, Expression itemsExpr, TemplateBlock body, string joiner)
-        {
-            this.variableName = variableName;
-            this.itemsExpr = itemsExpr;
-            this.body = body;
-            this.joiner = joiner;
-        }
-        
-        public string format(ObjectValue model)
-        {
-            var items = new ExprVM(model).evaluate(this.itemsExpr);
-            if (!(items is ArrayValue))
-                throw new Error($"ForNode items ({TSOverviewGenerator.preview.expr(this.itemsExpr)}) return a non-array result!");
-            
-            var result = "";
-            foreach (var item in (((ArrayValue)items)).items) {
-                if (this.joiner != null && result != "")
-                    result += this.joiner;
-                
-                model.props.set(this.variableName, item);
-                result += this.body.format(model);
-            }
-            /* unset model.props.get(this.variableName); */
-            return result;
-        }
-    }
-    
-    public class TemplateParser {
-        public Reader reader;
-        public ExpressionParser exprParser;
-        public string template;
-        
-        public TemplateParser(string template)
-        {
-            this.template = template;
-            this.reader = new Reader(template);
-            this.exprParser = new ExpressionParser(this.reader);
-        }
-        
-        public Dictionary<string, string> parseAttributes()
-        {
-            var result = new Dictionary<string, string> {};
-            while (this.reader.readToken(",")) {
-                var key = this.reader.expectIdentifier();
-                var value = this.reader.readToken("=") ? this.reader.expectString() : null;
-                result.set(key, value);
-            }
-            return result;
-        }
-        
-        public TemplateBlock parseBlock()
-        {
-            var items = new List<ITemplateNode>();
-            while (!this.reader.eof) {
-                if (this.reader.peekToken("{{/"))
-                    break;
-                if (this.reader.readToken("{{")) {
-                    if (this.reader.readToken("for")) {
-                        var varName = this.reader.readIdentifier();
-                        this.reader.expectToken("of");
-                        var itemsExpr = this.exprParser.parse();
-                        var attrs = this.parseAttributes();
-                        this.reader.expectToken("}}");
-                        var body = this.parseBlock();
-                        this.reader.expectToken("{{/for}}");
-                        items.push(new ForNode(varName, itemsExpr, body, attrs.get("joiner")));
-                    }
-                    else {
-                        var expr = this.exprParser.parse();
-                        items.push(new ExpressionNode(expr));
-                        this.reader.expectToken("}}");
-                    }
-                }
-                else {
-                    var literal = this.reader.readUntil("{{", true);
-                    if (literal.endsWith("\\") && !literal.endsWith("\\\\"))
-                        literal = literal.substring(0, literal.length() - 1) + "{{";
-                    if (literal != "")
-                        items.push(new LiteralNode(literal));
-                }
-            }
-            return new TemplateBlock(items.ToArray());
-        }
-        
-        public TemplateBlock parse()
-        {
-            return this.parseBlock();
-        }
-    }
-    
-    public class TemplateFile {
-        public TemplateBlock main;
-        public string template;
-        
-        public TemplateFile(string template)
-        {
-            this.template = template;
-            this.main = new TemplateParser(template).parse();
-        }
-        
-        public string format(ObjectValue model)
-        {
-            return this.main.format(model);
         }
     }
     
@@ -269,8 +45,8 @@ namespace Generator
                 var srcFn = $"{this.templateDir}/src/{fn}";
                 var dstFn = $"{dstDir}/{fn}";
                 if (this.meta.templateFiles.includes(fn)) {
-                    var tmplFile = new TemplateFile(OneFile.readText(srcFn));
-                    var dstFile = tmplFile.format(model);
+                    var tmpl = new TemplateParser(OneFile.readText(srcFn)).parse();
+                    var dstFile = tmpl.format(new TemplateContext(model));
                     OneFile.writeText(dstFn, dstFile);
                 }
                 else
@@ -349,17 +125,11 @@ namespace Generator
                 var langId = projTemplate.meta.language;
                 var generator = generators.find(x => x.getLangName().toLowerCase() == langId);
                 var langName = generator.getLangName();
+                var outDir = $"{this.outDir}/{langName}";
                 
                 foreach (var trans in generator.getTransforms())
                     trans.visitFiles(Object.values(compiler.projectPkg.files));
                     
-                // generate cross compiled source code
-                var outDir = $"{this.outDir}/{langName}";
-                console.log($"Generating {langName} code...");
-                var files = generator.generate(compiler.projectPkg);
-                foreach (var file in files)
-                    OneFile.writeText($"{outDir}/{projTemplate.meta.destinationDir ?? ""}/{file.path}", file.content);
-                
                 // copy implementation native sources
                 var oneDeps = new List<ImplementationPackage>();
                 var nativeDeps = new Dictionary<string, string> {};
@@ -382,7 +152,17 @@ namespace Generator
                         foreach (var fn in depFiles)
                             OneFile.writeText($"{dstDir}/{fn}", impl.content.files.get($"{srcDir}{fn}"));
                     }
+                    
+                    if (langData.generatorPlugins != null)
+                        foreach (var genPlugFn in langData.generatorPlugins)
+                            generator.addPlugin(new TemplateFileGeneratorPlugin(generator, impl.content.files.get(genPlugFn)));
                 }
+                
+                // generate cross compiled source code
+                console.log($"Generating {langName} code...");
+                var files = generator.generate(compiler.projectPkg);
+                foreach (var file in files)
+                    OneFile.writeText($"{outDir}/{projTemplate.meta.destinationDir ?? ""}/{file.path}", file.content);
                 
                 // generate files from project template
                 var model = new ObjectValue(new Dictionary<string, IVMValue> {

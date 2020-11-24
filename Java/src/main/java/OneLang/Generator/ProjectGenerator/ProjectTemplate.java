@@ -5,26 +5,26 @@ import io.onelang.std.yaml.OneYaml;
 import io.onelang.std.yaml.YamlValue;
 import io.onelang.std.json.OneJObject;
 import io.onelang.std.json.OneJson;
-import io.onelang.std.json.OneJValue;
-import OneLang.Parsers.Common.Reader.Reader;
-import OneLang.One.Ast.Expressions.Expression;
-import OneLang.One.Ast.Expressions.Identifier;
-import OneLang.One.Ast.Expressions.PropertyAccessExpression;
-import OneLang.One.Compiler.Compiler;
 import OneLang.Generator.IGenerator.IGenerator;
-import OneLang.Parsers.Common.ExpressionParser.ExpressionParser;
-import OneLang.Utils.TSOverviewGenerator.TSOverviewGenerator;
 import OneLang.Generator.JavaGenerator.JavaGenerator;
 import OneLang.Generator.CsharpGenerator.CsharpGenerator;
 import OneLang.Generator.PythonGenerator.PythonGenerator;
 import OneLang.Generator.PhpGenerator.PhpGenerator;
 import OneLang.One.CompilerHelper.CompilerHelper;
 import OneLang.StdLib.PackageManager.ImplementationPackage;
+import OneLang.VM.Values.ArrayValue;
+import OneLang.VM.Values.IVMValue;
+import OneLang.VM.Values.ObjectValue;
+import OneLang.VM.Values.StringValue;
+import OneLang.Template.TemplateParser.TemplateParser;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
+import OneLang.Template.Nodes.TemplateContext;
 
 import OneLang.Generator.ProjectGenerator.ProjectTemplateMeta;
 import java.util.Arrays;
-import OneLang.Generator.ProjectGenerator.TemplateFile;
-import OneLang.Generator.ProjectGenerator.ObjectValue;
+import OneLang.Template.TemplateParser.TemplateParser;
+import OneLang.Template.Nodes.TemplateContext;
+import OneLang.VM.Values.ObjectValue;
 
 public class ProjectTemplate {
     public ProjectTemplateMeta meta;
@@ -43,8 +43,8 @@ public class ProjectTemplate {
             var srcFn = this.templateDir + "/src/" + fn;
             var dstFn = dstDir + "/" + fn;
             if (Arrays.stream(this.meta.templateFiles).anyMatch(fn::equals)) {
-                var tmplFile = new TemplateFile(OneFile.readText(srcFn));
-                var dstFile = tmplFile.format(model);
+                var tmpl = new TemplateParser(OneFile.readText(srcFn)).parse();
+                var dstFile = tmpl.format(new TemplateContext(model, null));
                 OneFile.writeText(dstFn, dstFile);
             }
             else

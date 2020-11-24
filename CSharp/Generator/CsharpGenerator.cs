@@ -35,6 +35,16 @@ namespace Generator
             return new ITransformer[0];
         }
         
+        public void addPlugin(IGeneratorPlugin plugin)
+        {
+            
+        }
+        
+        public void addInclude(string include)
+        {
+            this.usings.add(include);
+        }
+        
         public string name_(string name)
         {
             if (this.reservedWords.includes(name))
@@ -129,9 +139,9 @@ namespace Generator
                 return $"{genType.typeVarName}";
             else if (t is LambdaType lambdType) {
                 var isFunc = !(lambdType.returnType is VoidType);
-                var paramTypes = lambdType.parameters.map(x => this.type(x.type)).ToList();
+                var paramTypes = lambdType.parameters.map(x => this.type(x.type, false)).ToList();
                 if (isFunc)
-                    paramTypes.push(this.type(lambdType.returnType));
+                    paramTypes.push(this.type(lambdType.returnType, false));
                 this.usings.add("System");
                 return $"{(isFunc ? "Func" : "Action")}<{paramTypes.join(", ")}>";
             }

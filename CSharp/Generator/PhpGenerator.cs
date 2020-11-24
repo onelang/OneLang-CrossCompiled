@@ -37,6 +37,16 @@ namespace Generator
             return new ITransformer[0];
         }
         
+        public void addPlugin(IGeneratorPlugin plugin)
+        {
+            this.plugins.push(plugin);
+        }
+        
+        public void addInclude(string include)
+        {
+            this.usings.add(include);
+        }
+        
         public string name_(string name)
         {
             if (this.reservedWords.includes(name))

@@ -140,7 +140,7 @@ public class ResolveIdentifiers extends AstTransformer {
     }
     
     protected void visitMethodBase(IMethodBase method) {
-        this.symbolLookup.pushContext(method instanceof Method ? "Method: " + ((Method)method).name : method instanceof Constructor ? "constructor" : "???");
+        this.symbolLookup.pushContext(method instanceof Method ? "Method: " + ((Method)method).getName() : method instanceof Constructor ? "constructor" : "???");
         
         for (var param : method.getParameters()) {
             this.symbolLookup.addSymbol(param.getName(), param);

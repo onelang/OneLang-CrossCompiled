@@ -98,6 +98,10 @@ use OneLang\Generator\JavaPlugins\JsToJava\JsToJava;
 use OneLang\One\ITransformer\ITransformer;
 use OneLang\One\Transforms\ConvertNullCoalesce\ConvertNullCoalesce;
 use OneLang\One\Transforms\UseDefaultCallArgsExplicitly\UseDefaultCallArgsExplicitly;
+use OneLang\Generator\TemplateFileGeneratorPlugin\ExpressionValue;
+use OneLang\Generator\TemplateFileGeneratorPlugin\LambdaValue;
+use OneLang\Generator\TemplateFileGeneratorPlugin\TemplateFileGeneratorPlugin;
+use OneLang\VM\Values\StringValue;
 
 class JavaGenerator implements IGenerator {
     public $imports;
@@ -124,6 +128,36 @@ class JavaGenerator implements IGenerator {
     
     function getTransforms() {
         return array(new ConvertNullCoalesce(), new UseDefaultCallArgsExplicitly());
+    }
+    
+    function addInclude($include) {
+        $this->imports->add($include);
+    }
+    
+    function isArray($arrayExpr) {
+        // TODO: InstanceMethodCallExpression is a hack, we should introduce real stream handling
+        return $arrayExpr instanceof VariableReference && !$arrayExpr->getVariable()->mutability->mutated || $arrayExpr instanceof StaticMethodCallExpression || $arrayExpr instanceof InstanceMethodCallExpression;
+    }
+    
+    function arrayStream($arrayExpr) {
+        $isArray = $this->isArray($arrayExpr);
+        $objR = $this->expr($arrayExpr);
+        if ($isArray)
+            $this->imports->add("java.util.Arrays");
+        return $isArray ? "Arrays.stream(" . $objR . ")" : $objR . ".stream()";
+    }
+    
+    function toArray($arrayType, $typeArgIdx = 0) {
+        $type = ($arrayType)->typeArguments[$typeArgIdx];
+        return "toArray(" . $this->type($type) . "[]::new)";
+    }
+    
+    function addPlugin($plugin) {
+        $this->plugins[] = $plugin;
+        
+        // TODO: hack?
+        if ($plugin instanceof TemplateFileGeneratorPlugin)
+            $plugin->modelGlobals["toStream"] = new LambdaValue(function ($args) { return new StringValue($this->arrayStream(($args[0])->value)); });
     }
     
     function name_($name) {
@@ -229,9 +263,9 @@ class JavaGenerator implements IGenerator {
             return $t->typeVarName;
         else if ($t instanceof LambdaType) {
             $isFunc = !($t->returnType instanceof VoidType);
-            $paramTypes = array_map(function ($x) { return $this->type($x->type); }, $t->parameters);
+            $paramTypes = array_map(function ($x) { return $this->type($x->type, false); }, $t->parameters);
             if ($isFunc)
-                $paramTypes[] = $this->type($t->returnType);
+                $paramTypes[] = $this->type($t->returnType, false);
             $this->imports->add("java.util.function." . ($isFunc ? "Function" : "Consumer"));
             return ($isFunc ? "Function" : "Consumer") . "<" . implode(", ", $paramTypes) . ">";
         }

@@ -96,6 +96,10 @@ import OneLang.Generator.JavaPlugins.JsToJava.JsToJava;
 import OneLang.One.ITransformer.ITransformer;
 import OneLang.One.Transforms.ConvertNullCoalesce.ConvertNullCoalesce;
 import OneLang.One.Transforms.UseDefaultCallArgsExplicitly.UseDefaultCallArgsExplicitly;
+import OneLang.Generator.TemplateFileGeneratorPlugin.ExpressionValue;
+import OneLang.Generator.TemplateFileGeneratorPlugin.LambdaValue;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
+import OneLang.VM.Values.StringValue;
 
 import OneLang.Generator.IGenerator.IGenerator;
 import java.util.Set;
@@ -108,13 +112,21 @@ import OneLang.Generator.JavaPlugins.JsToJava.JsToJava;
 import OneLang.One.ITransformer.ITransformer;
 import OneLang.One.Transforms.ConvertNullCoalesce.ConvertNullCoalesce;
 import OneLang.One.Transforms.UseDefaultCallArgsExplicitly.UseDefaultCallArgsExplicitly;
+import OneLang.One.Ast.References.VariableReference;
+import OneLang.One.Ast.Expressions.StaticMethodCallExpression;
+import OneLang.One.Ast.Expressions.InstanceMethodCallExpression;
+import OneLang.One.Ast.Expressions.Expression;
+import OneLang.One.Ast.AstTypes.ClassType;
+import OneLang.One.Ast.Interfaces.IType;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
+import OneLang.Generator.TemplateFileGeneratorPlugin.LambdaValue;
+import OneLang.VM.Values.StringValue;
+import OneLang.Generator.TemplateFileGeneratorPlugin.ExpressionValue;
 import java.util.Arrays;
 import io.onelang.std.core.RegExp;
 import java.util.stream.Collectors;
 import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Statements.Statement;
-import OneLang.One.Ast.Interfaces.IType;
-import OneLang.One.Ast.AstTypes.ClassType;
 import OneLang.One.Ast.AstTypes.InterfaceType;
 import OneLang.One.Ast.AstTypes.IInterfaceType;
 import OneLang.One.Ast.AstTypes.VoidType;
@@ -126,11 +138,7 @@ import OneLang.One.Ast.AstTypes.LambdaType;
 import OneLang.One.Ast.Types.IVariable;
 import OneLang.One.Ast.Types.IHasAttributesAndTrivia;
 import OneLang.One.Ast.Types.IVariableWithInitializer;
-import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Expressions.ArrayLiteral;
-import OneLang.One.Ast.References.VariableReference;
-import OneLang.One.Ast.Expressions.InstanceMethodCallExpression;
-import OneLang.One.Ast.Expressions.StaticMethodCallExpression;
 import OneLang.One.Ast.Types.MethodParameter;
 import OneLang.One.Ast.Expressions.IMethodCallExpression;
 import io.onelang.std.core.StdArrayHelper;
@@ -228,6 +236,36 @@ public class JavaGenerator implements IGenerator {
     
     public ITransformer[] getTransforms() {
         return new ITransformer[] { ((ITransformer)new ConvertNullCoalesce()), ((ITransformer)new UseDefaultCallArgsExplicitly()) };
+    }
+    
+    public void addInclude(String include) {
+        this.imports.add(include);
+    }
+    
+    public Boolean isArray(Expression arrayExpr) {
+        // TODO: InstanceMethodCallExpression is a hack, we should introduce real stream handling
+        return arrayExpr instanceof VariableReference && !((VariableReference)arrayExpr).getVariable().getMutability().mutated || arrayExpr instanceof StaticMethodCallExpression || arrayExpr instanceof InstanceMethodCallExpression;
+    }
+    
+    public String arrayStream(Expression arrayExpr) {
+        var isArray = this.isArray(arrayExpr);
+        var objR = this.expr(arrayExpr);
+        if (isArray)
+            this.imports.add("java.util.Arrays");
+        return isArray ? "Arrays.stream(" + objR + ")" : objR + ".stream()";
+    }
+    
+    public String toArray(IType arrayType, Integer typeArgIdx) {
+        var type = (((ClassType)arrayType)).getTypeArguments()[typeArgIdx];
+        return "toArray(" + this.type(type, true, false) + "[]::new)";
+    }
+    
+    public void addPlugin(IGeneratorPlugin plugin) {
+        this.plugins.add(plugin);
+        
+        // TODO: hack?
+        if (plugin instanceof TemplateFileGeneratorPlugin)
+            ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("toStream", new LambdaValue(args -> new StringValue(this.arrayStream((((ExpressionValue)args[0])).value))));
     }
     
     public String name_(String name) {
@@ -333,9 +371,9 @@ public class JavaGenerator implements IGenerator {
             return ((GenericsType)t).typeVarName;
         else if (t instanceof LambdaType) {
             var isFunc = !(((LambdaType)t).returnType instanceof VoidType);
-            var paramTypes = new ArrayList<>(Arrays.asList(Arrays.stream(((LambdaType)t).parameters).map(x -> this.type(x.getType(), true, false)).toArray(String[]::new)));
+            var paramTypes = new ArrayList<>(Arrays.asList(Arrays.stream(((LambdaType)t).parameters).map(x -> this.type(x.getType(), false, false)).toArray(String[]::new)));
             if (isFunc)
-                paramTypes.add(this.type(((LambdaType)t).returnType, true, false));
+                paramTypes.add(this.type(((LambdaType)t).returnType, false, false));
             this.imports.add("java.util.function." + (isFunc ? "Function" : "Consumer"));
             return (isFunc ? "Function" : "Consumer") + "<" + paramTypes.stream().collect(Collectors.joining(", ")) + ">";
         }
@@ -422,7 +460,7 @@ public class JavaGenerator implements IGenerator {
     }
     
     public String methodCall(IMethodCallExpression expr) {
-        return this.name_(expr.getMethod().name) + this.typeArgs2(expr.getTypeArgs()) + this.callParams(expr.getArgs(), expr.getMethod().getParameters());
+        return this.name_(expr.getMethod().getName()) + this.typeArgs2(expr.getTypeArgs()) + this.callParams(expr.getArgs(), expr.getMethod().getParameters());
     }
     
     public String inferExprNameForType(IType type) {
@@ -512,7 +550,7 @@ public class JavaGenerator implements IGenerator {
         else if (expr instanceof BinaryExpression) {
             var modifies = new ArrayList<>(List.of("=", "+=", "-=")).stream().anyMatch(((BinaryExpression)expr).operator::equals);
             if (modifies && ((BinaryExpression)expr).left instanceof InstanceFieldReference && this.useGetterSetter(((InstanceFieldReference)((BinaryExpression)expr).left)))
-                res = this.expr(((InstanceFieldReference)((BinaryExpression)expr).left).object) + ".set" + this.ucFirst(((InstanceFieldReference)((BinaryExpression)expr).left).field.getName()) + "(" + this.mutatedExpr(((BinaryExpression)expr).right, Objects.equals(((BinaryExpression)expr).operator, "=") ? ((InstanceFieldReference)((BinaryExpression)expr).left) : null) + ")";
+                res = this.expr(((InstanceFieldReference)((BinaryExpression)expr).left).getObject()) + ".set" + this.ucFirst(((InstanceFieldReference)((BinaryExpression)expr).left).field.getName()) + "(" + this.mutatedExpr(((BinaryExpression)expr).right, Objects.equals(((BinaryExpression)expr).operator, "=") ? ((InstanceFieldReference)((BinaryExpression)expr).left) : null) + ")";
             else if (new ArrayList<>(List.of("==", "!=")).stream().anyMatch(((BinaryExpression)expr).operator::equals)) {
                 var lit = this.currentClass.getParentFile().literalTypes;
                 var leftType = ((BinaryExpression)expr).left.getType();
@@ -608,12 +646,12 @@ public class JavaGenerator implements IGenerator {
         else if (expr instanceof InstanceFieldReference) {
             // TODO: unified handling of field -> property conversion?
             if (this.useGetterSetter(((InstanceFieldReference)expr)))
-                res = this.expr(((InstanceFieldReference)expr).object) + ".get" + this.ucFirst(((InstanceFieldReference)expr).field.getName()) + "()";
+                res = this.expr(((InstanceFieldReference)expr).getObject()) + ".get" + this.ucFirst(((InstanceFieldReference)expr).field.getName()) + "()";
             else
-                res = this.expr(((InstanceFieldReference)expr).object) + "." + this.name_(((InstanceFieldReference)expr).field.getName());
+                res = this.expr(((InstanceFieldReference)expr).getObject()) + "." + this.name_(((InstanceFieldReference)expr).field.getName());
         }
         else if (expr instanceof InstancePropertyReference)
-            res = this.expr(((InstancePropertyReference)expr).object) + "." + (this.isSetExpr(((InstancePropertyReference)expr)) ? "set" : "get") + this.ucFirst(((InstancePropertyReference)expr).property.getName()) + "()";
+            res = this.expr(((InstancePropertyReference)expr).getObject()) + "." + (this.isSetExpr(((InstancePropertyReference)expr)) ? "set" : "get") + this.ucFirst(((InstancePropertyReference)expr).property.getName()) + "()";
         else if (expr instanceof EnumMemberReference)
             res = this.name_(((EnumMemberReference)expr).decl.parentEnum.getName()) + "." + this.name_(((EnumMemberReference)expr).decl.name);
         else if (expr instanceof NullCoalesceExpression)
@@ -623,7 +661,7 @@ public class JavaGenerator implements IGenerator {
     }
     
     public Boolean useGetterSetter(InstanceFieldReference fieldRef) {
-        return fieldRef.object.actualType instanceof InterfaceType || (fieldRef.field.interfaceDeclarations != null && fieldRef.field.interfaceDeclarations.length > 0);
+        return fieldRef.getObject().actualType instanceof InterfaceType || (fieldRef.field.interfaceDeclarations != null && fieldRef.field.interfaceDeclarations.length > 0);
     }
     
     public String block(Block block, Boolean allowOneLiner) {
@@ -714,7 +752,7 @@ public class JavaGenerator implements IGenerator {
     
     public String method(Method method, Boolean isCls) {
         // TODO: final
-        var prefix = (isCls ? this.vis(method.getVisibility()) + " " : "") + this.preIf("static ", method.getIsStatic()) + this.preIf("/* throws */ ", method.getThrows()) + (method.typeArguments.length > 0 ? "<" + Arrays.stream(method.typeArguments).collect(Collectors.joining(", ")) + "> " : "") + this.type(method.returns, false, false) + " " + this.name_(method.name);
+        var prefix = (isCls ? this.vis(method.getVisibility()) + " " : "") + this.preIf("static ", method.getIsStatic()) + this.preIf("/* throws */ ", method.getThrows()) + (method.typeArguments.length > 0 ? "<" + Arrays.stream(method.typeArguments).collect(Collectors.joining(", ")) + "> " : "") + this.type(method.returns, false, false) + " " + this.name_(method.getName());
         
         return this.methodGen(prefix, method.getParameters(), method.getBody() == null ? ";" : " {\n" + this.pad(this.stmts(method.getBody().statements.toArray(Statement[]::new))) + "\n}");
     }

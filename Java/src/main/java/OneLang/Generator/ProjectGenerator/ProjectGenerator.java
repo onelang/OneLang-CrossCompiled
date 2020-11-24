@@ -5,21 +5,20 @@ import io.onelang.std.yaml.OneYaml;
 import io.onelang.std.yaml.YamlValue;
 import io.onelang.std.json.OneJObject;
 import io.onelang.std.json.OneJson;
-import io.onelang.std.json.OneJValue;
-import OneLang.Parsers.Common.Reader.Reader;
-import OneLang.One.Ast.Expressions.Expression;
-import OneLang.One.Ast.Expressions.Identifier;
-import OneLang.One.Ast.Expressions.PropertyAccessExpression;
-import OneLang.One.Compiler.Compiler;
 import OneLang.Generator.IGenerator.IGenerator;
-import OneLang.Parsers.Common.ExpressionParser.ExpressionParser;
-import OneLang.Utils.TSOverviewGenerator.TSOverviewGenerator;
 import OneLang.Generator.JavaGenerator.JavaGenerator;
 import OneLang.Generator.CsharpGenerator.CsharpGenerator;
 import OneLang.Generator.PythonGenerator.PythonGenerator;
 import OneLang.Generator.PhpGenerator.PhpGenerator;
 import OneLang.One.CompilerHelper.CompilerHelper;
 import OneLang.StdLib.PackageManager.ImplementationPackage;
+import OneLang.VM.Values.ArrayValue;
+import OneLang.VM.Values.IVMValue;
+import OneLang.VM.Values.ObjectValue;
+import OneLang.VM.Values.StringValue;
+import OneLang.Template.TemplateParser.TemplateParser;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
+import OneLang.Template.Nodes.TemplateContext;
 
 import OneLang.Generator.ProjectGenerator.OneProjectFile;
 import OneLang.Generator.IGenerator.IGenerator;
@@ -31,16 +30,17 @@ import OneLang.Generator.ProjectGenerator.ProjectTemplate;
 import io.onelang.std.core.Objects;
 import java.util.Arrays;
 import OneLang.One.Ast.Types.SourceFile;
-import io.onelang.std.core.console;
 import OneLang.StdLib.PackageManager.ImplementationPackage;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import OneLang.StdLib.PackageManager.ImplPkgNativeDependency;
-import OneLang.Generator.ProjectGenerator.ObjectValue;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
+import io.onelang.std.core.console;
+import OneLang.VM.Values.ObjectValue;
 import java.util.Map;
-import OneLang.Generator.ProjectGenerator.IVMValue;
-import OneLang.Generator.ProjectGenerator.ArrayValue;
-import OneLang.Generator.ProjectGenerator.StringValue;
+import OneLang.VM.Values.IVMValue;
+import OneLang.VM.Values.ArrayValue;
+import OneLang.VM.Values.StringValue;
 
 public class ProjectGenerator {
     public OneProjectFile projectFile;
@@ -74,17 +74,11 @@ public class ProjectGenerator {
             var langId = projTemplate.meta.language;
             var generator = Arrays.stream(generators).filter(x -> Objects.equals(x.getLangName().toLowerCase(), langId)).findFirst().orElse(null);
             var langName = generator.getLangName();
+            var outDir = this.outDir + "/" + langName;
             
             for (var trans : generator.getTransforms())
                 trans.visitFiles(compiler.projectPkg.files.values().toArray(SourceFile[]::new));
                 
-            // generate cross compiled source code
-            var outDir = this.outDir + "/" + langName;
-            console.log("Generating " + langName + " code...");
-            var files = generator.generate(compiler.projectPkg);
-            for (var file : files)
-                OneFile.writeText(outDir + "/" + projTemplate.meta.destinationDir != null ? projTemplate.meta.destinationDir : "" + "/" + file.path, file.content);
-            
             // copy implementation native sources
             var oneDeps = new ArrayList<ImplementationPackage>();
             var nativeDeps = new LinkedHashMap<String, String>();
@@ -107,7 +101,17 @@ public class ProjectGenerator {
                     for (var fn : depFiles)
                         OneFile.writeText(dstDir + "/" + fn, impl.content.files.get(srcDir + fn));
                 }
+                
+                if (langData.generatorPlugins != null)
+                    for (var genPlugFn : langData.generatorPlugins)
+                        generator.addPlugin(new TemplateFileGeneratorPlugin(generator, impl.content.files.get(genPlugFn)));
             }
+            
+            // generate cross compiled source code
+            console.log("Generating " + langName + " code...");
+            var files = generator.generate(compiler.projectPkg);
+            for (var file : files)
+                OneFile.writeText(outDir + "/" + projTemplate.meta.destinationDir != null ? projTemplate.meta.destinationDir : "" + "/" + file.path, file.content);
             
             // generate files from project template
             var model = new ObjectValue(Map.of("dependencies", ((IVMValue)new ArrayValue(Arrays.stream(nativeDeps.keySet().toArray(String[]::new)).map(name -> new ObjectValue(Map.of("name", ((IVMValue)new StringValue(name)), "version", ((IVMValue)new StringValue(nativeDeps.get(name)))))).toArray(ObjectValue[]::new))), "onepackages", ((IVMValue)new ArrayValue(oneDeps.stream().map(dep -> new ObjectValue(Map.of("vendor", ((IVMValue)new StringValue(dep.implementationYaml.vendor)), "id", ((IVMValue)new StringValue(dep.implementationYaml.name))))).toArray(ObjectValue[]::new)))));

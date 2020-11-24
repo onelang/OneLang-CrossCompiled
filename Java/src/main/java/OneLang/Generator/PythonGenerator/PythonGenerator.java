@@ -231,6 +231,14 @@ public class PythonGenerator implements IGenerator {
         return new ITransformer[0];
     }
     
+    public void addPlugin(IGeneratorPlugin plugin) {
+        this.plugins.add(plugin);
+    }
+    
+    public void addInclude(String include) {
+        this.imports.add(include);
+    }
+    
     public String type(IType type) {
         if (type instanceof ClassType) {
             if (Objects.equals(((ClassType)type).decl.getName(), "TsString"))
@@ -351,7 +359,7 @@ public class PythonGenerator implements IGenerator {
     }
     
     public String methodCall(IMethodCallExpression expr) {
-        return this.name_(expr.getMethod().name) + this.callParams(expr.getArgs());
+        return this.name_(expr.getMethod().getName()) + this.callParams(expr.getArgs());
     }
     
     public String expr(IExpression expr) {
@@ -521,9 +529,9 @@ public class PythonGenerator implements IGenerator {
         else if (expr instanceof StaticPropertyReference)
             res = this.clsName(((StaticPropertyReference)expr).decl.parentClass, false) + ".get_" + this.name_(((StaticPropertyReference)expr).decl.getName()) + "()";
         else if (expr instanceof InstanceFieldReference)
-            res = this.expr(((InstanceFieldReference)expr).object) + "." + this.name_(((InstanceFieldReference)expr).field.getName());
+            res = this.expr(((InstanceFieldReference)expr).getObject()) + "." + this.name_(((InstanceFieldReference)expr).field.getName());
         else if (expr instanceof InstancePropertyReference)
-            res = this.expr(((InstancePropertyReference)expr).object) + ".get_" + this.name_(((InstancePropertyReference)expr).property.getName()) + "()";
+            res = this.expr(((InstancePropertyReference)expr).getObject()) + ".get_" + this.name_(((InstancePropertyReference)expr).property.getName()) + "()";
         else if (expr instanceof EnumMemberReference)
             res = this.enumName(((EnumMemberReference)expr).decl.parentEnum, false) + "." + this.enumMemberName(((EnumMemberReference)expr).decl.name);
         else if (expr instanceof NullCoalesceExpression)
@@ -643,7 +651,7 @@ public class PythonGenerator implements IGenerator {
             if (method.getBody() == null)
                 continue;
             // declaration only
-            methods.add((method.getIsStatic() ? "@classmethod\n" : "") + "def " + this.name_(method.name) + "(" + (method.getIsStatic() ? "cls" : "self") + Arrays.stream(Arrays.stream(method.getParameters()).map(p -> ", " + this.var(p, null)).toArray(String[]::new)).collect(Collectors.joining("")) + "):" + "\n" + this.block(method.getBody(), false));
+            methods.add((method.getIsStatic() ? "@classmethod\n" : "") + "def " + this.name_(method.getName()) + "(" + (method.getIsStatic() ? "cls" : "self") + Arrays.stream(Arrays.stream(method.getParameters()).map(p -> ", " + this.var(p, null)).toArray(String[]::new)).collect(Collectors.joining("")) + "):" + "\n" + this.block(method.getBody(), false));
         }
         resList.add(methods.stream().collect(Collectors.joining("\n\n")));
         var resList2 = resList.stream().filter(x -> !Objects.equals(x, "")).toArray(String[]::new);

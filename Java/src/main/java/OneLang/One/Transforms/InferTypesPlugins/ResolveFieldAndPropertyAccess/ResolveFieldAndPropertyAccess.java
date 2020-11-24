@@ -143,12 +143,12 @@ public class ResolveFieldAndPropertyAccess extends InferTypesPlugin {
     
     public Boolean detectType(Expression expr) {
         if (expr instanceof InstanceFieldReference) {
-            var actualType = GenericsResolver.fromObject(((InstanceFieldReference)expr).object).resolveType(((InstanceFieldReference)expr).field.getType(), true);
-            ((InstanceFieldReference)expr).setActualType(actualType, false, TypeHelper.isGeneric(((InstanceFieldReference)expr).object.actualType));
+            var actualType = GenericsResolver.fromObject(((InstanceFieldReference)expr).getObject()).resolveType(((InstanceFieldReference)expr).field.getType(), true);
+            ((InstanceFieldReference)expr).setActualType(actualType, false, TypeHelper.isGeneric(((InstanceFieldReference)expr).getObject().actualType));
             return true;
         }
         else if (expr instanceof InstancePropertyReference) {
-            var actualType = GenericsResolver.fromObject(((InstancePropertyReference)expr).object).resolveType(((InstancePropertyReference)expr).property.getType(), true);
+            var actualType = GenericsResolver.fromObject(((InstancePropertyReference)expr).getObject()).resolveType(((InstancePropertyReference)expr).property.getType(), true);
             ((InstancePropertyReference)expr).setActualType(actualType, false, false);
             return true;
         }

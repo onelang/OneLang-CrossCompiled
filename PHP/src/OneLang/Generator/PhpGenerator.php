@@ -120,6 +120,14 @@ class PhpGenerator implements IGenerator {
         return array();
     }
     
+    function addPlugin($plugin) {
+        $this->plugins[] = $plugin;
+    }
+    
+    function addInclude($include) {
+        $this->usings->add($include);
+    }
+    
     function name_($name) {
         if (in_array($name, $this->reservedWords))
             $name .= "_";

@@ -419,11 +419,11 @@ public class AstTransformer implements ITransformer {
         else if (expr instanceof GlobalFunctionReference) { }
         else if (expr instanceof SuperReference) { }
         else if (expr instanceof InstanceFieldReference) {
-            ((InstanceFieldReference)expr).object = this.visitExpression(((InstanceFieldReference)expr).object);
+            ((InstanceFieldReference)expr).setObject(this.visitExpression(((InstanceFieldReference)expr).getObject()));
             return this.visitVariableReference(((InstanceFieldReference)expr));
         }
         else if (expr instanceof InstancePropertyReference) {
-            ((InstancePropertyReference)expr).object = this.visitExpression(((InstancePropertyReference)expr).object);
+            ((InstancePropertyReference)expr).setObject(this.visitExpression(((InstancePropertyReference)expr).getObject()));
             return this.visitVariableReference(((InstancePropertyReference)expr));
         }
         else if (expr instanceof StaticFieldReference)

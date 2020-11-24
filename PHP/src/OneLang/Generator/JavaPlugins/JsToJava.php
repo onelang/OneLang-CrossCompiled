@@ -57,8 +57,10 @@ class JsToJava implements IGeneratorPlugin {
         $argsR = array_map(function ($x) { return $this->main->expr($x); }, $args);
         if ($cls->name === "TsArray") {
             if ($method->name === "includes")
+                // TsArray.includes(value): ${toStream(this)}.anyMatch($value}::equals)
                 return $this->arrayStream($obj) . ".anyMatch(" . $argsR[0] . "::equals)";
             else if ($method->name === "set") {
+                // TsArray.set(key, value): $this[$key] = $value
                 if ($this->isArray($obj))
                     return $objR . "[" . $argsR[0] . "] = " . $argsR[1];
                 else

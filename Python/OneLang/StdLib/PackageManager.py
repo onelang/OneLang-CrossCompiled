@@ -86,15 +86,16 @@ class ImplPkgNativeDependency:
         return ImplPkgNativeDependency(obj.str("name"), obj.str("version"))
 
 class ImplPkgLanguage:
-    def __init__(self, id, package_dir, native_src_dir, native_dependencies):
+    def __init__(self, id, package_dir, generator_plugins, native_src_dir, native_dependencies):
         self.id = id
         self.package_dir = package_dir
+        self.generator_plugins = generator_plugins
         self.native_src_dir = native_src_dir
         self.native_dependencies = native_dependencies
     
     @classmethod
     def from_yaml(cls, obj):
-        return ImplPkgLanguage(obj.str("id"), obj.str("package-dir"), obj.str("native-src-dir"), list(map(lambda impl: ImplPkgNativeDependency.from_yaml(impl), obj.arr("native-dependencies"))))
+        return ImplPkgLanguage(obj.str("id"), obj.str("package-dir"), obj.str_arr("generator-plugins"), obj.str("native-src-dir"), list(map(lambda impl: ImplPkgNativeDependency.from_yaml(impl), obj.arr("native-dependencies"))))
 
 class ImplPackageYaml:
     def __init__(self, file_version, vendor, name, description, version, includes, implements_, languages):

@@ -41,6 +41,16 @@ namespace Generator
             return new ITransformer[0];
         }
         
+        public void addPlugin(IGeneratorPlugin plugin)
+        {
+            this.plugins.push(plugin);
+        }
+        
+        public void addInclude(string include)
+        {
+            this.imports.add(include);
+        }
+        
         public string type(IType type)
         {
             if (type is ClassType classType) {

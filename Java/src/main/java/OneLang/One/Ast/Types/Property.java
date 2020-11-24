@@ -37,6 +37,7 @@ import OneLang.One.Ast.References.StaticPropertyReference;
 import OneLang.One.Ast.References.InstancePropertyReference;
 import OneLang.One.Ast.Types.MutabilityInfo;
 import java.util.ArrayList;
+import OneLang.One.Ast.Types.IInterface;
 
 public class Property implements IVariable, IHasAttributesAndTrivia, IClassMember, IAstNode {
     public Block getter;
@@ -85,5 +86,9 @@ public class Property implements IVariable, IHasAttributesAndTrivia, IClassMembe
         this.parentClass = null;
         this.staticReferences = new ArrayList<StaticPropertyReference>();
         this.instanceReferences = new ArrayList<InstancePropertyReference>();
+    }
+    
+    public IInterface getParentInterface() {
+        return this.parentClass;
     }
 }

@@ -32,6 +32,12 @@ class PhpGenerator:
     def get_transforms(self):
         return []
     
+    def add_plugin(self, plugin):
+        self.plugins.append(plugin)
+    
+    def add_include(self, include):
+        self.usings[include] = None
+    
     def name_(self, name):
         if name in self.reserved_words:
             name += "_"

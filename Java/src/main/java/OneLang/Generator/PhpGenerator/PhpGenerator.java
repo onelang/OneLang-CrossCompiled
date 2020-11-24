@@ -221,6 +221,14 @@ public class PhpGenerator implements IGenerator {
         return new ITransformer[0];
     }
     
+    public void addPlugin(IGeneratorPlugin plugin) {
+        this.plugins.add(plugin);
+    }
+    
+    public void addInclude(String include) {
+        this.usings.add(include);
+    }
+    
     public String name_(String name) {
         if (Arrays.stream(this.reservedWords).anyMatch(name::equals))
             name += "_";
@@ -385,7 +393,7 @@ public class PhpGenerator implements IGenerator {
     }
     
     public String methodCall(IMethodCallExpression expr) {
-        return this.name_(expr.getMethod().name) + this.typeArgs2(expr.getTypeArgs()) + this.callParams(expr.getArgs(), expr.getMethod().getParameters());
+        return this.name_(expr.getMethod().getName()) + this.typeArgs2(expr.getTypeArgs()) + this.callParams(expr.getArgs(), expr.getMethod().getParameters());
     }
     
     public String inferExprNameForType(IType type) {
@@ -557,9 +565,9 @@ public class PhpGenerator implements IGenerator {
         else if (expr instanceof StaticPropertyReference)
             res = this.name_(((StaticPropertyReference)expr).decl.parentClass.getName()) + "::get_" + this.name_(((StaticPropertyReference)expr).decl.getName()) + "()";
         else if (expr instanceof InstanceFieldReference)
-            res = this.expr(((InstanceFieldReference)expr).object) + "->" + this.name_(((InstanceFieldReference)expr).field.getName());
+            res = this.expr(((InstanceFieldReference)expr).getObject()) + "->" + this.name_(((InstanceFieldReference)expr).field.getName());
         else if (expr instanceof InstancePropertyReference)
-            res = this.expr(((InstancePropertyReference)expr).object) + "->get_" + this.name_(((InstancePropertyReference)expr).property.getName()) + "()";
+            res = this.expr(((InstancePropertyReference)expr).getObject()) + "->get_" + this.name_(((InstancePropertyReference)expr).property.getName()) + "()";
         else if (expr instanceof EnumMemberReference)
             res = this.name_(((EnumMemberReference)expr).decl.parentEnum.getName()) + "::" + this.enumMemberName(((EnumMemberReference)expr).decl.name);
         else if (expr instanceof NullCoalesceExpression)
@@ -710,7 +718,7 @@ public class PhpGenerator implements IGenerator {
             if (cls instanceof Class && method.getBody() == null)
                 continue;
             // declaration only
-            methods.add((method.parentInterface instanceof Interface ? "" : this.vis(method.getVisibility(), false)) + this.preIf("static ", method.getIsStatic()) + this.preIf("/* throws */ ", method.getThrows()) + "function " + this.name_(method.name) + this.typeArgs(method.typeArguments) + "(" + Arrays.stream(Arrays.stream(method.getParameters()).map(p -> this.var(p, null)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")" + (method.getBody() != null ? " {\n" + this.pad(this.stmts(method.getBody().statements.toArray(Statement[]::new))) + "\n}" : ";"));
+            methods.add((method.parentInterface instanceof Interface ? "" : this.vis(method.getVisibility(), false)) + this.preIf("static ", method.getIsStatic()) + this.preIf("/* throws */ ", method.getThrows()) + "function " + this.name_(method.getName()) + this.typeArgs(method.typeArguments) + "(" + Arrays.stream(Arrays.stream(method.getParameters()).map(p -> this.var(p, null)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")" + (method.getBody() != null ? " {\n" + this.pad(this.stmts(method.getBody().statements.toArray(Statement[]::new))) + "\n}" : ";"));
         }
         resList.add(methods.stream().collect(Collectors.joining("\n\n")));
         return " {\n" + this.pad(Arrays.stream(resList.stream().filter(x -> !Objects.equals(x, "")).toArray(String[]::new)).collect(Collectors.joining("\n\n"))) + "\n}" + (staticConstructorStmts.size() > 0 ? "\n" + this.name_(cls.getName()) + "::StaticInit();" : "");

@@ -25,18 +25,22 @@ import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 
 import OneLang.One.Ast.References.VariableReference;
+import OneLang.One.Ast.References.IInstanceMemberReference;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Types.Property;
 import OneLang.One.Ast.Types.IVariable;
 
-public class InstancePropertyReference extends VariableReference {
-    public Expression object;
+public class InstancePropertyReference extends VariableReference implements IInstanceMemberReference {
     public Property property;
+    
+    Expression object;
+    public Expression getObject() { return this.object; }
+    public void setObject(Expression value) { this.object = value; }
     
     public InstancePropertyReference(Expression object, Property property)
     {
         super();
-        this.object = object;
+        this.setObject(object);
         this.property = property;
         property.instanceReferences.add(this);
     }

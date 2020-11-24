@@ -25,18 +25,22 @@ import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 
 import OneLang.One.Ast.References.VariableReference;
+import OneLang.One.Ast.References.IInstanceMemberReference;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Types.Field;
 import OneLang.One.Ast.Types.IVariable;
 
-public class InstanceFieldReference extends VariableReference {
-    public Expression object;
+public class InstanceFieldReference extends VariableReference implements IInstanceMemberReference {
     public Field field;
+    
+    Expression object;
+    public Expression getObject() { return this.object; }
+    public void setObject(Expression value) { this.object = value; }
     
     public InstanceFieldReference(Expression object, Field field)
     {
         super();
-        this.object = object;
+        this.setObject(object);
         this.field = field;
         field.instanceReferences.add(this);
     }

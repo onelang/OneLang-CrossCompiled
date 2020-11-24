@@ -10,6 +10,10 @@ namespace One.Ast
         IMethodBase getMethodBase();
     }
     
+    public interface IInstanceMemberReference {
+        Expression object_ { get; set; }
+    }
+    
     public class Reference : Expression {
         
     }
@@ -261,8 +265,8 @@ namespace One.Ast
         }
     }
     
-    public class InstanceFieldReference : VariableReference {
-        public Expression object_;
+    public class InstanceFieldReference : VariableReference, IInstanceMemberReference {
+        public Expression object_ { get; set; }
         public Field field;
         
         public InstanceFieldReference(Expression object_, Field field): base()
@@ -278,8 +282,8 @@ namespace One.Ast
         }
     }
     
-    public class InstancePropertyReference : VariableReference {
-        public Expression object_;
+    public class InstancePropertyReference : VariableReference, IInstanceMemberReference {
+        public Expression object_ { get; set; }
         public Property property;
         
         public InstancePropertyReference(Expression object_, Property property): base()

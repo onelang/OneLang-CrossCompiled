@@ -35,8 +35,8 @@ public class CollectInheritanceInfo implements ITransformer {
             field.interfaceDeclarations = Arrays.stream(Arrays.stream(intfs).map(x -> Arrays.stream(x.getFields()).filter(f -> Objects.equals(f.getName(), field.getName())).findFirst().orElse(null)).toArray(Field[]::new)).filter(x -> x != null).toArray(Field[]::new);
         
         for (var method : cls.getMethods()) {
-            method.interfaceDeclarations = Arrays.stream(Arrays.stream(intfs).map(x -> Arrays.stream(x.getMethods()).filter(m -> Objects.equals(m.name, method.name)).findFirst().orElse(null)).toArray(Method[]::new)).filter(x -> x != null).toArray(Method[]::new);
-            method.overrides = Arrays.stream(Arrays.stream(clses).map(x -> Arrays.stream(x.getMethods()).filter(m -> Objects.equals(m.name, method.name)).findFirst().orElse(null)).toArray(Method[]::new)).filter(x -> x != null).findFirst().orElse(null);
+            method.interfaceDeclarations = Arrays.stream(Arrays.stream(intfs).map(x -> Arrays.stream(x.getMethods()).filter(m -> Objects.equals(m.getName(), method.getName())).findFirst().orElse(null)).toArray(Method[]::new)).filter(x -> x != null).toArray(Method[]::new);
+            method.overrides = Arrays.stream(Arrays.stream(clses).map(x -> Arrays.stream(x.getMethods()).filter(m -> Objects.equals(m.getName(), method.getName())).findFirst().orElse(null)).toArray(Method[]::new)).filter(x -> x != null).findFirst().orElse(null);
             if (method.overrides != null)
                 method.overrides.overriddenBy.add(method);
         }

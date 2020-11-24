@@ -27,7 +27,7 @@ import OneLang.One.Ast.Expressions.Expression;
 public class DefaultExpressionNamingStrategy implements IExpressionNamingStrategy {
     public String getNameFor(Expression expr) {
         if (expr instanceof InstanceMethodCallExpression || expr instanceof StaticMethodCallExpression)
-            return (((IMethodCallExpression)expr)).getMethod().name + "Result";
+            return (((IMethodCallExpression)expr)).getMethod().getName() + "Result";
         return "result";
     }
 }

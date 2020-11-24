@@ -24,10 +24,17 @@ import OneLang.One.Ast.AstHelper.AstHelper;
 import OneLang.One.Ast.Statements.Block;
 import OneLang.One.Ast.Interfaces.IType;
 
+import OneLang.One.Ast.Types.IInterface;
+
 public interface IClassMember {
+    String getName();
+    void setName(String value);
+    
     Visibility getVisibility();
     void setVisibility(Visibility value);
     
     Boolean getIsStatic();
     void setIsStatic(Boolean value);
+    
+    IInterface getParentInterface();
 }

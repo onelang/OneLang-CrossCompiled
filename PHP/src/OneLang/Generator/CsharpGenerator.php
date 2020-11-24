@@ -90,6 +90,7 @@ use OneLang\Generator\IGenerator\IGenerator;
 use OneLang\One\Ast\Interfaces\IExpression;
 use OneLang\One\Ast\Interfaces\IType;
 use OneLang\One\ITransformer\ITransformer;
+use OneLang\Generator\IGeneratorPlugin\IGeneratorPlugin;
 
 class CsharpGenerator implements IGenerator {
     public $usings;
@@ -115,6 +116,14 @@ class CsharpGenerator implements IGenerator {
     
     function getTransforms() {
         return array();
+    }
+    
+    function addPlugin($plugin) {
+        
+    }
+    
+    function addInclude($include) {
+        $this->usings->add($include);
     }
     
     function name_($name) {
@@ -203,9 +212,9 @@ class CsharpGenerator implements IGenerator {
             return $t->typeVarName;
         else if ($t instanceof LambdaType) {
             $isFunc = !($t->returnType instanceof VoidType);
-            $paramTypes = array_map(function ($x) { return $this->type($x->type); }, $t->parameters);
+            $paramTypes = array_map(function ($x) { return $this->type($x->type, false); }, $t->parameters);
             if ($isFunc)
-                $paramTypes[] = $this->type($t->returnType);
+                $paramTypes[] = $this->type($t->returnType, false);
             $this->usings->add("System");
             return ($isFunc ? "Func" : "Action") . "<" . implode(", ", $paramTypes) . ">";
         }

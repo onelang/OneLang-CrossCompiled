@@ -13,6 +13,8 @@ import OneLang.Generator.JavaPlugins.JsToJava as jsToJava
 import OneLang.One.ITransformer as iTrans
 import OneLang.One.Transforms.ConvertNullCoalesce as convNullCoal
 import OneLang.One.Transforms.UseDefaultCallArgsExplicitly as useDefCallArgsExpl
+import OneLang.Generator.TemplateFileGeneratorPlugin as templFileGenPlug
+import OneLang.VM.Values as vals
 import re
 import json
 
@@ -33,6 +35,31 @@ class JavaGenerator:
     
     def get_transforms(self):
         return [convNullCoal.ConvertNullCoalesce(), useDefCallArgsExpl.UseDefaultCallArgsExplicitly()]
+    
+    def add_include(self, include):
+        self.imports[include] = None
+    
+    def is_array(self, array_expr):
+        # TODO: InstanceMethodCallExpression is a hack, we should introduce real stream handling
+        return isinstance(array_expr, refs.VariableReference) and not array_expr.get_variable().mutability.mutated or isinstance(array_expr, exprs.StaticMethodCallExpression) or isinstance(array_expr, exprs.InstanceMethodCallExpression)
+    
+    def array_stream(self, array_expr):
+        is_array = self.is_array(array_expr)
+        obj_r = self.expr(array_expr)
+        if is_array:
+            self.imports["java.util.Arrays"] = None
+        return f'''Arrays.stream({obj_r})''' if is_array else f'''{obj_r}.stream()'''
+    
+    def to_array(self, array_type, type_arg_idx = 0):
+        type = (array_type).type_arguments[type_arg_idx]
+        return f'''toArray({self.type(type)}[]::new)'''
+    
+    def add_plugin(self, plugin):
+        self.plugins.append(plugin)
+        
+        # TODO: hack?
+        if isinstance(plugin, templFileGenPlug.TemplateFileGeneratorPlugin):
+            plugin.model_globals["toStream"] = templFileGenPlug.LambdaValue(lambda args: vals.StringValue(self.array_stream((args[0]).value)))
     
     def name_(self, name):
         if name in self.reserved_words:
@@ -126,9 +153,9 @@ class JavaGenerator:
             return f'''{t.type_var_name}'''
         elif isinstance(t, astTypes.LambdaType):
             is_func = not (isinstance(t.return_type, astTypes.VoidType))
-            param_types = list(map(lambda x: self.type(x.type), t.parameters))
+            param_types = list(map(lambda x: self.type(x.type, False), t.parameters))
             if is_func:
-                param_types.append(self.type(t.return_type))
+                param_types.append(self.type(t.return_type, False))
             self.imports["java.util.function." + ("Function" if is_func else "Consumer")] = None
             return f'''{("Function" if is_func else "Consumer")}<{", ".join(param_types)}>'''
         elif t == None:

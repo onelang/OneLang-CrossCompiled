@@ -41,8 +41,10 @@ namespace Generator.JavaPlugins
             var argsR = args.map(x => this.main.expr(x));
             if (cls.name == "TsArray") {
                 if (method.name == "includes")
+                    // TsArray.includes(value): ${toStream(this)}.anyMatch($value}::equals)
                     return $"{this.arrayStream(obj)}.anyMatch({argsR.get(0)}::equals)";
                 else if (method.name == "set") {
+                    // TsArray.set(key, value): $this[$key] = $value
                     if (this.isArray(obj))
                         return $"{objR}[{argsR.get(0)}] = {argsR.get(1)}";
                     else

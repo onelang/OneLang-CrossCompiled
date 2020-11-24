@@ -47,7 +47,7 @@ public class ErrorManager {
         else if (par instanceof Property)
             location = ((Property)par).parentClass.getParentFile().sourcePath.path + " -> " + ((Property)par).parentClass.getName() + "::" + ((Property)par).getName() + " (property)";
         else if (par instanceof Method)
-            location = ((Method)par).parentInterface.getParentFile().sourcePath.path + " -> " + ((Method)par).parentInterface.getName() + "::" + ((Method)par).name + " (method)";
+            location = ((Method)par).parentInterface.getParentFile().sourcePath.path + " -> " + ((Method)par).parentInterface.getName() + "::" + ((Method)par).getName() + " (method)";
         else if (par instanceof Constructor)
             location = ((Constructor)par).parentClass.getParentFile().sourcePath.path + " -> " + ((Constructor)par).parentClass.getName() + "::constructor";
         else if (par == null) { }
@@ -59,7 +59,7 @@ public class ErrorManager {
             if (t.currentInterface != null) {
                 location += " -> " + t.currentInterface.getName();
                 if (t.currentMethod instanceof Method)
-                    location += "::" + ((Method)t.currentMethod).name;
+                    location += "::" + ((Method)t.currentMethod).getName();
                 else if (t.currentMethod instanceof Constructor)
                     location += "::constructor";
                 else if (t.currentMethod instanceof Lambda)

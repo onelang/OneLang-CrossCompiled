@@ -41,7 +41,7 @@ interface IVariable {
 }
 
 interface IClassMember {
-    
+    function getParentInterface();
 }
 
 interface IVariableWithInitializer extends IVariable {
@@ -440,6 +440,10 @@ class Field implements IVariableWithInitializer, IHasAttributesAndTrivia, IClass
         $this->instanceReferences = array();
         $this->interfaceDeclarations = null;
     }
+    
+    function getParentInterface() {
+        return $this->parentInterface;
+    }
 }
 
 class Property implements IVariable, IHasAttributesAndTrivia, IClassMember, IAstNode {
@@ -467,6 +471,10 @@ class Property implements IVariable, IHasAttributesAndTrivia, IClassMember, IAst
         $this->parentClass = null;
         $this->staticReferences = array();
         $this->instanceReferences = array();
+    }
+    
+    function getParentInterface() {
+        return $this->parentClass;
     }
 }
 
@@ -545,6 +553,10 @@ class Method implements IMethodBaseWithTrivia, IClassMember {
         $this->interfaceDeclarations = null;
         $this->overrides = null;
         $this->overriddenBy = array();
+    }
+    
+    function getParentInterface() {
+        return $this->parentInterface;
     }
 }
 

@@ -34,6 +34,10 @@ interface IGetMethodBase {
     function getMethodBase();
 }
 
+interface IInstanceMemberReference {
+    
+}
+
 class Reference extends Expression {
     
 }
@@ -266,7 +270,7 @@ class StaticPropertyReference extends VariableReference {
     }
 }
 
-class InstanceFieldReference extends VariableReference {
+class InstanceFieldReference extends VariableReference implements IInstanceMemberReference {
     public $object;
     public $field;
     
@@ -282,7 +286,7 @@ class InstanceFieldReference extends VariableReference {
     }
 }
 
-class InstancePropertyReference extends VariableReference {
+class InstancePropertyReference extends VariableReference implements IInstanceMemberReference {
     public $object;
     public $property;
     

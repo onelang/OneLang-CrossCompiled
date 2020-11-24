@@ -93,4 +93,8 @@ public class Field implements IVariableWithInitializer, IHasAttributesAndTrivia,
         this.instanceReferences = new ArrayList<InstanceFieldReference>();
         this.interfaceDeclarations = null;
     }
+    
+    public IInterface getParentInterface() {
+        return this.parentInterface;
+    }
 }

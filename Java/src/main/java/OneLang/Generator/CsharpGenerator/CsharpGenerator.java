@@ -88,6 +88,7 @@ import OneLang.Generator.IGenerator.IGenerator;
 import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 import OneLang.One.ITransformer.ITransformer;
+import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
 
 import OneLang.Generator.IGenerator.IGenerator;
 import java.util.Set;
@@ -95,6 +96,7 @@ import OneLang.One.Ast.Types.IInterface;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import OneLang.One.ITransformer.ITransformer;
+import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
 import java.util.Arrays;
 import io.onelang.std.core.RegExp;
 import java.util.stream.Collectors;
@@ -216,6 +218,14 @@ public class CsharpGenerator implements IGenerator {
         return new ITransformer[0];
     }
     
+    public void addPlugin(IGeneratorPlugin plugin) {
+        
+    }
+    
+    public void addInclude(String include) {
+        this.usings.add(include);
+    }
+    
     public String name_(String name) {
         if (Arrays.stream(this.reservedWords).anyMatch(name::equals))
             name += "_";
@@ -302,9 +312,9 @@ public class CsharpGenerator implements IGenerator {
             return ((GenericsType)t).typeVarName;
         else if (t instanceof LambdaType) {
             var isFunc = !(((LambdaType)t).returnType instanceof VoidType);
-            var paramTypes = new ArrayList<>(Arrays.asList(Arrays.stream(((LambdaType)t).parameters).map(x -> this.type(x.getType(), true)).toArray(String[]::new)));
+            var paramTypes = new ArrayList<>(Arrays.asList(Arrays.stream(((LambdaType)t).parameters).map(x -> this.type(x.getType(), false)).toArray(String[]::new)));
             if (isFunc)
-                paramTypes.add(this.type(((LambdaType)t).returnType, true));
+                paramTypes.add(this.type(((LambdaType)t).returnType, false));
             this.usings.add("System");
             return (isFunc ? "Func" : "Action") + "<" + paramTypes.stream().collect(Collectors.joining(", ")) + ">";
         }
@@ -387,7 +397,7 @@ public class CsharpGenerator implements IGenerator {
     }
     
     public String methodCall(IMethodCallExpression expr) {
-        return this.name_(expr.getMethod().name) + this.typeArgs2(expr.getTypeArgs()) + this.callParams(expr.getArgs(), expr.getMethod().getParameters());
+        return this.name_(expr.getMethod().getName()) + this.typeArgs2(expr.getTypeArgs()) + this.callParams(expr.getArgs(), expr.getMethod().getParameters());
     }
     
     public String inferExprNameForType(IType type) {
@@ -550,9 +560,9 @@ public class CsharpGenerator implements IGenerator {
         else if (expr instanceof StaticPropertyReference)
             res = this.name_(((StaticPropertyReference)expr).decl.parentClass.getName()) + "." + this.name_(((StaticPropertyReference)expr).decl.getName());
         else if (expr instanceof InstanceFieldReference)
-            res = this.expr(((InstanceFieldReference)expr).object) + "." + this.name_(((InstanceFieldReference)expr).field.getName());
+            res = this.expr(((InstanceFieldReference)expr).getObject()) + "." + this.name_(((InstanceFieldReference)expr).field.getName());
         else if (expr instanceof InstancePropertyReference)
-            res = this.expr(((InstancePropertyReference)expr).object) + "." + this.name_(((InstancePropertyReference)expr).property.getName());
+            res = this.expr(((InstancePropertyReference)expr).getObject()) + "." + this.name_(((InstancePropertyReference)expr).property.getName());
         else if (expr instanceof EnumMemberReference)
             res = this.name_(((EnumMemberReference)expr).decl.parentEnum.getName()) + "." + this.name_(((EnumMemberReference)expr).decl.name);
         else if (expr instanceof NullCoalesceExpression)
@@ -682,7 +692,7 @@ public class CsharpGenerator implements IGenerator {
             if (cls instanceof Class && method.getBody() == null)
                 continue;
             // declaration only
-            methods.add((method.parentInterface instanceof Interface ? "" : this.vis(method.getVisibility()) + " ") + this.preIf("static ", method.getIsStatic()) + this.preIf("virtual ", method.overrides == null && method.overriddenBy.size() > 0) + this.preIf("override ", method.overrides != null) + this.preIf("async ", method.async) + this.preIf("/* throws */ ", method.getThrows()) + this.type(method.returns, false) + " " + this.name_(method.name) + this.typeArgs(method.typeArguments) + "(" + Arrays.stream(Arrays.stream(method.getParameters()).map(p -> this.var(p, null)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")" + (method.getBody() != null ? "\n{\n" + this.pad(this.stmts(method.getBody().statements.toArray(Statement[]::new))) + "\n}" : ";"));
+            methods.add((method.parentInterface instanceof Interface ? "" : this.vis(method.getVisibility()) + " ") + this.preIf("static ", method.getIsStatic()) + this.preIf("virtual ", method.overrides == null && method.overriddenBy.size() > 0) + this.preIf("override ", method.overrides != null) + this.preIf("async ", method.async) + this.preIf("/* throws */ ", method.getThrows()) + this.type(method.returns, false) + " " + this.name_(method.getName()) + this.typeArgs(method.typeArguments) + "(" + Arrays.stream(Arrays.stream(method.getParameters()).map(p -> this.var(p, null)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")" + (method.getBody() != null ? "\n{\n" + this.pad(this.stmts(method.getBody().statements.toArray(Statement[]::new))) + "\n}" : ";"));
         }
         resList.add(methods.stream().collect(Collectors.joining("\n\n")));
         return this.pad(Arrays.stream(resList.stream().filter(x -> !Objects.equals(x, "")).toArray(String[]::new)).collect(Collectors.joining("\n\n")));

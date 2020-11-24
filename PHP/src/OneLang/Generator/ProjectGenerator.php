@@ -5,28 +5,20 @@ namespace OneLang\Generator\ProjectGenerator;
 use OneLang\File\OneFile;
 use OneLang\Yaml\OneYaml;
 use OneLang\Json\OneJson;
-use OneLang\Parsers\Common\Reader\Reader;
-use OneLang\One\Ast\Expressions\Expression;
-use OneLang\One\Ast\Expressions\Identifier;
-use OneLang\One\Ast\Expressions\PropertyAccessExpression;
-use OneLang\One\Compiler\Compiler;
 use OneLang\Generator\IGenerator\IGenerator;
-use OneLang\Parsers\Common\ExpressionParser\ExpressionParser;
-use OneLang\Utils\TSOverviewGenerator\TSOverviewGenerator;
 use OneLang\Generator\JavaGenerator\JavaGenerator;
 use OneLang\Generator\CsharpGenerator\CsharpGenerator;
 use OneLang\Generator\PythonGenerator\PythonGenerator;
 use OneLang\Generator\PhpGenerator\PhpGenerator;
 use OneLang\One\CompilerHelper\CompilerHelper;
 use OneLang\StdLib\PackageManager\ImplementationPackage;
-
-interface IVMValue {
-    
-}
-
-interface ITemplateNode {
-    function format($model);
-}
+use OneLang\VM\Values\ArrayValue;
+use OneLang\VM\Values\IVMValue;
+use OneLang\VM\Values\ObjectValue;
+use OneLang\VM\Values\StringValue;
+use OneLang\Template\TemplateParser\TemplateParser;
+use OneLang\Generator\TemplateFileGeneratorPlugin\TemplateFileGeneratorPlugin;
+use OneLang\Template\Nodes\TemplateContext;
 
 class ProjectTemplateMeta {
     public $language;
@@ -46,201 +38,6 @@ class ProjectTemplateMeta {
     }
 }
 
-class ObjectValue implements IVMValue {
-    public $props;
-    
-    function __construct($props) {
-        $this->props = $props;
-    }
-}
-
-class StringValue implements IVMValue {
-    public $value;
-    
-    function __construct($value) {
-        $this->value = $value;
-    }
-}
-
-class ArrayValue implements IVMValue {
-    public $items;
-    
-    function __construct($items) {
-        $this->items = $items;
-    }
-}
-
-class TemplateBlock implements ITemplateNode {
-    public $items;
-    
-    function __construct($items) {
-        $this->items = $items;
-    }
-    
-    function format($model) {
-        return implode("", array_map(function ($x) use ($model) { return $x->format($model); }, $this->items));
-    }
-}
-
-class LiteralNode implements ITemplateNode {
-    public $value;
-    
-    function __construct($value) {
-        $this->value = $value;
-    }
-    
-    function format($model) {
-        return $this->value;
-    }
-}
-
-class ExprVM {
-    public $model;
-    
-    function __construct($model) {
-        $this->model = $model;
-    }
-    
-    static function propAccess($obj, $propName) {
-        if (!($obj instanceof ObjectValue))
-            throw new \OneLang\Core\Error("You can only access a property of an object!");
-        if (!(array_key_exists($propName, ($obj)->props)))
-            throw new \OneLang\Core\Error("Property '" . $propName . "' does not exists on this object!");
-        return @($obj)->props[$propName] ?? null;
-    }
-    
-    function evaluate($expr) {
-        if ($expr instanceof Identifier)
-            return ExprVM::propAccess($this->model, $expr->text);
-        else if ($expr instanceof PropertyAccessExpression) {
-            $objValue = $this->evaluate($expr->object);
-            return ExprVM::propAccess($objValue, $expr->propertyName);
-        }
-        else
-            throw new \OneLang\Core\Error("Unsupported expression!");
-    }
-}
-
-class ExpressionNode implements ITemplateNode {
-    public $expr;
-    
-    function __construct($expr) {
-        $this->expr = $expr;
-    }
-    
-    function format($model) {
-        $result = (new ExprVM($model))->evaluate($this->expr);
-        if ($result instanceof StringValue)
-            return $result->value;
-        else
-            throw new \OneLang\Core\Error("ExpressionNode (" . TSOverviewGenerator::$preview->expr($this->expr) . ") return a non-string result!");
-    }
-}
-
-class ForNode implements ITemplateNode {
-    public $variableName;
-    public $itemsExpr;
-    public $body;
-    public $joiner;
-    
-    function __construct($variableName, $itemsExpr, $body, $joiner) {
-        $this->variableName = $variableName;
-        $this->itemsExpr = $itemsExpr;
-        $this->body = $body;
-        $this->joiner = $joiner;
-    }
-    
-    function format($model) {
-        $items = (new ExprVM($model))->evaluate($this->itemsExpr);
-        if (!($items instanceof ArrayValue))
-            throw new \OneLang\Core\Error("ForNode items (" . TSOverviewGenerator::$preview->expr($this->itemsExpr) . ") return a non-array result!");
-        
-        $result = "";
-        foreach (($items)->items as $item) {
-            if ($this->joiner !== null && $result !== "")
-                $result .= $this->joiner;
-            
-            $model->props[$this->variableName] = $item;
-            $result .= $this->body->format($model);
-        }
-        /* unset @$model->props[$this->variableName] ?? null; */
-        return $result;
-    }
-}
-
-class TemplateParser {
-    public $reader;
-    public $exprParser;
-    public $template;
-    
-    function __construct($template) {
-        $this->template = $template;
-        $this->reader = new Reader($template);
-        $this->exprParser = new ExpressionParser($this->reader);
-    }
-    
-    function parseAttributes() {
-        $result = Array();
-        while ($this->reader->readToken(",")) {
-            $key = $this->reader->expectIdentifier();
-            $value = $this->reader->readToken("=") ? $this->reader->expectString() : null;
-            $result[$key] = $value;
-        }
-        return $result;
-    }
-    
-    function parseBlock() {
-        $items = array();
-        while (!$this->reader->get_eof()) {
-            if ($this->reader->peekToken("{{/"))
-                break;
-            if ($this->reader->readToken("{{")) {
-                if ($this->reader->readToken("for")) {
-                    $varName = $this->reader->readIdentifier();
-                    $this->reader->expectToken("of");
-                    $itemsExpr = $this->exprParser->parse();
-                    $attrs = $this->parseAttributes();
-                    $this->reader->expectToken("}}");
-                    $body = $this->parseBlock();
-                    $this->reader->expectToken("{{/for}}");
-                    $items[] = new ForNode($varName, $itemsExpr, $body, @$attrs["joiner"] ?? null);
-                }
-                else {
-                    $expr = $this->exprParser->parse();
-                    $items[] = new ExpressionNode($expr);
-                    $this->reader->expectToken("}}");
-                }
-            }
-            else {
-                $literal = $this->reader->readUntil("{{", true);
-                if (substr_compare($literal, "\\", strlen($literal) - strlen("\\"), strlen("\\")) === 0 && !substr_compare($literal, "\\\\", strlen($literal) - strlen("\\\\"), strlen("\\\\")) === 0)
-                    $literal = substr($literal, 0, strlen($literal) - 1 - (0)) . "{{";
-                if ($literal !== "")
-                    $items[] = new LiteralNode($literal);
-            }
-        }
-        return new TemplateBlock($items);
-    }
-    
-    function parse() {
-        return $this->parseBlock();
-    }
-}
-
-class TemplateFile {
-    public $main;
-    public $template;
-    
-    function __construct($template) {
-        $this->template = $template;
-        $this->main = (new TemplateParser($template))->parse();
-    }
-    
-    function format($model) {
-        return $this->main->format($model);
-    }
-}
-
 class ProjectTemplate {
     public $meta;
     public $srcFiles;
@@ -257,8 +54,8 @@ class ProjectTemplate {
             $srcFn = $this->templateDir . "/src/" . $fn;
             $dstFn = $dstDir . "/" . $fn;
             if (in_array($fn, $this->meta->templateFiles)) {
-                $tmplFile = new TemplateFile(OneFile::readText($srcFn));
-                $dstFile = $tmplFile->format($model);
+                $tmpl = (new TemplateParser(OneFile::readText($srcFn)))->parse();
+                $dstFile = $tmpl->format(new TemplateContext($model));
                 OneFile::writeText($dstFn, $dstFile);
             }
             else
@@ -332,17 +129,11 @@ class ProjectGenerator {
             $langId = $projTemplate->meta->language;
             $generator = \OneLang\Core\ArrayHelper::find($generators, function ($x) use ($langId) { return strtolower($x->getLangName()) === $langId; });
             $langName = $generator->getLangName();
+            $outDir = $this->outDir . "/" . $langName;
             
             foreach ($generator->getTransforms() as $trans)
                 $trans->visitFiles(array_values($compiler->projectPkg->files));
                 
-            // generate cross compiled source code
-            $outDir = $this->outDir . "/" . $langName;
-            \OneLang\Core\console::log("Generating " . $langName . " code...");
-            $files = $generator->generate($compiler->projectPkg);
-            foreach ($files as $file)
-                OneFile::writeText($outDir . "/" . $projTemplate->meta->destinationDir ?? "" . "/" . $file->path, $file->content);
-            
             // copy implementation native sources
             $oneDeps = array();
             $nativeDeps = Array();
@@ -365,7 +156,17 @@ class ProjectGenerator {
                     foreach ($depFiles as $fn)
                         OneFile::writeText($dstDir . "/" . $fn, @$impl->content->files[$srcDir . $fn] ?? null);
                 }
+                
+                if ($langData->generatorPlugins !== null)
+                    foreach ($langData->generatorPlugins as $genPlugFn)
+                        $generator->addPlugin(new TemplateFileGeneratorPlugin($generator, @$impl->content->files[$genPlugFn] ?? null));
             }
+            
+            // generate cross compiled source code
+            \OneLang\Core\console::log("Generating " . $langName . " code...");
+            $files = $generator->generate($compiler->projectPkg);
+            foreach ($files as $file)
+                OneFile::writeText($outDir . "/" . $projTemplate->meta->destinationDir ?? "" . "/" . $file->path, $file->content);
             
             // generate files from project template
             $model = new ObjectValue(Array(

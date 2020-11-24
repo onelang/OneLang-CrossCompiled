@@ -269,11 +269,11 @@ public class TSOverviewGenerator {
         }
         else if (expr instanceof InstanceMethodCallExpression) {
             var typeArgs = ((InstanceMethodCallExpression)expr).getTypeArgs().length > 0 ? "<" + Arrays.stream(Arrays.stream(((InstanceMethodCallExpression)expr).getTypeArgs()).map(x -> this.type(x, false)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ">" : "";
-            res = this.expr(((InstanceMethodCallExpression)expr).object) + ".{M}" + ((InstanceMethodCallExpression)expr).getMethod().name + typeArgs + "(" + (this.previewOnly ? "..." : Arrays.stream(Arrays.stream(((InstanceMethodCallExpression)expr).getArgs()).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", "))) + ")";
+            res = this.expr(((InstanceMethodCallExpression)expr).object) + ".{M}" + ((InstanceMethodCallExpression)expr).getMethod().getName() + typeArgs + "(" + (this.previewOnly ? "..." : Arrays.stream(Arrays.stream(((InstanceMethodCallExpression)expr).getArgs()).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", "))) + ")";
         }
         else if (expr instanceof StaticMethodCallExpression) {
             var typeArgs = ((StaticMethodCallExpression)expr).getTypeArgs().length > 0 ? "<" + Arrays.stream(Arrays.stream(((StaticMethodCallExpression)expr).getTypeArgs()).map(x -> this.type(x, false)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ">" : "";
-            res = ((StaticMethodCallExpression)expr).getMethod().parentInterface.getName() + ".{M}" + ((StaticMethodCallExpression)expr).getMethod().name + typeArgs + "(" + (this.previewOnly ? "..." : Arrays.stream(Arrays.stream(((StaticMethodCallExpression)expr).getArgs()).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", "))) + ")";
+            res = ((StaticMethodCallExpression)expr).getMethod().parentInterface.getName() + ".{M}" + ((StaticMethodCallExpression)expr).getMethod().getName() + typeArgs + "(" + (this.previewOnly ? "..." : Arrays.stream(Arrays.stream(((StaticMethodCallExpression)expr).getArgs()).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", "))) + ")";
         }
         else if (expr instanceof GlobalFunctionCallExpression)
             res = ((GlobalFunctionCallExpression)expr).func.getName() + "(" + (this.previewOnly ? "..." : Arrays.stream(Arrays.stream(((GlobalFunctionCallExpression)expr).args).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", "))) + ")";
@@ -346,9 +346,9 @@ public class TSOverviewGenerator {
         else if (expr instanceof StaticPropertyReference)
             res = "{R:StPr}" + ((StaticPropertyReference)expr).decl.parentClass.getName() + "::" + ((StaticPropertyReference)expr).decl.getName();
         else if (expr instanceof InstanceFieldReference)
-            res = this.expr(((InstanceFieldReference)expr).object) + ".{F}" + ((InstanceFieldReference)expr).field.getName();
+            res = this.expr(((InstanceFieldReference)expr).getObject()) + ".{F}" + ((InstanceFieldReference)expr).field.getName();
         else if (expr instanceof InstancePropertyReference)
-            res = this.expr(((InstancePropertyReference)expr).object) + ".{P}" + ((InstancePropertyReference)expr).property.getName();
+            res = this.expr(((InstancePropertyReference)expr).getObject()) + ".{P}" + ((InstancePropertyReference)expr).property.getName();
         else if (expr instanceof EnumMemberReference)
             res = "{E}" + ((EnumMemberReference)expr).decl.parentEnum.getName() + "::" + ((EnumMemberReference)expr).decl.name;
         else if (expr instanceof NullCoalesceExpression)
@@ -411,7 +411,7 @@ public class TSOverviewGenerator {
     public String methodBase(IMethodBase method, IType returns) {
         if (method == null)
             return "";
-        var name = method instanceof Method ? ((Method)method).name : method instanceof Constructor ? "constructor" : method instanceof GlobalFunction ? ((GlobalFunction)method).getName() : "???";
+        var name = method instanceof Method ? ((Method)method).getName() : method instanceof Constructor ? "constructor" : method instanceof GlobalFunction ? ((GlobalFunction)method).getName() : "???";
         var typeArgs = method instanceof Method ? ((Method)method).typeArguments : null;
         return this.preIf("/* throws */ ", method.getThrows()) + name + this.typeArgs(typeArgs) + "(" + Arrays.stream(Arrays.stream(method.getParameters()).map(p -> this.leading(p) + this.var(p)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")" + (returns instanceof VoidType ? "" : ": " + this.type(returns, false)) + (method.getBody() != null ? " {\n" + this.pad(this.rawBlock(method.getBody())) + "\n}" : ";");
     }

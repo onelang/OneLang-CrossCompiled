@@ -240,6 +240,9 @@ class Field:
         self.instance_references = []
         self.interface_declarations = None
         self.mutability = None
+    
+    def get_parent_interface(self):
+        return self.parent_interface
 
 class Property:
     def __init__(self, name, type, getter, setter, visibility, is_static, leading_trivia):
@@ -255,6 +258,9 @@ class Property:
         self.static_references = []
         self.instance_references = []
         self.mutability = None
+    
+    def get_parent_interface(self):
+        return self.parent_class
 
 class MethodParameter:
     def __init__(self, name, type, initializer, leading_trivia):
@@ -298,6 +304,9 @@ class Method:
         self.overrides = None
         self.overridden_by = []
         self.throws = None
+    
+    def get_parent_interface(self):
+        return self.parent_interface
 
 class GlobalFunction:
     def __init__(self, name, parameters, body, returns, is_exported, leading_trivia):
