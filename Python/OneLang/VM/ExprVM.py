@@ -32,6 +32,8 @@ class ExprVM:
             return result
         elif isinstance(expr, exprs.StringLiteral):
             return vals.StringValue(expr.string_value)
+        elif isinstance(expr, exprs.NumericLiteral):
+            return vals.NumericValue(parse_int(expr.value_as_text))
         elif isinstance(expr, exprs.ConditionalExpression):
             cond_result = self.evaluate(expr.condition)
             result = self.evaluate(expr.when_true if (cond_result).value else expr.when_false)

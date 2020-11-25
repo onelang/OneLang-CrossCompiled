@@ -8,6 +8,10 @@ class StringValue:
     def __init__(self, value):
         self.value = value
 
+class NumericValue:
+    def __init__(self, value):
+        self.value = value
+
 class BooleanValue:
     def __init__(self, value):
         self.value = value

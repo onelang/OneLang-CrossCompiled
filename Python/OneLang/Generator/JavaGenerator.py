@@ -15,8 +15,8 @@ import OneLang.One.Transforms.ConvertNullCoalesce as convNullCoal
 import OneLang.One.Transforms.UseDefaultCallArgsExplicitly as useDefCallArgsExpl
 import OneLang.Generator.TemplateFileGeneratorPlugin as templFileGenPlug
 import OneLang.VM.Values as vals
-import re
 import json
+import re
 
 class JavaGenerator:
     def __init__(self):
@@ -54,6 +54,13 @@ class JavaGenerator:
         type = (array_type).type_arguments[type_arg_idx]
         return f'''toArray({self.type(type)}[]::new)'''
     
+    def escape(self, value):
+        if isinstance(value, templFileGenPlug.ExpressionValue) and isinstance(value.value, exprs.RegexLiteral):
+            return json.dumps(value.value.pattern)
+        elif isinstance(value, vals.StringValue):
+            return json.dumps(value.value)
+        raise Error(f'''Not supported VMValue for escape()''')
+    
     def add_plugin(self, plugin):
         self.plugins.append(plugin)
         
@@ -62,6 +69,7 @@ class JavaGenerator:
             plugin.model_globals["toStream"] = templFileGenPlug.LambdaValue(lambda args: vals.StringValue(self.array_stream((args[0]).value)))
             plugin.model_globals["isArray"] = templFileGenPlug.LambdaValue(lambda args: vals.BooleanValue(self.is_array((args[0]).value)))
             plugin.model_globals["toArray"] = templFileGenPlug.LambdaValue(lambda args: vals.StringValue(self.to_array((args[0]).type)))
+            plugin.model_globals["escape"] = templFileGenPlug.LambdaValue(lambda args: vals.StringValue(self.escape(args[0])))
     
     def name_(self, name):
         if name in self.reserved_words:

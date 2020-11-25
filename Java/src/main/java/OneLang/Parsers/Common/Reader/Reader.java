@@ -131,6 +131,10 @@ public class Reader {
         return false;
     }
     
+    public Boolean peekExactly(String what) {
+        return this.input.startsWith(what, this.offset);
+    }
+    
     public String readChar() {
         // TODO: should we move wsOffset?
         this.offset++;

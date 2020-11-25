@@ -28,6 +28,15 @@ namespace VM
         }
     }
     
+    public class NumericValue : IVMValue {
+        public int value;
+        
+        public NumericValue(int value)
+        {
+            this.value = value;
+        }
+    }
+    
     public class BooleanValue : IVMValue {
         public bool value;
         

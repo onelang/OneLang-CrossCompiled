@@ -170,6 +170,11 @@ namespace Parsers.Common
             return false;
         }
         
+        public bool peekExactly(string what)
+        {
+            return this.input.startsWith(what, this.offset);
+        }
+        
         public string readChar()
         {
             // TODO: should we move wsOffset?

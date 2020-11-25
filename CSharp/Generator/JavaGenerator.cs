@@ -66,6 +66,15 @@ namespace Generator
             return $"toArray({this.type(type)}[]::new)";
         }
         
+        public string escape(IVMValue value)
+        {
+            if (value is ExpressionValue exprValue && exprValue.value is RegexLiteral regexLit)
+                return JSON.stringify(regexLit.pattern);
+            else if (value is StringValue strValue)
+                return JSON.stringify(strValue.value);
+            throw new Error($"Not supported VMValue for escape()");
+        }
+        
         public void addPlugin(IGeneratorPlugin plugin)
         {
             this.plugins.push(plugin);
@@ -75,6 +84,7 @@ namespace Generator
                 templFileGenPlug.modelGlobals.set("toStream", new LambdaValue(args => new StringValue(this.arrayStream((((ExpressionValue)args.get(0))).value))));
                 templFileGenPlug.modelGlobals.set("isArray", new LambdaValue(args => new BooleanValue(this.isArray((((ExpressionValue)args.get(0))).value))));
                 templFileGenPlug.modelGlobals.set("toArray", new LambdaValue(args => new StringValue(this.toArray((((TypeValue)args.get(0))).type))));
+                templFileGenPlug.modelGlobals.set("escape", new LambdaValue(args => new StringValue(this.escape(args.get(0)))));
             }
         }
         
@@ -414,9 +424,9 @@ namespace Generator
                 res = $"{this.expr(instOfExpr.expr)} instanceof {this.type(instOfExpr.checkType)}";
             else if (expr is ParenthesizedExpression parExpr)
                 res = $"({this.expr(parExpr.expression)})";
-            else if (expr is RegexLiteral regexLit) {
+            else if (expr is RegexLiteral regexLit2) {
                 this.imports.add($"io.onelang.std.core.RegExp");
-                res = $"new RegExp({JSON.stringify(regexLit.pattern)})";
+                res = $"new RegExp({JSON.stringify(regexLit2.pattern)})";
             }
             else if (expr is Lambda lambd) {
                 string body;

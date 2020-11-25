@@ -5,6 +5,7 @@ namespace OneLang\VM\ExprVM;
 use OneLang\One\Ast\Expressions\ConditionalExpression;
 use OneLang\One\Ast\Expressions\Expression;
 use OneLang\One\Ast\Expressions\Identifier;
+use OneLang\One\Ast\Expressions\NumericLiteral;
 use OneLang\One\Ast\Expressions\PropertyAccessExpression;
 use OneLang\One\Ast\Expressions\StringLiteral;
 use OneLang\One\Ast\Expressions\TemplateString;
@@ -12,6 +13,7 @@ use OneLang\One\Ast\Expressions\UnresolvedCallExpression;
 use OneLang\VM\Values\BooleanValue;
 use OneLang\VM\Values\ICallableValue;
 use OneLang\VM\Values\IVMValue;
+use OneLang\VM\Values\NumericValue;
 use OneLang\VM\Values\ObjectValue;
 use OneLang\VM\Values\StringValue;
 
@@ -59,6 +61,8 @@ class ExprVM {
         }
         else if ($expr instanceof StringLiteral)
             return new StringValue($expr->stringValue);
+        else if ($expr instanceof NumericLiteral)
+            return new NumericValue(Global.parseInt($expr->valueAsText));
         else if ($expr instanceof ConditionalExpression) {
             $condResult = $this->evaluate($expr->condition);
             $result = $this->evaluate(($condResult)->value ? $expr->whenTrue : $expr->whenFalse);

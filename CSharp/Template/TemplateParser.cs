@@ -34,20 +34,20 @@ namespace Template
         {
             var items = new List<ITemplateNode>();
             while (!this.reader.eof) {
-                if (this.reader.peekToken("{{/"))
+                if (this.reader.peekExactly("{{/"))
                     break;
-                if (this.reader.readToken("${")) {
+                if (this.reader.readExactly("${")) {
                     var expr = this.parser.parseExpression();
                     items.push(new ExpressionNode(expr));
                     this.reader.expectToken("}");
                 }
-                else if (this.reader.readToken("$")) {
-                    var id = this.reader.readIdentifier();
+                else if (this.reader.readExactly("$")) {
+                    var id = this.reader.expectIdentifier();
                     items.push(new ExpressionNode(new Identifier(id)));
                 }
-                else if (this.reader.readToken("{{")) {
+                else if (this.reader.readExactly("{{")) {
                     if (this.reader.readToken("for")) {
-                        var varName = this.reader.readIdentifier();
+                        var varName = this.reader.expectIdentifier();
                         this.reader.expectToken("of");
                         var itemsExpr = this.parser.parseExpression();
                         var attrs = this.parseAttributes();

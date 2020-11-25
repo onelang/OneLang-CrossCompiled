@@ -32,90 +32,13 @@ class JsToJava:
     def convert_method(self, cls_, obj, method, args, return_type):
         obj_r = None if obj == None else self.main.expr(obj)
         args_r = list(map(lambda x: self.main.expr(x), args))
-        if cls_.name == "TsArray":
-            if method.name == "includes":
-                # TsArray.includes(value): ${toStream(this)}.anyMatch($value}::equals)
-                return f'''{self.array_stream(obj)}.anyMatch({args_r[0]}::equals)'''
-            elif method.name == "set":
-                # TsArray.set(key, value): $this[$key] = $value
-                if self.is_array(obj):
-                    return f'''{obj_r}[{args_r[0]}] = {args_r[1]}'''
-                else:
-                    return f'''{obj_r}.set({args_r[0]}, {args_r[1]})'''
-            elif method.name == "pop":
-                return f'''{obj_r}.remove({obj_r}.size() - 1)'''
-            elif method.name == "filter":
-                return f'''{self.array_stream(obj)}.filter({args_r[0]}).{self.to_array(return_type)}'''
-            elif method.name == "every":
-                self.main.imports["io.onelang.std.core.StdArrayHelper"] = None
-                return f'''StdArrayHelper.allMatch({obj_r}, {args_r[0]})'''
-            elif method.name == "some":
-                return f'''{self.array_stream(obj)}.anyMatch({args_r[0]})'''
-            elif method.name == "concat":
-                self.main.imports["java.util.stream.Stream"] = None
-                return f'''Stream.of({obj_r}, {args_r[0]}).flatMap(Stream::of).{self.to_array(obj.get_type())}'''
-            elif method.name == "shift":
-                return f'''{obj_r}.remove(0)'''
-            elif method.name == "find":
-                return f'''{self.array_stream(obj)}.filter({args_r[0]}).findFirst().orElse(null)'''
-            elif method.name == "sort":
-                self.main.imports["java.util.Collections"] = None
-                return f'''Collections.sort({obj_r})'''
-        elif cls_.name == "TsString":
+        if cls_.name == "TsString":
             if method.name == "replace":
                 if isinstance(args[0], exprs.RegexLiteral):
                     self.main.imports["java.util.regex.Pattern"] = None
                     return f'''{obj_r}.replaceAll({json.dumps((args[0]).pattern)}, {args_r[1]})'''
                 
                 return f'''{args_r[0]}.replace({obj_r}, {args_r[1]})'''
-            elif method.name == "charCodeAt":
-                return f'''(int){obj_r}.charAt({args_r[0]})'''
-            elif method.name == "includes":
-                return f'''{obj_r}.contains({args_r[0]})'''
-            elif method.name == "get":
-                return f'''{obj_r}.substring({args_r[0]}, {args_r[0]} + 1)'''
-            elif method.name == "substr":
-                return f'''{obj_r}.substring({args_r[0]})''' if len(args_r) == 1 else f'''{obj_r}.substring({args_r[0]}, {args_r[0]} + {args_r[1]})'''
-            elif method.name == "substring":
-                return f'''{obj_r}.substring({args_r[0]}, {args_r[1]})'''
-            
-            if method.name == "split" and isinstance(args[0], exprs.RegexLiteral):
-                pattern = (args[0]).pattern
-                return f'''{obj_r}.split({json.dumps(pattern)}, -1)'''
-        elif cls_.name == "TsMap" or cls_.name == "Map":
-            if method.name == "set":
-                return f'''{obj_r}.put({args_r[0]}, {args_r[1]})'''
-            elif method.name == "get":
-                return f'''{obj_r}.get({args_r[0]})'''
-            elif method.name == "hasKey" or method.name == "has":
-                return f'''{obj_r}.containsKey({args_r[0]})'''
-            elif method.name == "delete":
-                return f'''{obj_r}.remove({args_r[0]})'''
-            elif method.name == "values":
-                return f'''{obj_r}.values().{self.to_array(obj.get_type(), 1)}'''
-        elif cls_.name == "Object":
-            if method.name == "keys":
-                return f'''{args_r[0]}.keySet().toArray(String[]::new)'''
-            elif method.name == "values":
-                return f'''{args_r[0]}.values().{self.to_array(args[0].get_type())}'''
-        elif cls_.name == "Set":
-            if method.name == "values":
-                return f'''{obj_r}.{self.to_array(obj.get_type())}'''
-            elif method.name == "has":
-                return f'''{obj_r}.contains({args_r[0]})'''
-            elif method.name == "add":
-                return f'''{obj_r}.add({args_r[0]})'''
-        elif cls_.name == "ArrayHelper":
-            pass
-        elif cls_.name == "Array":
-            if method.name == "from":
-                return f'''{args_r[0]}'''
-        elif cls_.name == "Promise":
-            if method.name == "resolve":
-                return f'''{args_r[0]}'''
-        elif cls_.name == "RegExpExecArray":
-            if method.name == "get":
-                return f'''{obj_r}[{args_r[0]}]'''
         elif cls_.name in ["console", "RegExp"]:
             self.main.imports[f'''io.onelang.std.core.{cls_.name}'''] = None
             return None
@@ -125,11 +48,6 @@ class JsToJava:
         else:
             return None
         
-        method_name = f'''{cls_.name}.{method.name}'''
-        if not method_name in self.unhandled_methods:
-            console.error(f'''[JsToJava] Method was not handled: {cls_.name}.{method.name}''')
-            self.unhandled_methods[method_name] = None
-        #debugger;
         return None
     
     def expr(self, expr):

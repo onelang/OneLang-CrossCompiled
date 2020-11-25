@@ -49,20 +49,20 @@ public class TemplateParser {
     public TemplateBlock parseBlock() {
         var items = new ArrayList<ITemplateNode>();
         while (!this.reader.getEof()) {
-            if (this.reader.peekToken("{{/"))
+            if (this.reader.peekExactly("{{/"))
                 break;
-            if (this.reader.readToken("${")) {
+            if (this.reader.readExactly("${")) {
                 var expr = this.parser.parseExpression();
                 items.add(new ExpressionNode(expr));
                 this.reader.expectToken("}", null);
             }
-            else if (this.reader.readToken("$")) {
-                var id = this.reader.readIdentifier();
+            else if (this.reader.readExactly("$")) {
+                var id = this.reader.expectIdentifier(null);
                 items.add(new ExpressionNode(new Identifier(id)));
             }
-            else if (this.reader.readToken("{{")) {
+            else if (this.reader.readExactly("{{")) {
                 if (this.reader.readToken("for")) {
-                    var varName = this.reader.readIdentifier();
+                    var varName = this.reader.expectIdentifier(null);
                     this.reader.expectToken("of", null);
                     var itemsExpr = this.parser.parseExpression();
                     var attrs = this.parseAttributes();

@@ -103,6 +103,7 @@ use OneLang\Generator\TemplateFileGeneratorPlugin\LambdaValue;
 use OneLang\Generator\TemplateFileGeneratorPlugin\TemplateFileGeneratorPlugin;
 use OneLang\Generator\TemplateFileGeneratorPlugin\TypeValue;
 use OneLang\VM\Values\BooleanValue;
+use OneLang\VM\Values\IVMValue;
 use OneLang\VM\Values\StringValue;
 
 class JavaGenerator implements IGenerator {
@@ -154,6 +155,14 @@ class JavaGenerator implements IGenerator {
         return "toArray(" . $this->type($type) . "[]::new)";
     }
     
+    function escape($value) {
+        if ($value instanceof ExpressionValue && $value->value instanceof RegexLiteral)
+            return json_encode($value->value->pattern, JSON_UNESCAPED_SLASHES);
+        else if ($value instanceof StringValue)
+            return json_encode($value->value, JSON_UNESCAPED_SLASHES);
+        throw new \OneLang\Core\Error("Not supported VMValue for escape()");
+    }
+    
     function addPlugin($plugin) {
         $this->plugins[] = $plugin;
         
@@ -162,6 +171,7 @@ class JavaGenerator implements IGenerator {
             $plugin->modelGlobals["toStream"] = new LambdaValue(function ($args) { return new StringValue($this->arrayStream(($args[0])->value)); });
             $plugin->modelGlobals["isArray"] = new LambdaValue(function ($args) { return new BooleanValue($this->isArray(($args[0])->value)); });
             $plugin->modelGlobals["toArray"] = new LambdaValue(function ($args) { return new StringValue($this->toArray(($args[0])->type)); });
+            $plugin->modelGlobals["escape"] = new LambdaValue(function ($args) { return new StringValue($this->escape($args[0])); });
         }
     }
     

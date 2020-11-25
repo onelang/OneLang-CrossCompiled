@@ -37,20 +37,20 @@ class TemplateParser {
     function parseBlock() {
         $items = array();
         while (!$this->reader->get_eof()) {
-            if ($this->reader->peekToken("{{/"))
+            if ($this->reader->peekExactly("{{/"))
                 break;
-            if ($this->reader->readToken("\${")) {
+            if ($this->reader->readExactly("\${")) {
                 $expr = $this->parser->parseExpression();
                 $items[] = new ExpressionNode($expr);
                 $this->reader->expectToken("}");
             }
-            else if ($this->reader->readToken("\$")) {
-                $id = $this->reader->readIdentifier();
+            else if ($this->reader->readExactly("\$")) {
+                $id = $this->reader->expectIdentifier();
                 $items[] = new ExpressionNode(new Identifier($id));
             }
-            else if ($this->reader->readToken("{{")) {
+            else if ($this->reader->readExactly("{{")) {
                 if ($this->reader->readToken("for")) {
-                    $varName = $this->reader->readIdentifier();
+                    $varName = $this->reader->expectIdentifier();
                     $this->reader->expectToken("of");
                     $itemsExpr = $this->parser->parseExpression();
                     $attrs = $this->parseAttributes();

@@ -101,6 +101,7 @@ import OneLang.Generator.TemplateFileGeneratorPlugin.LambdaValue;
 import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
 import OneLang.Generator.TemplateFileGeneratorPlugin.TypeValue;
 import OneLang.VM.Values.BooleanValue;
+import OneLang.VM.Values.IVMValue;
 import OneLang.VM.Values.StringValue;
 
 import OneLang.Generator.IGenerator.IGenerator;
@@ -120,10 +121,13 @@ import OneLang.One.Ast.Expressions.InstanceMethodCallExpression;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.AstTypes.ClassType;
 import OneLang.One.Ast.Interfaces.IType;
+import OneLang.Generator.TemplateFileGeneratorPlugin.ExpressionValue;
+import OneLang.One.Ast.Expressions.RegexLiteral;
+import io.onelang.std.json.JSON;
+import OneLang.VM.Values.StringValue;
+import OneLang.VM.Values.IVMValue;
 import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
 import OneLang.Generator.TemplateFileGeneratorPlugin.LambdaValue;
-import OneLang.VM.Values.StringValue;
-import OneLang.Generator.TemplateFileGeneratorPlugin.ExpressionValue;
 import OneLang.VM.Values.BooleanValue;
 import OneLang.Generator.TemplateFileGeneratorPlugin.TypeValue;
 import java.util.Arrays;
@@ -157,7 +161,6 @@ import OneLang.One.Ast.Expressions.GlobalFunctionCallExpression;
 import OneLang.One.Ast.Expressions.LambdaCallExpression;
 import OneLang.One.Ast.Expressions.BooleanLiteral;
 import OneLang.One.Ast.Expressions.StringLiteral;
-import io.onelang.std.json.JSON;
 import OneLang.One.Ast.Expressions.NumericLiteral;
 import OneLang.One.Ast.Expressions.CharacterLiteral;
 import OneLang.One.Ast.Expressions.ElementAccessExpression;
@@ -167,7 +170,6 @@ import OneLang.One.Ast.References.InstanceFieldReference;
 import OneLang.One.Ast.Expressions.CastExpression;
 import OneLang.One.Ast.Expressions.InstanceOfExpression;
 import OneLang.One.Ast.Expressions.ParenthesizedExpression;
-import OneLang.One.Ast.Expressions.RegexLiteral;
 import OneLang.One.Ast.Types.Lambda;
 import OneLang.One.Ast.Statements.ReturnStatement;
 import OneLang.One.Ast.Expressions.UnaryExpression;
@@ -264,6 +266,14 @@ public class JavaGenerator implements IGenerator {
         return "toArray(" + this.type(type, true, false) + "[]::new)";
     }
     
+    public String escape(IVMValue value) {
+        if (value instanceof ExpressionValue && ((ExpressionValue)value).value instanceof RegexLiteral)
+            return JSON.stringify(((RegexLiteral)((ExpressionValue)value).value).pattern);
+        else if (value instanceof StringValue)
+            return JSON.stringify(((StringValue)value).value);
+        throw new Error("Not supported VMValue for escape()");
+    }
+    
     public void addPlugin(IGeneratorPlugin plugin) {
         this.plugins.add(plugin);
         
@@ -272,6 +282,7 @@ public class JavaGenerator implements IGenerator {
             ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("toStream", new LambdaValue(args -> new StringValue(this.arrayStream((((ExpressionValue)args[0])).value))));
             ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("isArray", new LambdaValue(args -> new BooleanValue(this.isArray((((ExpressionValue)args[0])).value))));
             ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("toArray", new LambdaValue(args -> new StringValue(this.toArray((((TypeValue)args[0])).type, 0))));
+            ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("escape", new LambdaValue(args -> new StringValue(this.escape(args[0]))));
         }
     }
     

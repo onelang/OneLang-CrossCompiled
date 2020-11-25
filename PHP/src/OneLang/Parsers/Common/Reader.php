@@ -152,6 +152,10 @@ class Reader {
         return false;
     }
     
+    function peekExactly($what) {
+        return substr_compare($this->input, $what, $this->offset, strlen($what)) === 0;
+    }
+    
     function readChar() {
         // TODO: should we move wsOffset?
         $this->offset++;

@@ -1,11 +1,17 @@
 {
     "autoload": {
         "psr-4": {
-            "OneLang\\Core\\": "onepkg/OneLang-Core"
-            ,"OneLang\\File\\": "onepkg/OneLang-File"
-            ,"OneLang\\Json\\": "onepkg/OneLang-Json"
-            ,"OneLang\\Yaml\\": "onepkg/OneLang-Yaml"
-            ,"OneLang\\Reflect\\": "onepkg/OneLang-Reflect"
-            }
+            
+                "OneLang\\Core\\": "onepkg/OneLang-Core"
+            ,
+                "OneLang\\File\\": "onepkg/OneLang-File"
+            ,
+                "OneLang\\Json\\": "onepkg/OneLang-Json"
+            ,
+                "OneLang\\Yaml\\": "onepkg/OneLang-Yaml"
+            ,
+                "OneLang\\Reflect\\": "onepkg/OneLang-Reflect"
+            
+        }
     }
 }

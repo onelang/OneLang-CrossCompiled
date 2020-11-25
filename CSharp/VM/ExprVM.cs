@@ -51,6 +51,8 @@ namespace VM
             }
             else if (expr is StringLiteral strLit)
                 return new StringValue(strLit.stringValue);
+            else if (expr is NumericLiteral numLit)
+                return new NumericValue(Global.parseInt(numLit.valueAsText));
             else if (expr is ConditionalExpression condExpr) {
                 var condResult = this.evaluate(condExpr.condition);
                 var result = this.evaluate((((BooleanValue)condResult)).value ? condExpr.whenTrue : condExpr.whenFalse);

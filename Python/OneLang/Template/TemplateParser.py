@@ -25,18 +25,18 @@ class TemplateParser:
     def parse_block(self):
         items = []
         while not self.reader.get_eof():
-            if self.reader.peek_token("{{/"):
+            if self.reader.peek_exactly("{{/"):
                 break
-            if self.reader.read_token("${"):
+            if self.reader.read_exactly("${"):
                 expr = self.parser.parse_expression()
                 items.append(nodes.ExpressionNode(expr))
                 self.reader.expect_token("}")
-            elif self.reader.read_token("$"):
-                id = self.reader.read_identifier()
+            elif self.reader.read_exactly("$"):
+                id = self.reader.expect_identifier()
                 items.append(nodes.ExpressionNode(exprs.Identifier(id)))
-            elif self.reader.read_token("{{"):
+            elif self.reader.read_exactly("{{"):
                 if self.reader.read_token("for"):
-                    var_name = self.reader.read_identifier()
+                    var_name = self.reader.expect_identifier()
                     self.reader.expect_token("of")
                     items_expr = self.parser.parse_expression()
                     attrs = self.parse_attributes()

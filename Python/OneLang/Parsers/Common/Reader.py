@@ -113,6 +113,9 @@ class Reader:
             return True
         return False
     
+    def peek_exactly(self, what):
+        return self.input.startswith(what, self.offset)
+    
     def read_char(self):
         # TODO: should we move wsOffset?
         self.offset = self.offset + 1

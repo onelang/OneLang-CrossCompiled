@@ -3,6 +3,7 @@ package OneLang.VM.ExprVM;
 import OneLang.One.Ast.Expressions.ConditionalExpression;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Expressions.Identifier;
+import OneLang.One.Ast.Expressions.NumericLiteral;
 import OneLang.One.Ast.Expressions.PropertyAccessExpression;
 import OneLang.One.Ast.Expressions.StringLiteral;
 import OneLang.One.Ast.Expressions.TemplateString;
@@ -10,6 +11,7 @@ import OneLang.One.Ast.Expressions.UnresolvedCallExpression;
 import OneLang.VM.Values.BooleanValue;
 import OneLang.VM.Values.ICallableValue;
 import OneLang.VM.Values.IVMValue;
+import OneLang.VM.Values.NumericValue;
 import OneLang.VM.Values.ObjectValue;
 import OneLang.VM.Values.StringValue;
 
@@ -23,6 +25,8 @@ import OneLang.VM.Values.ICallableValue;
 import java.util.Arrays;
 import OneLang.One.Ast.Expressions.StringLiteral;
 import OneLang.VM.Values.StringValue;
+import OneLang.One.Ast.Expressions.NumericLiteral;
+import OneLang.VM.Values.NumericValue;
 import OneLang.One.Ast.Expressions.ConditionalExpression;
 import OneLang.VM.Values.BooleanValue;
 import OneLang.One.Ast.Expressions.TemplateString;
@@ -59,6 +63,8 @@ public class ExprVM {
         }
         else if (expr instanceof StringLiteral)
             return new StringValue(((StringLiteral)expr).stringValue);
+        else if (expr instanceof NumericLiteral)
+            return new NumericValue(Global.parseInt(((NumericLiteral)expr).valueAsText));
         else if (expr instanceof ConditionalExpression) {
             var condResult = this.evaluate(((ConditionalExpression)expr).condition);
             var result = this.evaluate((((BooleanValue)condResult)).value ? ((ConditionalExpression)expr).whenTrue : ((ConditionalExpression)expr).whenFalse);
