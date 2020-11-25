@@ -5,6 +5,8 @@ import io.onelang.std.yaml.ValueType;
 import io.onelang.std.yaml.YamlValue;
 import OneLang.Parsers.Common.ExpressionParser.ExpressionParser;
 import OneLang.One.Ast.Expressions.Expression;
+import OneLang.One.Ast.Expressions.GlobalFunctionCallExpression;
+import OneLang.One.Ast.Expressions.ICallExpression;
 import OneLang.One.Ast.Expressions.Identifier;
 import OneLang.One.Ast.Expressions.IMethodCallExpression;
 import OneLang.One.Ast.Expressions.InstanceMethodCallExpression;

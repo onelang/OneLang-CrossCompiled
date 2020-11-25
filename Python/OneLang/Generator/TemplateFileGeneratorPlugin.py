@@ -18,7 +18,7 @@ class CodeTemplate:
         self.template = template
         self.includes = includes
 
-class MethodCallTemplate:
+class CallTemplate:
     def __init__(self, class_name, method_name, args, template):
         self.class_name = class_name
         self.method_name = method_name
@@ -70,8 +70,11 @@ class TemplateFileGeneratorPlugin:
     def add_expr_template(self, expr_str, tmpl):
         expr = exprPars.ExpressionParser(read.Reader(expr_str)).parse()
         if isinstance(expr, exprs.UnresolvedCallExpression) and isinstance(expr.func, exprs.PropertyAccessExpression) and isinstance(expr.func.object, exprs.Identifier):
-            call_tmpl = MethodCallTemplate(expr.func.object.text, expr.func.property_name, list(map(lambda x: (x).text, expr.args)), tmpl)
+            call_tmpl = CallTemplate(expr.func.object.text, expr.func.property_name, list(map(lambda x: (x).text, expr.args)), tmpl)
             self.methods[f'''{call_tmpl.class_name}.{call_tmpl.method_name}@{len(call_tmpl.args)}'''] = call_tmpl
+        elif isinstance(expr, exprs.UnresolvedCallExpression) and isinstance(expr.func, exprs.Identifier):
+            call_tmpl = CallTemplate(None, expr.func.text, list(map(lambda x: (x).text, expr.args)), tmpl)
+            self.methods[f'''{call_tmpl.method_name}@{len(call_tmpl.args)}'''] = call_tmpl
         elif isinstance(expr, exprs.PropertyAccessExpression) and isinstance(expr.object, exprs.Identifier):
             field_tmpl = FieldAccessTemplate(expr.object.text, expr.property_name, tmpl)
             self.fields[f'''{field_tmpl.class_name}.{field_tmpl.field_name}'''] = field_tmpl
@@ -82,9 +85,10 @@ class TemplateFileGeneratorPlugin:
         code_tmpl = None
         model = {}
         
-        if isinstance(expr, exprs.StaticMethodCallExpression) or isinstance(expr, exprs.InstanceMethodCallExpression):
+        if isinstance(expr, exprs.StaticMethodCallExpression) or isinstance(expr, exprs.InstanceMethodCallExpression) or isinstance(expr, exprs.GlobalFunctionCallExpression):
             call = expr
-            method_name = f'''{call.method.parent_interface.name}.{call.method.name}@{len(call.args)}'''
+            parent_intf = call.get_parent_interface()
+            method_name = f'''{("" if parent_intf == None else f'{parent_intf.name}.')}{call.get_name()}@{len(call.args)}'''
             call_tmpl = self.methods.get(method_name)
             if call_tmpl == None:
                 return None

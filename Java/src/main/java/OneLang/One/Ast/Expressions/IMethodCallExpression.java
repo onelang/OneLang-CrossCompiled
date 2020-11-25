@@ -7,21 +7,15 @@ import OneLang.One.Ast.AstTypes.TypeHelper;
 import OneLang.One.Ast.Types.Method;
 import OneLang.One.Ast.Types.GlobalFunction;
 import OneLang.One.Ast.Types.IAstNode;
+import OneLang.One.Ast.Types.IInterface;
 import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 
 import OneLang.One.Ast.Interfaces.IExpression;
+import OneLang.One.Ast.Expressions.ICallExpression;
 import OneLang.One.Ast.Types.Method;
-import OneLang.One.Ast.Interfaces.IType;
-import OneLang.One.Ast.Expressions.Expression;
 
-public interface IMethodCallExpression extends IExpression {
+public interface IMethodCallExpression extends IExpression, ICallExpression {
     Method getMethod();
     void setMethod(Method value);
-    
-    IType[] getTypeArgs();
-    void setTypeArgs(IType[] value);
-    
-    Expression[] getArgs();
-    void setArgs(Expression[] value);
 }

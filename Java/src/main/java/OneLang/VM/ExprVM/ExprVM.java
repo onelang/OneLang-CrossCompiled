@@ -64,7 +64,7 @@ public class ExprVM {
         else if (expr instanceof StringLiteral)
             return new StringValue(((StringLiteral)expr).stringValue);
         else if (expr instanceof NumericLiteral)
-            return new NumericValue(Global.parseInt(((NumericLiteral)expr).valueAsText));
+            return new NumericValue(Integer.parseInt(((NumericLiteral)expr).valueAsText));
         else if (expr instanceof ConditionalExpression) {
             var condResult = this.evaluate(((ConditionalExpression)expr).condition);
             var result = this.evaluate((((BooleanValue)condResult)).value ? ((ConditionalExpression)expr).whenTrue : ((ConditionalExpression)expr).whenFalse);

@@ -5,6 +5,8 @@ import io.onelang.std.yaml.ValueType;
 import io.onelang.std.yaml.YamlValue;
 import OneLang.Parsers.Common.ExpressionParser.ExpressionParser;
 import OneLang.One.Ast.Expressions.Expression;
+import OneLang.One.Ast.Expressions.GlobalFunctionCallExpression;
+import OneLang.One.Ast.Expressions.ICallExpression;
 import OneLang.One.Ast.Expressions.Identifier;
 import OneLang.One.Ast.Expressions.IMethodCallExpression;
 import OneLang.One.Ast.Expressions.InstanceMethodCallExpression;
@@ -33,7 +35,7 @@ import OneLang.VM.ExprVM.VMContext;
 
 import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
 import OneLang.VM.ExprVM.IVMHooks;
-import OneLang.Generator.TemplateFileGeneratorPlugin.MethodCallTemplate;
+import OneLang.Generator.TemplateFileGeneratorPlugin.CallTemplate;
 import java.util.Map;
 import OneLang.Generator.TemplateFileGeneratorPlugin.FieldAccessTemplate;
 import OneLang.VM.Values.IVMValue;
@@ -49,7 +51,8 @@ import OneLang.One.Ast.Expressions.Identifier;
 import java.util.Arrays;
 import OneLang.One.Ast.Expressions.StaticMethodCallExpression;
 import OneLang.One.Ast.Expressions.InstanceMethodCallExpression;
-import OneLang.One.Ast.Expressions.IMethodCallExpression;
+import OneLang.One.Ast.Expressions.GlobalFunctionCallExpression;
+import OneLang.One.Ast.Expressions.ICallExpression;
 import OneLang.One.Ast.References.StaticFieldReference;
 import OneLang.One.Ast.References.StaticPropertyReference;
 import OneLang.One.Ast.References.InstanceFieldReference;
@@ -65,7 +68,7 @@ import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Statements.Statement;
 
 public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
-    public Map<String, MethodCallTemplate> methods;
+    public Map<String, CallTemplate> methods;
     public Map<String, FieldAccessTemplate> fields;
     public Map<String, IVMValue> modelGlobals;
     public IGenerator generator;
@@ -73,7 +76,7 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
     public TemplateFileGeneratorPlugin(IGenerator generator, String templateYaml)
     {
         this.generator = generator;
-        this.methods = new LinkedHashMap<String, MethodCallTemplate>();
+        this.methods = new LinkedHashMap<String, CallTemplate>();
         this.fields = new LinkedHashMap<String, FieldAccessTemplate>();
         this.modelGlobals = new LinkedHashMap<String, IVMValue>();
         var root = OneYaml.load(templateYaml);
@@ -98,8 +101,12 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
     public void addExprTemplate(String exprStr, CodeTemplate tmpl) {
         var expr = new ExpressionParser(new Reader(exprStr), null, null, null).parse(0, true);
         if (expr instanceof UnresolvedCallExpression && ((UnresolvedCallExpression)expr).func instanceof PropertyAccessExpression && ((PropertyAccessExpression)((UnresolvedCallExpression)expr).func).object instanceof Identifier) {
-            var callTmpl = new MethodCallTemplate(((Identifier)((PropertyAccessExpression)((UnresolvedCallExpression)expr).func).object).text, ((PropertyAccessExpression)((UnresolvedCallExpression)expr).func).propertyName, Arrays.stream(((UnresolvedCallExpression)expr).args).map(x -> (((Identifier)x)).text).toArray(String[]::new), tmpl);
+            var callTmpl = new CallTemplate(((Identifier)((PropertyAccessExpression)((UnresolvedCallExpression)expr).func).object).text, ((PropertyAccessExpression)((UnresolvedCallExpression)expr).func).propertyName, Arrays.stream(((UnresolvedCallExpression)expr).args).map(x -> (((Identifier)x)).text).toArray(String[]::new), tmpl);
             this.methods.put(callTmpl.className + "." + callTmpl.methodName + "@" + callTmpl.args.length, callTmpl);
+        }
+        else if (expr instanceof UnresolvedCallExpression && ((UnresolvedCallExpression)expr).func instanceof Identifier) {
+            var callTmpl = new CallTemplate(null, ((Identifier)((UnresolvedCallExpression)expr).func).text, Arrays.stream(((UnresolvedCallExpression)expr).args).map(x -> (((Identifier)x)).text).toArray(String[]::new), tmpl);
+            this.methods.put(callTmpl.methodName + "@" + callTmpl.args.length, callTmpl);
         }
         else if (expr instanceof PropertyAccessExpression && ((PropertyAccessExpression)expr).object instanceof Identifier) {
             var fieldTmpl = new FieldAccessTemplate(((Identifier)((PropertyAccessExpression)expr).object).text, ((PropertyAccessExpression)expr).propertyName, tmpl);
@@ -113,9 +120,10 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
         CodeTemplate codeTmpl = null;
         var model = new LinkedHashMap<String, IVMValue>();
         
-        if (expr instanceof StaticMethodCallExpression || expr instanceof InstanceMethodCallExpression) {
-            var call = ((IMethodCallExpression)expr);
-            var methodName = call.getMethod().parentInterface.getName() + "." + call.getMethod().getName() + "@" + call.getArgs().length;
+        if (expr instanceof StaticMethodCallExpression || expr instanceof InstanceMethodCallExpression || expr instanceof GlobalFunctionCallExpression) {
+            var call = ((ICallExpression)expr);
+            var parentIntf = call.getParentInterface();
+            var methodName = (parentIntf == null ? "" : parentIntf.getName() + ".") + call.getName() + "@" + call.getArgs().length;
             var callTmpl = this.methods.get(methodName);
             if (callTmpl == null)
                 return null;

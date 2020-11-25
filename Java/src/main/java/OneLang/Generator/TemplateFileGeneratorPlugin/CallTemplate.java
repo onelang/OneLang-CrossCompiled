@@ -33,14 +33,19 @@ import OneLang.Generator.IGenerator.IGenerator;
 import OneLang.VM.ExprVM.IVMHooks;
 import OneLang.VM.ExprVM.VMContext;
 
-import OneLang.VM.Values.IVMValue;
-import OneLang.One.Ast.Interfaces.IType;
+import OneLang.Generator.TemplateFileGeneratorPlugin.CodeTemplate;
 
-public class TypeValue implements IVMValue {
-    public IType type;
+public class CallTemplate {
+    public String className;
+    public String methodName;
+    public String[] args;
+    public CodeTemplate template;
     
-    public TypeValue(IType type)
+    public CallTemplate(String className, String methodName, String[] args, CodeTemplate template)
     {
-        this.type = type;
+        this.className = className;
+        this.methodName = methodName;
+        this.args = args;
+        this.template = template;
     }
 }

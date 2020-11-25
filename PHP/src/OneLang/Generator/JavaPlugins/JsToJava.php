@@ -34,24 +34,6 @@ class JsToJava implements IGeneratorPlugin {
         $this->unhandledMethods = new \OneLang\Core\Set();
     }
     
-    function isArray($arrayExpr) {
-        // TODO: InstanceMethodCallExpression is a hack, we should introduce real stream handling
-        return $arrayExpr instanceof VariableReference && !$arrayExpr->getVariable()->mutability->mutated || $arrayExpr instanceof StaticMethodCallExpression || $arrayExpr instanceof InstanceMethodCallExpression;
-    }
-    
-    function arrayStream($arrayExpr) {
-        $isArray = $this->isArray($arrayExpr);
-        $objR = $this->main->expr($arrayExpr);
-        if ($isArray)
-            $this->main->imports->add("java.util.Arrays");
-        return $isArray ? "Arrays.stream(" . $objR . ")" : $objR . ".stream()";
-    }
-    
-    function toArray($arrayType, $typeArgIdx = 0) {
-        $type = ($arrayType)->typeArguments[$typeArgIdx];
-        return "toArray(" . $this->main->type($type) . "[]::new)";
-    }
-    
     function convertMethod($cls, $obj, $method, $args, $returnType) {
         $objR = $obj === null ? null : $this->main->expr($obj);
         $argsR = array_map(function ($x) { return $this->main->expr($x); }, $args);
@@ -82,18 +64,6 @@ class JsToJava implements IGeneratorPlugin {
     function expr($expr) {
         if ($expr instanceof InstanceMethodCallExpression && $expr->object->actualType instanceof ClassType)
             return $this->convertMethod($expr->object->actualType->decl, $expr->object, $expr->method, $expr->args, $expr->actualType);
-        else if ($expr instanceof InstancePropertyReference && $expr->object->actualType instanceof ClassType) {
-            if ($expr->property->parentClass->name === "TsString" && $expr->property->name === "length")
-                return $this->main->expr($expr->object) . ".length()";
-            if ($expr->property->parentClass->name === "TsArray" && $expr->property->name === "length")
-                return $this->main->expr($expr->object) . "." . ($this->isArray($expr->object) ? "length" : "size()");
-        }
-        else if ($expr instanceof InstanceFieldReference && $expr->object->actualType instanceof ClassType) {
-            if ($expr->field->parentInterface->name === "RegExpExecArray" && $expr->field->name === "length")
-                return $this->main->expr($expr->object) . ".length";
-            if ($expr->field->parentInterface->name === "Map" && $expr->field->name === "size")
-                return $this->main->expr($expr->object) . ".size()";
-        }
         else if ($expr instanceof StaticMethodCallExpression && $expr->method->parentInterface instanceof Class_)
             return $this->convertMethod($expr->method->parentInterface, null, $expr->method, $expr->args, $expr->actualType);
         return null;

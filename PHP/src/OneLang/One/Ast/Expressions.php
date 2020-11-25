@@ -9,6 +9,7 @@ use OneLang\One\Ast\AstTypes\TypeHelper;
 use OneLang\One\Ast\Types\Method;
 use OneLang\One\Ast\Types\GlobalFunction;
 use OneLang\One\Ast\Types\IAstNode;
+use OneLang\One\Ast\Types\IInterface;
 use OneLang\One\Ast\Interfaces\IExpression;
 use OneLang\One\Ast\Interfaces\IType;
 
@@ -23,7 +24,13 @@ class UnaryType {
     const PREFIX = 2;
 }
 
-interface IMethodCallExpression extends IExpression {
+interface ICallExpression extends IExpression {
+    function getName();
+    
+    function getParentInterface();
+}
+
+interface IMethodCallExpression extends IExpression, ICallExpression {
     
 }
 
@@ -359,6 +366,14 @@ class StaticMethodCallExpression extends Expression implements IMethodCallExpres
         $this->args = $args;
         $this->isThisCall = $isThisCall;
     }
+    
+    function getName() {
+        return $this->method->name;
+    }
+    
+    function getParentInterface() {
+        return $this->method->parentInterface;
+    }
 }
 
 class InstanceMethodCallExpression extends Expression implements IMethodCallExpression {
@@ -374,6 +389,14 @@ class InstanceMethodCallExpression extends Expression implements IMethodCallExpr
         $this->typeArgs = $typeArgs;
         $this->args = $args;
     }
+    
+    function getName() {
+        return $this->method->name;
+    }
+    
+    function getParentInterface() {
+        return $this->method->parentInterface;
+    }
 }
 
 class GlobalFunctionCallExpression extends Expression {
@@ -384,6 +407,14 @@ class GlobalFunctionCallExpression extends Expression {
         parent::__construct();
         $this->func = $func;
         $this->args = $args;
+    }
+    
+    function getName() {
+        return $this->func->name;
+    }
+    
+    function getParentInterface() {
+        return null;
     }
 }
 

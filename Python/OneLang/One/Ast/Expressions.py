@@ -213,6 +213,12 @@ class StaticMethodCallExpression(Expression):
         self.args = args
         self.is_this_call = is_this_call
         super().__init__()
+    
+    def get_name(self):
+        return self.method.name
+    
+    def get_parent_interface(self):
+        return self.method.parent_interface
 
 class InstanceMethodCallExpression(Expression):
     def __init__(self, object, method, type_args, args):
@@ -221,12 +227,24 @@ class InstanceMethodCallExpression(Expression):
         self.type_args = type_args
         self.args = args
         super().__init__()
+    
+    def get_name(self):
+        return self.method.name
+    
+    def get_parent_interface(self):
+        return self.method.parent_interface
 
 class GlobalFunctionCallExpression(Expression):
     def __init__(self, func, args):
         self.func = func
         self.args = args
         super().__init__()
+    
+    def get_name(self):
+        return self.func.name
+    
+    def get_parent_interface(self):
+        return None
 
 class LambdaCallExpression(Expression):
     def __init__(self, method, args):

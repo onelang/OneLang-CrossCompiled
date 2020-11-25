@@ -4,6 +4,8 @@ namespace OneLang\Generator\TemplateFileGeneratorPlugin;
 
 use OneLang\Parsers\Common\ExpressionParser\ExpressionParser;
 use OneLang\One\Ast\Expressions\Expression;
+use OneLang\One\Ast\Expressions\GlobalFunctionCallExpression;
+use OneLang\One\Ast\Expressions\ICallExpression;
 use OneLang\One\Ast\Expressions\Identifier;
 use OneLang\One\Ast\Expressions\IMethodCallExpression;
 use OneLang\One\Ast\Expressions\InstanceMethodCallExpression;
@@ -40,7 +42,7 @@ class CodeTemplate {
     }
 }
 
-class MethodCallTemplate {
+class CallTemplate {
     public $className;
     public $methodName;
     public $args;
@@ -127,8 +129,12 @@ class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
     function addExprTemplate($exprStr, $tmpl) {
         $expr = (new ExpressionParser(new Reader($exprStr)))->parse();
         if ($expr instanceof UnresolvedCallExpression && $expr->func instanceof PropertyAccessExpression && $expr->func->object instanceof Identifier) {
-            $callTmpl = new MethodCallTemplate($expr->func->object->text, $expr->func->propertyName, array_map(function ($x) { return ($x)->text; }, $expr->args), $tmpl);
+            $callTmpl = new CallTemplate($expr->func->object->text, $expr->func->propertyName, array_map(function ($x) { return ($x)->text; }, $expr->args), $tmpl);
             $this->methods[$callTmpl->className . "." . $callTmpl->methodName . "@" . count($callTmpl->args)] = $callTmpl;
+        }
+        else if ($expr instanceof UnresolvedCallExpression && $expr->func instanceof Identifier) {
+            $callTmpl = new CallTemplate(null, $expr->func->text, array_map(function ($x) { return ($x)->text; }, $expr->args), $tmpl);
+            $this->methods[$callTmpl->methodName . "@" . count($callTmpl->args)] = $callTmpl;
         }
         else if ($expr instanceof PropertyAccessExpression && $expr->object instanceof Identifier) {
             $fieldTmpl = new FieldAccessTemplate($expr->object->text, $expr->propertyName, $tmpl);
@@ -142,9 +148,10 @@ class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
         $codeTmpl = null;
         $model = Array();
         
-        if ($expr instanceof StaticMethodCallExpression || $expr instanceof InstanceMethodCallExpression) {
+        if ($expr instanceof StaticMethodCallExpression || $expr instanceof InstanceMethodCallExpression || $expr instanceof GlobalFunctionCallExpression) {
             $call = $expr;
-            $methodName = $call->method->parentInterface->name . "." . $call->method->name . "@" . count($call->args);
+            $parentIntf = $call->getParentInterface();
+            $methodName = ($parentIntf === null ? "" : $parentIntf->name . ".") . $call->getName() . "@" . count($call->args);
             $callTmpl = @$this->methods[$methodName] ?? null;
             if ($callTmpl === null)
                 return null;

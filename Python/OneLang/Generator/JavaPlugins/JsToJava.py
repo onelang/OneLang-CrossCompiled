@@ -14,21 +14,6 @@ class JsToJava:
         self.unhandled_methods = dict()
         self.main = main
     
-    def is_array(self, array_expr):
-        # TODO: InstanceMethodCallExpression is a hack, we should introduce real stream handling
-        return isinstance(array_expr, refs.VariableReference) and not array_expr.get_variable().mutability.mutated or isinstance(array_expr, exprs.StaticMethodCallExpression) or isinstance(array_expr, exprs.InstanceMethodCallExpression)
-    
-    def array_stream(self, array_expr):
-        is_array = self.is_array(array_expr)
-        obj_r = self.main.expr(array_expr)
-        if is_array:
-            self.main.imports["java.util.Arrays"] = None
-        return f'''Arrays.stream({obj_r})''' if is_array else f'''{obj_r}.stream()'''
-    
-    def to_array(self, array_type, type_arg_idx = 0):
-        type = (array_type).type_arguments[type_arg_idx]
-        return f'''toArray({self.main.type(type)}[]::new)'''
-    
     def convert_method(self, cls_, obj, method, args, return_type):
         obj_r = None if obj == None else self.main.expr(obj)
         args_r = list(map(lambda x: self.main.expr(x), args))
@@ -53,16 +38,6 @@ class JsToJava:
     def expr(self, expr):
         if isinstance(expr, exprs.InstanceMethodCallExpression) and isinstance(expr.object.actual_type, astTypes.ClassType):
             return self.convert_method(expr.object.actual_type.decl, expr.object, expr.method, expr.args, expr.actual_type)
-        elif isinstance(expr, refs.InstancePropertyReference) and isinstance(expr.object.actual_type, astTypes.ClassType):
-            if expr.property.parent_class.name == "TsString" and expr.property.name == "length":
-                return f'''{self.main.expr(expr.object)}.length()'''
-            if expr.property.parent_class.name == "TsArray" and expr.property.name == "length":
-                return f'''{self.main.expr(expr.object)}.{("length" if self.is_array(expr.object) else "size()")}'''
-        elif isinstance(expr, refs.InstanceFieldReference) and isinstance(expr.object.actual_type, astTypes.ClassType):
-            if expr.field.parent_interface.name == "RegExpExecArray" and expr.field.name == "length":
-                return f'''{self.main.expr(expr.object)}.length'''
-            if expr.field.parent_interface.name == "Map" and expr.field.name == "size":
-                return f'''{self.main.expr(expr.object)}.size()'''
         elif isinstance(expr, exprs.StaticMethodCallExpression) and isinstance(expr.method.parent_interface, types.Class):
             return self.convert_method(expr.method.parent_interface, None, expr.method, expr.args, expr.actual_type)
         return None

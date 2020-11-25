@@ -7,6 +7,7 @@ import OneLang.One.Ast.AstTypes.TypeHelper;
 import OneLang.One.Ast.Types.Method;
 import OneLang.One.Ast.Types.GlobalFunction;
 import OneLang.One.Ast.Types.IAstNode;
+import OneLang.One.Ast.Types.IInterface;
 import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 
@@ -14,6 +15,7 @@ import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Expressions.IMethodCallExpression;
 import OneLang.One.Ast.Types.Method;
 import OneLang.One.Ast.Interfaces.IType;
+import OneLang.One.Ast.Types.IInterface;
 
 public class StaticMethodCallExpression extends Expression implements IMethodCallExpression {
     public Boolean isThisCall;
@@ -37,5 +39,13 @@ public class StaticMethodCallExpression extends Expression implements IMethodCal
         this.setTypeArgs(typeArgs);
         this.setArgs(args);
         this.isThisCall = isThisCall;
+    }
+    
+    public String getName() {
+        return this.getMethod().getName();
+    }
+    
+    public IInterface getParentInterface() {
+        return this.getMethod().parentInterface;
     }
 }

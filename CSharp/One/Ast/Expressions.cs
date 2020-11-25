@@ -6,10 +6,17 @@ namespace One.Ast
     public enum TypeRestriction { NoRestriction, ShouldNotHaveType, MustBeGeneric, ShouldNotBeGeneric }
     public enum UnaryType { Postfix, Prefix }
     
-    public interface IMethodCallExpression : IExpression {
-        Method method { get; set; }
+    public interface ICallExpression : IExpression {
         IType[] typeArgs { get; set; }
         Expression[] args { get; set; }
+        
+        string getName();
+        
+        IInterface getParentInterface();
+    }
+    
+    public interface IMethodCallExpression : IExpression, ICallExpression {
+        Method method { get; set; }
     }
     
     public class Expression : IAstNode, IExpression {
@@ -352,6 +359,16 @@ namespace One.Ast
             this.args = args;
             this.isThisCall = isThisCall;
         }
+        
+        public string getName()
+        {
+            return this.method.name;
+        }
+        
+        public IInterface getParentInterface()
+        {
+            return this.method.parentInterface;
+        }
     }
     
     public class InstanceMethodCallExpression : Expression, IMethodCallExpression {
@@ -367,6 +384,16 @@ namespace One.Ast
             this.typeArgs = typeArgs;
             this.args = args;
         }
+        
+        public string getName()
+        {
+            return this.method.name;
+        }
+        
+        public IInterface getParentInterface()
+        {
+            return this.method.parentInterface;
+        }
     }
     
     public class GlobalFunctionCallExpression : Expression {
@@ -377,6 +404,16 @@ namespace One.Ast
         {
             this.func = func;
             this.args = args;
+        }
+        
+        public string getName()
+        {
+            return this.func.name;
+        }
+        
+        public IInterface getParentInterface()
+        {
+            return null;
         }
     }
     

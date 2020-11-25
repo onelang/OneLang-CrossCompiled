@@ -19,13 +19,13 @@ namespace Generator
         }
     }
     
-    public class MethodCallTemplate {
+    public class CallTemplate {
         public string className;
         public string methodName;
         public string[] args;
         public CodeTemplate template;
         
-        public MethodCallTemplate(string className, string methodName, string[] args, CodeTemplate template)
+        public CallTemplate(string className, string methodName, string[] args, CodeTemplate template)
         {
             this.className = className;
             this.methodName = methodName;
@@ -80,7 +80,7 @@ namespace Generator
     }
     
     public class TemplateFileGeneratorPlugin : IGeneratorPlugin, IVMHooks {
-        public Dictionary<string, MethodCallTemplate> methods;
+        public Dictionary<string, CallTemplate> methods;
         public Dictionary<string, FieldAccessTemplate> fields;
         public Dictionary<string, IVMValue> modelGlobals;
         public IGenerator generator;
@@ -88,7 +88,7 @@ namespace Generator
         public TemplateFileGeneratorPlugin(IGenerator generator, string templateYaml)
         {
             this.generator = generator;
-            this.methods = new Dictionary<string, MethodCallTemplate> {};
+            this.methods = new Dictionary<string, CallTemplate> {};
             this.fields = new Dictionary<string, FieldAccessTemplate> {};
             this.modelGlobals = new Dictionary<string, IVMValue> {};
             var root = OneYaml.load(templateYaml);
@@ -115,11 +115,15 @@ namespace Generator
         {
             var expr = new ExpressionParser(new Reader(exprStr)).parse();
             if (expr is UnresolvedCallExpression unrCallExpr && unrCallExpr.func is PropertyAccessExpression propAccExpr && propAccExpr.object_ is Identifier ident) {
-                var callTmpl = new MethodCallTemplate(ident.text, propAccExpr.propertyName, unrCallExpr.args.map(x => (((Identifier)x)).text), tmpl);
+                var callTmpl = new CallTemplate(ident.text, propAccExpr.propertyName, unrCallExpr.args.map(x => (((Identifier)x)).text), tmpl);
                 this.methods.set($"{callTmpl.className}.{callTmpl.methodName}@{callTmpl.args.length()}", callTmpl);
             }
-            else if (expr is PropertyAccessExpression propAccExpr2 && propAccExpr2.object_ is Identifier ident2) {
-                var fieldTmpl = new FieldAccessTemplate(ident2.text, propAccExpr2.propertyName, tmpl);
+            else if (expr is UnresolvedCallExpression unrCallExpr2 && unrCallExpr2.func is Identifier ident2) {
+                var callTmpl = new CallTemplate(null, ident2.text, unrCallExpr2.args.map(x => (((Identifier)x)).text), tmpl);
+                this.methods.set($"{callTmpl.methodName}@{callTmpl.args.length()}", callTmpl);
+            }
+            else if (expr is PropertyAccessExpression propAccExpr2 && propAccExpr2.object_ is Identifier ident3) {
+                var fieldTmpl = new FieldAccessTemplate(ident3.text, propAccExpr2.propertyName, tmpl);
                 this.fields.set($"{fieldTmpl.className}.{fieldTmpl.fieldName}", fieldTmpl);
             }
             else
@@ -131,9 +135,10 @@ namespace Generator
             CodeTemplate codeTmpl = null;
             var model = new Dictionary<string, IVMValue> {};
             
-            if (expr is StaticMethodCallExpression statMethCallExpr || expr is InstanceMethodCallExpression) {
-                var call = ((IMethodCallExpression)expr);
-                var methodName = $"{call.method.parentInterface.name}.{call.method.name}@{call.args.length()}";
+            if (expr is StaticMethodCallExpression statMethCallExpr || expr is InstanceMethodCallExpression || expr is GlobalFunctionCallExpression) {
+                var call = ((ICallExpression)expr);
+                var parentIntf = call.getParentInterface();
+                var methodName = $"{(parentIntf == null ? "" : $"{parentIntf.name}.")}{call.getName()}@{call.args.length()}";
                 var callTmpl = this.methods.get(methodName);
                 if (callTmpl == null)
                     return null;
