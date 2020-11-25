@@ -50,17 +50,6 @@ namespace Generator.JavaPlugins
                     else
                         return $"{objR}.set({argsR.get(0)}, {argsR.get(1)})";
                 }
-                else if (method.name == "get")
-                    return this.isArray(obj) ? $"{objR}[{argsR.get(0)}]" : $"{objR}.get({argsR.get(0)})";
-                else if (method.name == "join") {
-                    this.main.imports.add("java.util.stream.Collectors");
-                    return $"{this.arrayStream(obj)}.collect(Collectors.joining({argsR.get(0)}))";
-                }
-                else if (method.name == "map")
-                    //if (returnType.repr() !== "C:TsArray<C:TsString>") debugger;
-                    return $"{this.arrayStream(obj)}.map({argsR.get(0)}).{this.toArray(returnType)}";
-                else if (method.name == "push")
-                    return $"{objR}.add({argsR.get(0)})";
                 else if (method.name == "pop")
                     return $"{objR}.remove({objR}.size() - 1)";
                 else if (method.name == "filter")

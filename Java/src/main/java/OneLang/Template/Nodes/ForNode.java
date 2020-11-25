@@ -1,13 +1,10 @@
 package OneLang.Template.Nodes;
 
-import OneLang.Generator.TemplateFileGeneratorPlugin.ExpressionValue;
 import OneLang.One.Ast.Expressions.Expression;
-import OneLang.One.Ast.Expressions.StringLiteral;
 import OneLang.Utils.TSOverviewGenerator.TSOverviewGenerator;
 import OneLang.VM.ExprVM.ExprVM;
+import OneLang.VM.ExprVM.VMContext;
 import OneLang.VM.Values.ArrayValue;
-import OneLang.VM.Values.IVMValue;
-import OneLang.VM.Values.ObjectValue;
 import OneLang.VM.Values.StringValue;
 
 import OneLang.Template.Nodes.ITemplateNode;
@@ -16,7 +13,7 @@ import OneLang.Template.Nodes.TemplateBlock;
 import OneLang.VM.ExprVM.ExprVM;
 import OneLang.VM.Values.ArrayValue;
 import io.onelang.std.core.Objects;
-import OneLang.Template.Nodes.TemplateContext;
+import OneLang.VM.ExprVM.VMContext;
 
 public class ForNode implements ITemplateNode {
     public String variableName;
@@ -32,8 +29,8 @@ public class ForNode implements ITemplateNode {
         this.joiner = joiner;
     }
     
-    public String format(TemplateContext context) {
-        var items = new ExprVM(context.model).evaluate(this.itemsExpr);
+    public String format(VMContext context) {
+        var items = new ExprVM(context).evaluate(this.itemsExpr);
         if (!(items instanceof ArrayValue))
             throw new Error("ForNode items (" + TSOverviewGenerator.preview.expr(this.itemsExpr) + ") return a non-array result!");
         

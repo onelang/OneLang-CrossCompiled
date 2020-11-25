@@ -1,5 +1,6 @@
 using One.Ast;
 using Parsers.Common;
+using Parsers;
 using System.Collections.Generic;
 using Template;
 
@@ -7,14 +8,15 @@ namespace Template
 {
     public class TemplateParser {
         public Reader reader;
-        public ExpressionParser exprParser;
+        public TypeScriptParser2 parser;
         public string template;
         
         public TemplateParser(string template)
         {
             this.template = template;
-            this.reader = new Reader(template);
-            this.exprParser = new ExpressionParser(this.reader);
+            this.parser = new TypeScriptParser2(template);
+            this.parser.allowDollarIds = true;
+            this.reader = this.parser.reader;
         }
         
         public Dictionary<string, string> parseAttributes()
@@ -35,7 +37,7 @@ namespace Template
                 if (this.reader.peekToken("{{/"))
                     break;
                 if (this.reader.readToken("${")) {
-                    var expr = this.exprParser.parse();
+                    var expr = this.parser.parseExpression();
                     items.push(new ExpressionNode(expr));
                     this.reader.expectToken("}");
                 }
@@ -47,7 +49,7 @@ namespace Template
                     if (this.reader.readToken("for")) {
                         var varName = this.reader.readIdentifier();
                         this.reader.expectToken("of");
-                        var itemsExpr = this.exprParser.parse();
+                        var itemsExpr = this.parser.parseExpression();
                         var attrs = this.parseAttributes();
                         this.reader.expectToken("}}");
                         var body = this.parseBlock();
@@ -55,7 +57,7 @@ namespace Template
                         items.push(new ForNode(varName, itemsExpr, body, attrs.get("joiner")));
                     }
                     else {
-                        var expr = this.exprParser.parse();
+                        var expr = this.parser.parseExpression();
                         items.push(new ExpressionNode(expr));
                         this.reader.expectToken("}}");
                     }

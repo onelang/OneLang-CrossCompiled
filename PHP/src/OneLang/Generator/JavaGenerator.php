@@ -101,6 +101,8 @@ use OneLang\One\Transforms\UseDefaultCallArgsExplicitly\UseDefaultCallArgsExplic
 use OneLang\Generator\TemplateFileGeneratorPlugin\ExpressionValue;
 use OneLang\Generator\TemplateFileGeneratorPlugin\LambdaValue;
 use OneLang\Generator\TemplateFileGeneratorPlugin\TemplateFileGeneratorPlugin;
+use OneLang\Generator\TemplateFileGeneratorPlugin\TypeValue;
+use OneLang\VM\Values\BooleanValue;
 use OneLang\VM\Values\StringValue;
 
 class JavaGenerator implements IGenerator {
@@ -156,8 +158,11 @@ class JavaGenerator implements IGenerator {
         $this->plugins[] = $plugin;
         
         // TODO: hack?
-        if ($plugin instanceof TemplateFileGeneratorPlugin)
+        if ($plugin instanceof TemplateFileGeneratorPlugin) {
             $plugin->modelGlobals["toStream"] = new LambdaValue(function ($args) { return new StringValue($this->arrayStream(($args[0])->value)); });
+            $plugin->modelGlobals["isArray"] = new LambdaValue(function ($args) { return new BooleanValue($this->isArray(($args[0])->value)); });
+            $plugin->modelGlobals["toArray"] = new LambdaValue(function ($args) { return new StringValue($this->toArray(($args[0])->type)); });
+        }
     }
     
     function name_($name) {

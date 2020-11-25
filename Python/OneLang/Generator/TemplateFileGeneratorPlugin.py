@@ -11,7 +11,7 @@ import OneLang.One.Ast.References as refs
 import OneLang.One.Ast.Types as types
 import OneLang.Template.TemplateParser as templPars
 import OneLang.Generator.IGenerator as iGen
-import OneLang.Template.Nodes as nodes
+import OneLang.VM.ExprVM as exprVM
 
 class CodeTemplate:
     def __init__(self, template, includes):
@@ -35,6 +35,10 @@ class ExpressionValue:
     def __init__(self, value):
         self.value = value
 
+class TypeValue:
+    def __init__(self, type):
+        self.type = type
+
 class LambdaValue:
     def __init__(self, callback):
         self.callback = callback
@@ -57,7 +61,7 @@ class TemplateFileGeneratorPlugin:
             
             self.add_expr_template(expr_str, tmpl)
     
-    def format_value(self, value):
+    def stringify_value(self, value):
         if isinstance(value, ExpressionValue):
             result = self.generator.expr(value.value)
             return result
@@ -105,6 +109,7 @@ class TemplateFileGeneratorPlugin:
         else:
             return None
         
+        model["type"] = TypeValue(expr.get_type())
         for name in self.model_globals.keys():
             model[name] = self.model_globals.get(name)
         
@@ -112,7 +117,7 @@ class TemplateFileGeneratorPlugin:
             self.generator.add_include(inc)
         
         tmpl = templPars.TemplateParser(code_tmpl.template).parse()
-        result = tmpl.format(nodes.TemplateContext(vals.ObjectValue(model), self))
+        result = tmpl.format(exprVM.VMContext(vals.ObjectValue(model), self))
         return result
     
     def stmt(self, stmt):

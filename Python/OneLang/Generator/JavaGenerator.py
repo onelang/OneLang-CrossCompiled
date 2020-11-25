@@ -60,6 +60,8 @@ class JavaGenerator:
         # TODO: hack?
         if isinstance(plugin, templFileGenPlug.TemplateFileGeneratorPlugin):
             plugin.model_globals["toStream"] = templFileGenPlug.LambdaValue(lambda args: vals.StringValue(self.array_stream((args[0]).value)))
+            plugin.model_globals["isArray"] = templFileGenPlug.LambdaValue(lambda args: vals.BooleanValue(self.is_array((args[0]).value)))
+            plugin.model_globals["toArray"] = templFileGenPlug.LambdaValue(lambda args: vals.StringValue(self.to_array((args[0]).type)))
     
     def name_(self, name):
         if name in self.reserved_words:

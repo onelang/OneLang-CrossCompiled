@@ -71,8 +71,11 @@ namespace Generator
             this.plugins.push(plugin);
             
             // TODO: hack?
-            if (plugin is TemplateFileGeneratorPlugin templFileGenPlug)
+            if (plugin is TemplateFileGeneratorPlugin templFileGenPlug) {
                 templFileGenPlug.modelGlobals.set("toStream", new LambdaValue(args => new StringValue(this.arrayStream((((ExpressionValue)args.get(0))).value))));
+                templFileGenPlug.modelGlobals.set("isArray", new LambdaValue(args => new BooleanValue(this.isArray((((ExpressionValue)args.get(0))).value))));
+                templFileGenPlug.modelGlobals.set("toArray", new LambdaValue(args => new StringValue(this.toArray((((TypeValue)args.get(0))).type))));
+            }
         }
         
         public string name_(string name)

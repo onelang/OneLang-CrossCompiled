@@ -1,4 +1,3 @@
-using Generator;
 using One.Ast;
 using Utils;
 using VM;
@@ -6,22 +5,7 @@ using VM;
 namespace Template
 {
     public interface ITemplateNode {
-        string format(TemplateContext context);
-    }
-    
-    public interface ITemplateFormatHooks {
-        string formatValue(IVMValue value);
-    }
-    
-    public class TemplateContext {
-        public ObjectValue model;
-        public ITemplateFormatHooks hooks;
-        
-        public TemplateContext(ObjectValue model, ITemplateFormatHooks hooks = null)
-        {
-            this.model = model;
-            this.hooks = hooks;
-        }
+        string format(VMContext context);
     }
     
     public class TemplateBlock : ITemplateNode {
@@ -32,7 +16,7 @@ namespace Template
             this.items = items;
         }
         
-        public string format(TemplateContext context)
+        public string format(VMContext context)
         {
             return this.items.map(x => x.format(context)).join("");
         }
@@ -46,7 +30,7 @@ namespace Template
             this.value = value;
         }
         
-        public string format(TemplateContext context)
+        public string format(VMContext context)
         {
             return this.value;
         }
@@ -60,14 +44,14 @@ namespace Template
             this.expr = expr;
         }
         
-        public string format(TemplateContext context)
+        public string format(VMContext context)
         {
-            var value = new ExprVM(context.model).evaluate(this.expr);
+            var value = new ExprVM(context).evaluate(this.expr);
             if (value is StringValue strValue)
                 return strValue.value;
             
             if (context.hooks != null) {
-                var result = context.hooks.formatValue(value);
+                var result = context.hooks.stringifyValue(value);
                 if (result != null)
                     return result;
             }
@@ -90,9 +74,9 @@ namespace Template
             this.joiner = joiner;
         }
         
-        public string format(TemplateContext context)
+        public string format(VMContext context)
         {
-            var items = new ExprVM(context.model).evaluate(this.itemsExpr);
+            var items = new ExprVM(context).evaluate(this.itemsExpr);
             if (!(items is ArrayValue))
                 throw new Error($"ForNode items ({TSOverviewGenerator.preview.expr(this.itemsExpr)}) return a non-array result!");
             

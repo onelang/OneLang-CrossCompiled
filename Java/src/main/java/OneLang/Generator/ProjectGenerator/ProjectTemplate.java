@@ -18,12 +18,12 @@ import OneLang.VM.Values.ObjectValue;
 import OneLang.VM.Values.StringValue;
 import OneLang.Template.TemplateParser.TemplateParser;
 import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
-import OneLang.Template.Nodes.TemplateContext;
+import OneLang.VM.ExprVM.VMContext;
 
 import OneLang.Generator.ProjectGenerator.ProjectTemplateMeta;
 import java.util.Arrays;
 import OneLang.Template.TemplateParser.TemplateParser;
-import OneLang.Template.Nodes.TemplateContext;
+import OneLang.VM.ExprVM.VMContext;
 import OneLang.VM.Values.ObjectValue;
 
 public class ProjectTemplate {
@@ -44,7 +44,7 @@ public class ProjectTemplate {
             var dstFn = dstDir + "/" + fn;
             if (Arrays.stream(this.meta.templateFiles).anyMatch(fn::equals)) {
                 var tmpl = new TemplateParser(OneFile.readText(srcFn)).parse();
-                var dstFile = tmpl.format(new TemplateContext(model, null));
+                var dstFile = tmpl.format(new VMContext(model, null));
                 OneFile.writeText(dstFn, dstFile);
             }
             else

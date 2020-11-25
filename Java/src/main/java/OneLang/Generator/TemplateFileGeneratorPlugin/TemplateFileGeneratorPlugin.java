@@ -12,6 +12,7 @@ import OneLang.One.Ast.Expressions.PropertyAccessExpression;
 import OneLang.One.Ast.Expressions.StaticMethodCallExpression;
 import OneLang.One.Ast.Expressions.UnresolvedCallExpression;
 import OneLang.One.Ast.Interfaces.IExpression;
+import OneLang.One.Ast.Interfaces.IType;
 import OneLang.One.Ast.Statements.Statement;
 import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
 import OneLang.Parsers.Common.Reader.Reader;
@@ -27,11 +28,11 @@ import OneLang.One.Ast.References.VariableReference;
 import OneLang.One.Ast.Types.IClassMember;
 import OneLang.Template.TemplateParser.TemplateParser;
 import OneLang.Generator.IGenerator.IGenerator;
-import OneLang.Template.Nodes.ITemplateFormatHooks;
-import OneLang.Template.Nodes.TemplateContext;
+import OneLang.VM.ExprVM.IVMHooks;
+import OneLang.VM.ExprVM.VMContext;
 
 import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
-import OneLang.Template.Nodes.ITemplateFormatHooks;
+import OneLang.VM.ExprVM.IVMHooks;
 import OneLang.Generator.TemplateFileGeneratorPlugin.MethodCallTemplate;
 import java.util.Map;
 import OneLang.Generator.TemplateFileGeneratorPlugin.FieldAccessTemplate;
@@ -56,13 +57,14 @@ import OneLang.One.Ast.References.InstancePropertyReference;
 import OneLang.One.Ast.Types.IClassMember;
 import OneLang.One.Ast.References.VariableReference;
 import OneLang.One.Ast.References.IInstanceMemberReference;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TypeValue;
 import OneLang.Template.TemplateParser.TemplateParser;
-import OneLang.Template.Nodes.TemplateContext;
+import OneLang.VM.ExprVM.VMContext;
 import OneLang.VM.Values.ObjectValue;
 import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Statements.Statement;
 
-public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, ITemplateFormatHooks {
+public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
     public Map<String, MethodCallTemplate> methods;
     public Map<String, FieldAccessTemplate> fields;
     public Map<String, IVMValue> modelGlobals;
@@ -85,7 +87,7 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, ITemplateF
         }
     }
     
-    public String formatValue(IVMValue value) {
+    public String stringifyValue(IVMValue value) {
         if (value instanceof ExpressionValue) {
             var result = this.generator.expr(((ExpressionValue)value).value);
             return result;
@@ -137,6 +139,7 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, ITemplateF
         else
             return null;
         
+        model.put("type", new TypeValue(expr.getType()));
         for (var name : this.modelGlobals.keySet().toArray(String[]::new))
             model.put(name, this.modelGlobals.get(name));
         
@@ -144,7 +147,7 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, ITemplateF
             this.generator.addInclude(inc);
         
         var tmpl = new TemplateParser(codeTmpl.template).parse();
-        var result = tmpl.format(new TemplateContext(new ObjectValue(model), this));
+        var result = tmpl.format(new VMContext(new ObjectValue(model), this));
         return result;
     }
     

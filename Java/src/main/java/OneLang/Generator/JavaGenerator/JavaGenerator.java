@@ -99,6 +99,8 @@ import OneLang.One.Transforms.UseDefaultCallArgsExplicitly.UseDefaultCallArgsExp
 import OneLang.Generator.TemplateFileGeneratorPlugin.ExpressionValue;
 import OneLang.Generator.TemplateFileGeneratorPlugin.LambdaValue;
 import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TypeValue;
+import OneLang.VM.Values.BooleanValue;
 import OneLang.VM.Values.StringValue;
 
 import OneLang.Generator.IGenerator.IGenerator;
@@ -122,6 +124,8 @@ import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin
 import OneLang.Generator.TemplateFileGeneratorPlugin.LambdaValue;
 import OneLang.VM.Values.StringValue;
 import OneLang.Generator.TemplateFileGeneratorPlugin.ExpressionValue;
+import OneLang.VM.Values.BooleanValue;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TypeValue;
 import java.util.Arrays;
 import io.onelang.std.core.RegExp;
 import java.util.stream.Collectors;
@@ -264,8 +268,11 @@ public class JavaGenerator implements IGenerator {
         this.plugins.add(plugin);
         
         // TODO: hack?
-        if (plugin instanceof TemplateFileGeneratorPlugin)
+        if (plugin instanceof TemplateFileGeneratorPlugin) {
             ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("toStream", new LambdaValue(args -> new StringValue(this.arrayStream((((ExpressionValue)args[0])).value))));
+            ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("isArray", new LambdaValue(args -> new BooleanValue(this.isArray((((ExpressionValue)args[0])).value))));
+            ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("toArray", new LambdaValue(args -> new StringValue(this.toArray((((TypeValue)args[0])).type, 0))));
+        }
     }
     
     public String name_(String name) {

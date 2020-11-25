@@ -2,32 +2,15 @@
 
 namespace OneLang\Template\Nodes;
 
-use OneLang\Generator\TemplateFileGeneratorPlugin\ExpressionValue;
 use OneLang\One\Ast\Expressions\Expression;
-use OneLang\One\Ast\Expressions\StringLiteral;
 use OneLang\Utils\TSOverviewGenerator\TSOverviewGenerator;
 use OneLang\VM\ExprVM\ExprVM;
+use OneLang\VM\ExprVM\VMContext;
 use OneLang\VM\Values\ArrayValue;
-use OneLang\VM\Values\IVMValue;
-use OneLang\VM\Values\ObjectValue;
 use OneLang\VM\Values\StringValue;
 
 interface ITemplateNode {
     function format($context);
-}
-
-interface ITemplateFormatHooks {
-    function formatValue($value);
-}
-
-class TemplateContext {
-    public $model;
-    public $hooks;
-    
-    function __construct($model, $hooks = null) {
-        $this->model = $model;
-        $this->hooks = $hooks;
-    }
 }
 
 class TemplateBlock implements ITemplateNode {
@@ -62,12 +45,12 @@ class ExpressionNode implements ITemplateNode {
     }
     
     function format($context) {
-        $value = (new ExprVM($context->model))->evaluate($this->expr);
+        $value = (new ExprVM($context))->evaluate($this->expr);
         if ($value instanceof StringValue)
             return $value->value;
         
         if ($context->hooks !== null) {
-            $result = $context->hooks->formatValue($value);
+            $result = $context->hooks->stringifyValue($value);
             if ($result !== null)
                 return $result;
         }
@@ -90,7 +73,7 @@ class ForNode implements ITemplateNode {
     }
     
     function format($context) {
-        $items = (new ExprVM($context->model))->evaluate($this->itemsExpr);
+        $items = (new ExprVM($context))->evaluate($this->itemsExpr);
         if (!($items instanceof ArrayValue))
             throw new \OneLang\Core\Error("ForNode items (" . TSOverviewGenerator::$preview->expr($this->itemsExpr) . ") return a non-array result!");
         

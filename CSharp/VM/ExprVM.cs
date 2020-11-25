@@ -3,12 +3,27 @@ using VM;
 
 namespace VM
 {
-    public class ExprVM {
+    public interface IVMHooks {
+        string stringifyValue(IVMValue value);
+    }
+    
+    public class VMContext {
         public ObjectValue model;
+        public IVMHooks hooks;
         
-        public ExprVM(ObjectValue model)
+        public VMContext(ObjectValue model, IVMHooks hooks = null)
         {
             this.model = model;
+            this.hooks = hooks;
+        }
+    }
+    
+    public class ExprVM {
+        public VMContext context;
+        
+        public ExprVM(VMContext context)
+        {
+            this.context = context;
         }
         
         public static IVMValue propAccess(IVMValue obj, string propName)
@@ -23,7 +38,7 @@ namespace VM
         public IVMValue evaluate(Expression expr)
         {
             if (expr is Identifier ident)
-                return ExprVM.propAccess(this.model, ident.text);
+                return ExprVM.propAccess(this.context.model, ident.text);
             else if (expr is PropertyAccessExpression propAccExpr) {
                 var objValue = this.evaluate(propAccExpr.object_);
                 return ExprVM.propAccess(objValue, propAccExpr.propertyName);
@@ -36,6 +51,23 @@ namespace VM
             }
             else if (expr is StringLiteral strLit)
                 return new StringValue(strLit.stringValue);
+            else if (expr is ConditionalExpression condExpr) {
+                var condResult = this.evaluate(condExpr.condition);
+                var result = this.evaluate((((BooleanValue)condResult)).value ? condExpr.whenTrue : condExpr.whenFalse);
+                return result;
+            }
+            else if (expr is TemplateString templStr) {
+                var result = "";
+                foreach (var part in templStr.parts) {
+                    if (part.isLiteral)
+                        result += part.literalText;
+                    else {
+                        var value = this.evaluate(part.expression);
+                        result += value is StringValue strValue ? strValue.value : this.context.hooks.stringifyValue(value);
+                    }
+                }
+                return new StringValue(result);
+            }
             else
                 throw new Error("Unsupported expression!");
         }

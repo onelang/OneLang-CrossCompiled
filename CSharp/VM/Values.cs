@@ -28,6 +28,15 @@ namespace VM
         }
     }
     
+    public class BooleanValue : IVMValue {
+        public bool value;
+        
+        public BooleanValue(bool value)
+        {
+            this.value = value;
+        }
+    }
+    
     public class ArrayValue : IVMValue {
         public IVMValue[] items;
         

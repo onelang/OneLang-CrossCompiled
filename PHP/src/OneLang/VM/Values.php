@@ -26,6 +26,14 @@ class StringValue implements IVMValue {
     }
 }
 
+class BooleanValue implements IVMValue {
+    public $value;
+    
+    function __construct($value) {
+        $this->value = $value;
+    }
+}
+
 class ArrayValue implements IVMValue {
     public $items;
     

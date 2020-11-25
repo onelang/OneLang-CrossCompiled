@@ -12,7 +12,7 @@ import OneLang.StdLib.PackageManager as packMan
 import OneLang.VM.Values as vals
 import OneLang.Template.TemplateParser as templPars
 import OneLang.Generator.TemplateFileGeneratorPlugin as templFileGenPlug
-import OneLang.Template.Nodes as nodes
+import OneLang.VM.ExprVM as exprVM
 
 class ProjectTemplateMeta:
     def __init__(self, language, destination_dir, package_dir, template_files):
@@ -39,7 +39,7 @@ class ProjectTemplate:
             dst_fn = f'''{dst_dir}/{fn}'''
             if fn in self.meta.template_files:
                 tmpl = templPars.TemplateParser(OneFile.read_text(src_fn)).parse()
-                dst_file = tmpl.format(nodes.TemplateContext(model))
+                dst_file = tmpl.format(exprVM.VMContext(model))
                 OneFile.write_text(dst_fn, dst_file)
             else:
                 OneFile.copy(src_fn, dst_fn)

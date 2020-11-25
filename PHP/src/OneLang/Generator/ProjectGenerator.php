@@ -18,7 +18,7 @@ use OneLang\VM\Values\ObjectValue;
 use OneLang\VM\Values\StringValue;
 use OneLang\Template\TemplateParser\TemplateParser;
 use OneLang\Generator\TemplateFileGeneratorPlugin\TemplateFileGeneratorPlugin;
-use OneLang\Template\Nodes\TemplateContext;
+use OneLang\VM\ExprVM\VMContext;
 
 class ProjectTemplateMeta {
     public $language;
@@ -55,7 +55,7 @@ class ProjectTemplate {
             $dstFn = $dstDir . "/" . $fn;
             if (in_array($fn, $this->meta->templateFiles)) {
                 $tmpl = (new TemplateParser(OneFile::readText($srcFn)))->parse();
-                $dstFile = $tmpl->format(new TemplateContext($model));
+                $dstFile = $tmpl->format(new VMContext($model));
                 OneFile::writeText($dstFn, $dstFile);
             }
             else

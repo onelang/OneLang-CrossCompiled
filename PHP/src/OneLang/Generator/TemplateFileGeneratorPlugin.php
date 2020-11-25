@@ -11,6 +11,7 @@ use OneLang\One\Ast\Expressions\PropertyAccessExpression;
 use OneLang\One\Ast\Expressions\StaticMethodCallExpression;
 use OneLang\One\Ast\Expressions\UnresolvedCallExpression;
 use OneLang\One\Ast\Interfaces\IExpression;
+use OneLang\One\Ast\Interfaces\IType;
 use OneLang\One\Ast\Statements\Statement;
 use OneLang\Generator\IGeneratorPlugin\IGeneratorPlugin;
 use OneLang\Parsers\Common\Reader\Reader;
@@ -26,8 +27,8 @@ use OneLang\One\Ast\References\VariableReference;
 use OneLang\One\Ast\Types\IClassMember;
 use OneLang\Template\TemplateParser\TemplateParser;
 use OneLang\Generator\IGenerator\IGenerator;
-use OneLang\Template\Nodes\ITemplateFormatHooks;
-use OneLang\Template\Nodes\TemplateContext;
+use OneLang\VM\ExprVM\IVMHooks;
+use OneLang\VM\ExprVM\VMContext;
 
 class CodeTemplate {
     public $template;
@@ -73,6 +74,14 @@ class ExpressionValue implements IVMValue {
     }
 }
 
+class TypeValue implements IVMValue {
+    public $type;
+    
+    function __construct($type) {
+        $this->type = $type;
+    }
+}
+
 class LambdaValue implements ICallableValue {
     public $callback;
     
@@ -85,7 +94,7 @@ class LambdaValue implements ICallableValue {
     }
 }
 
-class TemplateFileGeneratorPlugin implements IGeneratorPlugin, ITemplateFormatHooks {
+class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
     public $methods;
     public $fields;
     public $modelGlobals;
@@ -107,7 +116,7 @@ class TemplateFileGeneratorPlugin implements IGeneratorPlugin, ITemplateFormatHo
         }
     }
     
-    function formatValue($value) {
+    function stringifyValue($value) {
         if ($value instanceof ExpressionValue) {
             $result = $this->generator->expr($value->value);
             return $result;
@@ -159,6 +168,7 @@ class TemplateFileGeneratorPlugin implements IGeneratorPlugin, ITemplateFormatHo
         else
             return null;
         
+        $model["type"] = new TypeValue($expr->getType());
         foreach (array_keys($this->modelGlobals) as $name)
             $model[$name] = @$this->modelGlobals[$name] ?? null;
         
@@ -166,7 +176,7 @@ class TemplateFileGeneratorPlugin implements IGeneratorPlugin, ITemplateFormatHo
             $this->generator->addInclude($inc);
         
         $tmpl = (new TemplateParser($codeTmpl->template))->parse();
-        $result = $tmpl->format(new TemplateContext(new ObjectValue($model), $this));
+        $result = $tmpl->format(new VMContext(new ObjectValue($model), $this));
         return $result;
     }
     

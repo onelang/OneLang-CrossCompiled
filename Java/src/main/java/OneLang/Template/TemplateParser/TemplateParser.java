@@ -8,9 +8,10 @@ import OneLang.Template.Nodes.ITemplateNode;
 import OneLang.Template.Nodes.LiteralNode;
 import OneLang.Template.Nodes.TemplateBlock;
 import OneLang.One.Ast.Expressions.Identifier;
+import OneLang.Parsers.TypeScriptParser.TypeScriptParser2;
 
 import OneLang.Parsers.Common.Reader.Reader;
-import OneLang.Parsers.Common.ExpressionParser.ExpressionParser;
+import OneLang.Parsers.TypeScriptParser.TypeScriptParser2;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import OneLang.Template.Nodes.TemplateBlock;
@@ -24,14 +25,15 @@ import OneLang.Template.Nodes.LiteralNode;
 
 public class TemplateParser {
     public Reader reader;
-    public ExpressionParser exprParser;
+    public TypeScriptParser2 parser;
     public String template;
     
     public TemplateParser(String template)
     {
         this.template = template;
-        this.reader = new Reader(template);
-        this.exprParser = new ExpressionParser(this.reader, null, null, null);
+        this.parser = new TypeScriptParser2(template, null);
+        this.parser.allowDollarIds = true;
+        this.reader = this.parser.reader;
     }
     
     public Map<String, String> parseAttributes() {
@@ -50,7 +52,7 @@ public class TemplateParser {
             if (this.reader.peekToken("{{/"))
                 break;
             if (this.reader.readToken("${")) {
-                var expr = this.exprParser.parse(0, true);
+                var expr = this.parser.parseExpression();
                 items.add(new ExpressionNode(expr));
                 this.reader.expectToken("}", null);
             }
@@ -62,7 +64,7 @@ public class TemplateParser {
                 if (this.reader.readToken("for")) {
                     var varName = this.reader.readIdentifier();
                     this.reader.expectToken("of", null);
-                    var itemsExpr = this.exprParser.parse(0, true);
+                    var itemsExpr = this.parser.parseExpression();
                     var attrs = this.parseAttributes();
                     this.reader.expectToken("}}", null);
                     var body = this.parseBlock();
@@ -70,7 +72,7 @@ public class TemplateParser {
                     items.add(new ForNode(varName, itemsExpr, body, attrs.get("joiner")));
                 }
                 else {
-                    var expr = this.exprParser.parse(0, true);
+                    var expr = this.parser.parseExpression();
                     items.add(new ExpressionNode(expr));
                     this.reader.expectToken("}}", null);
                 }

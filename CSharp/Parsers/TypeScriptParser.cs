@@ -40,6 +40,7 @@ namespace Parsers
         public NodeManager nodeManager { get; set; }
         public ExportScopeRef exportScope;
         public bool missingReturnTypeIsVoid = false;
+        public bool allowDollarIds = false;
         public SourcePath path;
         
         public TypeScriptParser2(string source, SourcePath path = null)
@@ -187,6 +188,15 @@ namespace Parsers
                         var expr = this.parseExpression();
                         parts.push(TemplateStringPart.Expression(expr));
                         this.reader.expectToken("}");
+                    }
+                    else if (this.allowDollarIds && this.reader.readExactly("$")) {
+                        if (litPart != "") {
+                            parts.push(TemplateStringPart.Literal(litPart));
+                            litPart = "";
+                        }
+                        
+                        var id = this.reader.readIdentifier();
+                        parts.push(TemplateStringPart.Expression(new Identifier(id)));
                     }
                     else if (this.reader.readExactly("\\")) {
                         var chr = this.reader.readChar();

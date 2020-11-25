@@ -10,16 +10,18 @@ use OneLang\Template\Nodes\ITemplateNode;
 use OneLang\Template\Nodes\LiteralNode;
 use OneLang\Template\Nodes\TemplateBlock;
 use OneLang\One\Ast\Expressions\Identifier;
+use OneLang\Parsers\TypeScriptParser\TypeScriptParser2;
 
 class TemplateParser {
     public $reader;
-    public $exprParser;
+    public $parser;
     public $template;
     
     function __construct($template) {
         $this->template = $template;
-        $this->reader = new Reader($template);
-        $this->exprParser = new ExpressionParser($this->reader);
+        $this->parser = new TypeScriptParser2($template);
+        $this->parser->allowDollarIds = true;
+        $this->reader = $this->parser->reader;
     }
     
     function parseAttributes() {
@@ -38,7 +40,7 @@ class TemplateParser {
             if ($this->reader->peekToken("{{/"))
                 break;
             if ($this->reader->readToken("\${")) {
-                $expr = $this->exprParser->parse();
+                $expr = $this->parser->parseExpression();
                 $items[] = new ExpressionNode($expr);
                 $this->reader->expectToken("}");
             }
@@ -50,7 +52,7 @@ class TemplateParser {
                 if ($this->reader->readToken("for")) {
                     $varName = $this->reader->readIdentifier();
                     $this->reader->expectToken("of");
-                    $itemsExpr = $this->exprParser->parse();
+                    $itemsExpr = $this->parser->parseExpression();
                     $attrs = $this->parseAttributes();
                     $this->reader->expectToken("}}");
                     $body = $this->parseBlock();
@@ -58,7 +60,7 @@ class TemplateParser {
                     $items[] = new ForNode($varName, $itemsExpr, $body, @$attrs["joiner"] ?? null);
                 }
                 else {
-                    $expr = $this->exprParser->parse();
+                    $expr = $this->parser->parseExpression();
                     $items[] = new ExpressionNode($expr);
                     $this->reader->expectToken("}}");
                 }

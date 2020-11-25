@@ -145,6 +145,7 @@ public class TypeScriptParser2 implements IParser, IExpressionParserHooks, IRead
     public ExpressionParser expressionParser;
     public ExportScopeRef exportScope;
     public Boolean missingReturnTypeIsVoid = false;
+    public Boolean allowDollarIds = false;
     public SourcePath path;
     
     NodeManager nodeManager;
@@ -289,6 +290,15 @@ public class TypeScriptParser2 implements IParser, IExpressionParserHooks, IRead
                     var expr = this.parseExpression();
                     parts.add(TemplateStringPart.Expression(expr));
                     this.reader.expectToken("}", null);
+                }
+                else if (this.allowDollarIds && this.reader.readExactly("$")) {
+                    if (!Objects.equals(litPart, "")) {
+                        parts.add(TemplateStringPart.Literal(litPart));
+                        litPart = "";
+                    }
+                    
+                    var id = this.reader.readIdentifier();
+                    parts.add(TemplateStringPart.Expression(new Identifier(id)));
                 }
                 else if (this.reader.readExactly("\\")) {
                     var chr = this.reader.readChar();

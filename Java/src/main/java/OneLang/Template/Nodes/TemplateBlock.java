@@ -1,19 +1,16 @@
 package OneLang.Template.Nodes;
 
-import OneLang.Generator.TemplateFileGeneratorPlugin.ExpressionValue;
 import OneLang.One.Ast.Expressions.Expression;
-import OneLang.One.Ast.Expressions.StringLiteral;
 import OneLang.Utils.TSOverviewGenerator.TSOverviewGenerator;
 import OneLang.VM.ExprVM.ExprVM;
+import OneLang.VM.ExprVM.VMContext;
 import OneLang.VM.Values.ArrayValue;
-import OneLang.VM.Values.IVMValue;
-import OneLang.VM.Values.ObjectValue;
 import OneLang.VM.Values.StringValue;
 
 import OneLang.Template.Nodes.ITemplateNode;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-import OneLang.Template.Nodes.TemplateContext;
+import OneLang.VM.ExprVM.VMContext;
 
 public class TemplateBlock implements ITemplateNode {
     public ITemplateNode[] items;
@@ -23,7 +20,7 @@ public class TemplateBlock implements ITemplateNode {
         this.items = items;
     }
     
-    public String format(TemplateContext context) {
+    public String format(VMContext context) {
         return Arrays.stream(Arrays.stream(this.items).map(x -> x.format(context)).toArray(String[]::new)).collect(Collectors.joining(""));
     }
 }

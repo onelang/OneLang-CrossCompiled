@@ -3,14 +3,16 @@ import OneLang.Parsers.Common.Reader as read
 import OneLang.Parsers.Common.ExpressionParser as exprPars
 import OneLang.Template.Nodes as nodes
 import OneLang.One.Ast.Expressions as exprs
+import OneLang.Parsers.TypeScriptParser as typeScrPars
 
 class TemplateParser:
     def __init__(self, template):
         self.reader = None
-        self.expr_parser = None
+        self.parser = None
         self.template = template
-        self.reader = read.Reader(template)
-        self.expr_parser = exprPars.ExpressionParser(self.reader)
+        self.parser = typeScrPars.TypeScriptParser2(template)
+        self.parser.allow_dollar_ids = True
+        self.reader = self.parser.reader
     
     def parse_attributes(self):
         result = {}
@@ -26,7 +28,7 @@ class TemplateParser:
             if self.reader.peek_token("{{/"):
                 break
             if self.reader.read_token("${"):
-                expr = self.expr_parser.parse()
+                expr = self.parser.parse_expression()
                 items.append(nodes.ExpressionNode(expr))
                 self.reader.expect_token("}")
             elif self.reader.read_token("$"):
@@ -36,14 +38,14 @@ class TemplateParser:
                 if self.reader.read_token("for"):
                     var_name = self.reader.read_identifier()
                     self.reader.expect_token("of")
-                    items_expr = self.expr_parser.parse()
+                    items_expr = self.parser.parse_expression()
                     attrs = self.parse_attributes()
                     self.reader.expect_token("}}")
                     body = self.parse_block()
                     self.reader.expect_token("{{/for}}")
                     items.append(nodes.ForNode(var_name, items_expr, body, attrs.get("joiner")))
                 else:
-                    expr = self.expr_parser.parse()
+                    expr = self.parser.parse_expression()
                     items.append(nodes.ExpressionNode(expr))
                     self.reader.expect_token("}}")
             else:

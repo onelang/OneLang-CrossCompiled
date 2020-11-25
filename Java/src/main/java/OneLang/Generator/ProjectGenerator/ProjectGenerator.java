@@ -18,7 +18,7 @@ import OneLang.VM.Values.ObjectValue;
 import OneLang.VM.Values.StringValue;
 import OneLang.Template.TemplateParser.TemplateParser;
 import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
-import OneLang.Template.Nodes.TemplateContext;
+import OneLang.VM.ExprVM.VMContext;
 
 import OneLang.Generator.ProjectGenerator.OneProjectFile;
 import OneLang.Generator.IGenerator.IGenerator;

@@ -31,6 +31,7 @@ class TypeScriptParser2:
         self.node_manager = None
         self.export_scope = None
         self.missing_return_type_is_void = False
+        self.allow_dollar_ids = False
         self.path = path
         self.reader = read.Reader(source)
         self.reader.hooks = self
@@ -149,6 +150,13 @@ class TypeScriptParser2:
                     expr = self.parse_expression()
                     parts.append(exprs.TemplateStringPart.expression(expr))
                     self.reader.expect_token("}")
+                elif self.allow_dollar_ids and self.reader.read_exactly("$"):
+                    if lit_part != "":
+                        parts.append(exprs.TemplateStringPart.literal(lit_part))
+                        lit_part = ""
+                    
+                    id = self.reader.read_identifier()
+                    parts.append(exprs.TemplateStringPart.expression(exprs.Identifier(id)))
                 elif self.reader.read_exactly("\\"):
                     chr = self.reader.read_char()
                     if chr == "n":

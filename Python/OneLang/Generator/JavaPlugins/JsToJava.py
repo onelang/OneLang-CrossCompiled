@@ -42,16 +42,6 @@ class JsToJava:
                     return f'''{obj_r}[{args_r[0]}] = {args_r[1]}'''
                 else:
                     return f'''{obj_r}.set({args_r[0]}, {args_r[1]})'''
-            elif method.name == "get":
-                return f'''{obj_r}[{args_r[0]}]''' if self.is_array(obj) else f'''{obj_r}.get({args_r[0]})'''
-            elif method.name == "join":
-                self.main.imports["java.util.stream.Collectors"] = None
-                return f'''{self.array_stream(obj)}.collect(Collectors.joining({args_r[0]}))'''
-            elif method.name == "map":
-                #if (returnType.repr() !== "C:TsArray<C:TsString>") debugger;
-                return f'''{self.array_stream(obj)}.map({args_r[0]}).{self.to_array(return_type)}'''
-            elif method.name == "push":
-                return f'''{obj_r}.add({args_r[0]})'''
             elif method.name == "pop":
                 return f'''{obj_r}.remove({obj_r}.size() - 1)'''
             elif method.name == "filter":

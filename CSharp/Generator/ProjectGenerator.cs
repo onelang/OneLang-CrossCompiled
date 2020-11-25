@@ -46,7 +46,7 @@ namespace Generator
                 var dstFn = $"{dstDir}/{fn}";
                 if (this.meta.templateFiles.includes(fn)) {
                     var tmpl = new TemplateParser(OneFile.readText(srcFn)).parse();
-                    var dstFile = tmpl.format(new TemplateContext(model));
+                    var dstFile = tmpl.format(new VMContext(model));
                     OneFile.writeText(dstFn, dstFile);
                 }
                 else

@@ -56,6 +56,15 @@ namespace Generator
         }
     }
     
+    public class TypeValue : IVMValue {
+        public IType type;
+        
+        public TypeValue(IType type)
+        {
+            this.type = type;
+        }
+    }
+    
     public class LambdaValue : ICallableValue {
         public Func<IVMValue[], IVMValue> callback;
         
@@ -70,7 +79,7 @@ namespace Generator
         }
     }
     
-    public class TemplateFileGeneratorPlugin : IGeneratorPlugin, ITemplateFormatHooks {
+    public class TemplateFileGeneratorPlugin : IGeneratorPlugin, IVMHooks {
         public Dictionary<string, MethodCallTemplate> methods;
         public Dictionary<string, FieldAccessTemplate> fields;
         public Dictionary<string, IVMValue> modelGlobals;
@@ -93,7 +102,7 @@ namespace Generator
             }
         }
         
-        public string formatValue(IVMValue value)
+        public string stringifyValue(IVMValue value)
         {
             if (value is ExpressionValue exprValue) {
                 var result = this.generator.expr(exprValue.value);
@@ -148,6 +157,7 @@ namespace Generator
             else
                 return null;
             
+            model.set("type", new TypeValue(expr.getType()));
             foreach (var name in Object.keys(this.modelGlobals))
                 model.set(name, this.modelGlobals.get(name));
             
@@ -155,7 +165,7 @@ namespace Generator
                 this.generator.addInclude(inc);
             
             var tmpl = new TemplateParser(codeTmpl.template).parse();
-            var result = tmpl.format(new TemplateContext(new ObjectValue(model), this));
+            var result = tmpl.format(new VMContext(new ObjectValue(model), this));
             return result;
         }
         

@@ -31,13 +31,14 @@ import OneLang.Generator.IGenerator.IGenerator;
 import OneLang.VM.ExprVM.IVMHooks;
 import OneLang.VM.ExprVM.VMContext;
 
-public class CodeTemplate {
-    public String template;
-    public String[] includes;
+import OneLang.VM.Values.IVMValue;
+import OneLang.One.Ast.Interfaces.IType;
+
+public class TypeValue implements IVMValue {
+    public IType type;
     
-    public CodeTemplate(String template, String[] includes)
+    public TypeValue(IType type)
     {
-        this.template = template;
-        this.includes = includes;
+        this.type = type;
     }
 }

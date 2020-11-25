@@ -102,6 +102,7 @@ class TypeScriptParser2 implements IParser, IExpressionParserHooks, IReaderHooks
     public $nodeManager;
     public $exportScope;
     public $missingReturnTypeIsVoid = false;
+    public $allowDollarIds = false;
     public $path;
     
     function __construct($source, $path = null) {
@@ -241,6 +242,15 @@ class TypeScriptParser2 implements IParser, IExpressionParserHooks, IReaderHooks
                     $expr = $this->parseExpression();
                     $parts[] = TemplateStringPart::Expression($expr);
                     $this->reader->expectToken("}");
+                }
+                else if ($this->allowDollarIds && $this->reader->readExactly("\$")) {
+                    if ($litPart !== "") {
+                        $parts[] = TemplateStringPart::Literal($litPart);
+                        $litPart = "";
+                    }
+                    
+                    $id = $this->reader->readIdentifier();
+                    $parts[] = TemplateStringPart::Expression(new Identifier($id));
                 }
                 else if ($this->reader->readExactly("\\")) {
                     $chr = $this->reader->readChar();

@@ -2,21 +2,38 @@
 
 namespace OneLang\VM\ExprVM;
 
+use OneLang\One\Ast\Expressions\ConditionalExpression;
 use OneLang\One\Ast\Expressions\Expression;
 use OneLang\One\Ast\Expressions\Identifier;
 use OneLang\One\Ast\Expressions\PropertyAccessExpression;
 use OneLang\One\Ast\Expressions\StringLiteral;
+use OneLang\One\Ast\Expressions\TemplateString;
 use OneLang\One\Ast\Expressions\UnresolvedCallExpression;
+use OneLang\VM\Values\BooleanValue;
 use OneLang\VM\Values\ICallableValue;
 use OneLang\VM\Values\IVMValue;
 use OneLang\VM\Values\ObjectValue;
 use OneLang\VM\Values\StringValue;
 
-class ExprVM {
+interface IVMHooks {
+    function stringifyValue($value);
+}
+
+class VMContext {
     public $model;
+    public $hooks;
     
-    function __construct($model) {
+    function __construct($model, $hooks = null) {
         $this->model = $model;
+        $this->hooks = $hooks;
+    }
+}
+
+class ExprVM {
+    public $context;
+    
+    function __construct($context) {
+        $this->context = $context;
     }
     
     static function propAccess($obj, $propName) {
@@ -29,7 +46,7 @@ class ExprVM {
     
     function evaluate($expr) {
         if ($expr instanceof Identifier)
-            return ExprVM::propAccess($this->model, $expr->text);
+            return ExprVM::propAccess($this->context->model, $expr->text);
         else if ($expr instanceof PropertyAccessExpression) {
             $objValue = $this->evaluate($expr->object);
             return ExprVM::propAccess($objValue, $expr->propertyName);
@@ -42,6 +59,23 @@ class ExprVM {
         }
         else if ($expr instanceof StringLiteral)
             return new StringValue($expr->stringValue);
+        else if ($expr instanceof ConditionalExpression) {
+            $condResult = $this->evaluate($expr->condition);
+            $result = $this->evaluate(($condResult)->value ? $expr->whenTrue : $expr->whenFalse);
+            return $result;
+        }
+        else if ($expr instanceof TemplateString) {
+            $result = "";
+            foreach ($expr->parts as $part) {
+                if ($part->isLiteral)
+                    $result .= $part->literalText;
+                else {
+                    $value = $this->evaluate($part->expression);
+                    $result .= $value instanceof StringValue ? $value->value : $this->context->hooks->stringifyValue($value);
+                }
+            }
+            return new StringValue($result);
+        }
         else
             throw new \OneLang\Core\Error("Unsupported expression!");
     }
