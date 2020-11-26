@@ -10,7 +10,6 @@ import OneLang.One.Ast.Types.Workspace;
 import OneLang.One.IssueDetectors.CircularDependencyDetector.IGraphVisitor;
 import OneLang.One.Ast.Types.SourceFile;
 import OneLang.One.IssueDetectors.CircularDependencyDetector.GraphCycleDetector;
-import io.onelang.std.core.console;
 import OneLang.One.Ast.Types.IInterface;
 import OneLang.One.Ast.Types.IResolvedImportable;
 import OneLang.One.Ast.AstTypes.ClassType;
@@ -31,7 +30,7 @@ public class CircularDependencyDetector implements IGraphVisitor<SourceFile> {
         for (var intf : intfs)
             for (var baseIntf : intf.getAllBaseInterfaces()) {
                 if (baseIntf.getParentFile() != file && this.detector.visitNode(baseIntf.getParentFile()))
-                    console.error("Circular dependency found in file '" + file.exportScope.getId() + "': " + type + " '" + intf.getName() + "' inherited from '" + baseIntf.getName() + "' (from '" + baseIntf.getParentFile().exportScope.getId() + "')");
+                    System.err.println("Circular dependency found in file '" + file.exportScope.getId() + "': " + type + " '" + intf.getName() + "' inherited from '" + baseIntf.getName() + "' (from '" + baseIntf.getParentFile().exportScope.getId() + "')");
             }
     }
     
@@ -41,7 +40,7 @@ public class CircularDependencyDetector implements IGraphVisitor<SourceFile> {
                 for (var impSym : imp.imports) {
                     var impFile = (((IResolvedImportable)impSym)).getParentFile();
                     if (this.detector.visitNode(impFile))
-                        console.error("Circular dependency found in file '" + file.exportScope.getId() + "' via the import '" + impSym.getName() + "' imported from '" + impFile.exportScope.getId() + "'");
+                        System.err.println("Circular dependency found in file '" + file.exportScope.getId() + "' via the import '" + impSym.getName() + "' imported from '" + impFile.exportScope.getId() + "'");
                 }
         else if (this.detectionMode == DetectionMode.AllInheritence) {
             this.processIntfs(file, "class", file.classes);
@@ -51,7 +50,7 @@ public class CircularDependencyDetector implements IGraphVisitor<SourceFile> {
             for (var cls : file.classes) {
                 var baseClass = (((ClassType)cls.baseClass)).decl;
                 if (baseClass.getParentFile() != file && this.detector.visitNode(baseClass.getParentFile()))
-                    console.error("Circular dependency found in file '" + file.exportScope.getId() + "': class '" + cls.getName() + "' inherited from '" + baseClass.getName() + "' (from '" + baseClass.getParentFile().exportScope.getId() + "')");
+                    System.err.println("Circular dependency found in file '" + file.exportScope.getId() + "': class '" + cls.getName() + "' inherited from '" + baseClass.getName() + "' (from '" + baseClass.getParentFile().exportScope.getId() + "')");
             }
     }
     

@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import OneLang.StdLib.PackageManager.ImplPkgNativeDependency;
 import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
-import io.onelang.std.core.console;
 import OneLang.VM.Values.ObjectValue;
 import java.util.Map;
 import OneLang.VM.Values.IVMValue;
@@ -108,7 +107,7 @@ public class ProjectGenerator {
             }
             
             // generate cross compiled source code
-            console.log("Generating " + langName + " code...");
+            System.out.println("Generating " + langName + " code...");
             var files = generator.generate(compiler.projectPkg);
             for (var file : files)
                 OneFile.writeText(outDir + "/" + projTemplate.meta.destinationDir != null ? projTemplate.meta.destinationDir : "" + "/" + file.path, file.content);

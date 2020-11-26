@@ -158,7 +158,6 @@ import OneLang.One.Ast.Expressions.ParenthesizedExpression;
 import OneLang.One.Ast.Expressions.RegexLiteral;
 import OneLang.One.Ast.Types.Lambda;
 import OneLang.One.Ast.Statements.ReturnStatement;
-import io.onelang.std.core.console;
 import OneLang.One.Ast.Expressions.UnaryExpression;
 import OneLang.One.Ast.Expressions.MapLiteral;
 import OneLang.One.Ast.Expressions.NullLiteral;
@@ -471,7 +470,7 @@ public class PythonGenerator implements IGenerator {
             if (((Lambda)expr).getBody().statements.size() == 1 && ((Lambda)expr).getBody().statements.get(0) instanceof ReturnStatement)
                 body = this.expr((((ReturnStatement)((Lambda)expr).getBody().statements.get(0))).expression);
             else
-                console.error("Multi-line lambda is not yet supported for Python: " + TSOverviewGenerator.preview.nodeRepr(((Lambda)expr)));
+                System.err.println("Multi-line lambda is not yet supported for Python: " + TSOverviewGenerator.preview.nodeRepr(((Lambda)expr)));
             
             var params = Arrays.stream(((Lambda)expr).getParameters()).map(x -> this.name_(x.getName())).toArray(String[]::new);
             

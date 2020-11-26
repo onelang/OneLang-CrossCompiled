@@ -4,6 +4,8 @@
             
                 "OneLang\\Core\\": "onepkg/OneLang-Core"
             ,
+                "OneLang\\Console\\": "onepkg/OneLang-Console"
+            ,
                 "OneLang\\File\\": "onepkg/OneLang-File"
             ,
                 "OneLang\\Json\\": "onepkg/OneLang-Json"

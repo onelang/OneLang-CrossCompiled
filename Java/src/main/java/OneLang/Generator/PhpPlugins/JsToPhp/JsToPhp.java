@@ -25,7 +25,6 @@ import OneLang.One.Ast.Expressions.RegexLiteral;
 import io.onelang.std.core.RegExp;
 import java.util.regex.Pattern;
 import io.onelang.std.json.JSON;
-import io.onelang.std.core.console;
 import OneLang.One.Ast.Types.Class;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Types.Method;
@@ -179,7 +178,7 @@ public class JsToPhp implements IGeneratorPlugin {
         
         var methodName = cls.getName() + "." + method.getName();
         if (!this.unhandledMethods.contains(methodName)) {
-            console.error("[JsToPython] Method was not handled: " + cls.getName() + "." + method.getName());
+            System.err.println("[JsToPython] Method was not handled: " + cls.getName() + "." + method.getName());
             this.unhandledMethods.add(methodName);
         }
         //debugger;

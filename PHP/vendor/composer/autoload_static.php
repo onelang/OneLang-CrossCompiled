@@ -14,6 +14,7 @@ class ComposerStaticInit7eb7fcce2b844f632dac41373d9a036a
             'OneLang\\Json\\' => 13,
             'OneLang\\File\\' => 13,
             'OneLang\\Core\\' => 13,
+            'OneLang\\Console\\' => 16,
         ),
     );
 
@@ -37,6 +38,10 @@ class ComposerStaticInit7eb7fcce2b844f632dac41373d9a036a
         'OneLang\\Core\\' => 
         array (
             0 => __DIR__ . '/../..' . '/onepkg/OneLang-Core',
+        ),
+        'OneLang\\Console\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/onepkg/OneLang-Console',
         ),
     );
 

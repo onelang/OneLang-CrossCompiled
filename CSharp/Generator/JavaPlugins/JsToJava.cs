@@ -1,6 +1,5 @@
 using Generator;
 using One.Ast;
-using System.Collections.Generic;
 
 namespace Generator.JavaPlugins
 {
@@ -14,7 +13,7 @@ namespace Generator.JavaPlugins
             this.unhandledMethods = new Set<string>();
         }
         
-        public string convertMethod(Class cls, Expression obj, Method method, Expression[] args, IType returnType)
+        public string convertMethod(Class cls, Expression obj, Method method, Expression[] args)
         {
             var objR = obj == null ? null : this.main.expr(obj);
             var argsR = args.map(x => this.main.expr(x));
@@ -28,14 +27,6 @@ namespace Generator.JavaPlugins
                     return $"{argsR.get(0)}.replace({objR}, {argsR.get(1)})";
                 }
             }
-            else if (new List<string> { "console", "RegExp" }.includes(cls.name)) {
-                this.main.imports.add($"io.onelang.std.core.{cls.name}");
-                return null;
-            }
-            else if (new List<string> { "JSON" }.includes(cls.name)) {
-                this.main.imports.add($"io.onelang.std.json.{cls.name}");
-                return null;
-            }
             else
                 return null;
             
@@ -45,9 +36,9 @@ namespace Generator.JavaPlugins
         public string expr(IExpression expr)
         {
             if (expr is InstanceMethodCallExpression instMethCallExpr && instMethCallExpr.object_.actualType is ClassType classType)
-                return this.convertMethod(classType.decl, instMethCallExpr.object_, instMethCallExpr.method, instMethCallExpr.args, instMethCallExpr.actualType);
+                return this.convertMethod(classType.decl, instMethCallExpr.object_, instMethCallExpr.method, instMethCallExpr.args);
             else if (expr is StaticMethodCallExpression statMethCallExpr && statMethCallExpr.method.parentInterface is Class class_)
-                return this.convertMethod(class_, null, statMethCallExpr.method, statMethCallExpr.args, statMethCallExpr.actualType);
+                return this.convertMethod(class_, null, statMethCallExpr.method, statMethCallExpr.args);
             return null;
         }
         

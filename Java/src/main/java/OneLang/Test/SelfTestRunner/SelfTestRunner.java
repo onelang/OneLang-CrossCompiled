@@ -7,7 +7,6 @@ import OneLang.One.Compiler.Compiler;
 import OneLang.One.Compiler.ICompilerHooks;
 import OneLang.Test.PackageStateCapture.PackageStateCapture;
 
-import io.onelang.std.core.console;
 import OneLang.Test.SelfTestRunner.CompilerHooks;
 import io.onelang.std.core.Objects;
 import OneLang.Generator.IGenerator.IGenerator;
@@ -22,7 +21,7 @@ public class SelfTestRunner {
     }
     
     public Boolean runTest(IGenerator generator) {
-        console.log("[-] SelfTestRunner :: START");
+        System.out.println("[-] SelfTestRunner :: START");
         var compiler = CompilerHelper.initProject("OneLang", this.baseDir + "src/", "ts", null);
         compiler.hooks = new CompilerHooks(compiler, this.baseDir);
         compiler.processWorkspace();
@@ -41,15 +40,15 @@ public class SelfTestRunner {
             
             if (!Objects.equals(tsGenContent, reGenContent)) {
                 OneFile.writeText(reGenPath, genFile.content);
-                console.error("Content does not match: " + genFile.path);
+                System.err.println("Content does not match: " + genFile.path);
                 allMatch = false;
             }
             else
-                console.log("[+] Content matches: " + genFile.path);
+                System.out.println("[+] Content matches: " + genFile.path);
         }
         
-        console.log(allMatch ? "[+} SUCCESS! All generated files are the same" : "[!] FAIL! Not all files are the same");
-        console.log("[-] SelfTestRunner :: DONE");
+        System.out.println(allMatch ? "[+} SUCCESS! All generated files are the same" : "[!] FAIL! Not all files are the same");
+        System.out.println("[-] SelfTestRunner :: DONE");
         return allMatch;
     }
 }

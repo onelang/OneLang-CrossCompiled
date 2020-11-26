@@ -26,7 +26,6 @@ import OneLang.One.Ast.Types.Constructor;
 import OneLang.One.Ast.Statements.Statement;
 import OneLang.One.Ast.Types.Lambda;
 import java.util.ArrayList;
-import io.onelang.std.core.console;
 
 public class ErrorManager {
     public AstTransformer transformer;
@@ -109,11 +108,11 @@ public class ErrorManager {
             text += "\n  Context: " + this.lastContextInfo;
         
         if (type == LogType.Info)
-            console.log(text);
+            System.out.println(text);
         else if (type == LogType.Warning)
-            console.error("[WARNING] " + text + "\n");
+            System.err.println("[WARNING] " + text + "\n");
         else if (type == LogType.Error)
-            console.error(text + "\n");
+            System.err.println(text + "\n");
         else { }
         
         if (type == LogType.Error || type == LogType.Warning)

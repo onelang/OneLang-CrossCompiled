@@ -11,7 +11,6 @@ import OneLang.One.Compiler.ICompilerHooks;
 import OneLang.One.Compiler.Compiler;
 import OneLang.Test.PackageStateCapture.PackageStateCapture;
 import io.onelang.std.core.Objects;
-import io.onelang.std.core.console;
 
 public class CompilerHooks implements ICompilerHooks {
     public Integer stage = 0;
@@ -35,6 +34,6 @@ public class CompilerHooks implements ICompilerHooks {
             throw new Error("Stage result differs from expected: " + stageName + " -> " + stageFn);
         }
         else
-            console.log("[+] Stage passed: " + stageName);
+            System.out.println("[+] Stage passed: " + stageName);
     }
 }

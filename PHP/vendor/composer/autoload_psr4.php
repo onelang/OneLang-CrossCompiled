@@ -11,4 +11,5 @@ return array(
     'OneLang\\Json\\' => array($baseDir . '/onepkg/OneLang-Json'),
     'OneLang\\File\\' => array($baseDir . '/onepkg/OneLang-File'),
     'OneLang\\Core\\' => array($baseDir . '/onepkg/OneLang-Core'),
+    'OneLang\\Console\\' => array($baseDir . '/onepkg/OneLang-Console'),
 );
