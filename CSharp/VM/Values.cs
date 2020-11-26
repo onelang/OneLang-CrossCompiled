@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace VM
 {
     public interface IVMValue {
-        
+        bool equals(IVMValue other);
     }
     
     public interface ICallableValue : IVMValue {
@@ -17,6 +17,11 @@ namespace VM
         {
             this.props = props;
         }
+        
+        public bool equals(IVMValue other)
+        {
+            return false;
+        }
     }
     
     public class StringValue : IVMValue {
@@ -25,6 +30,11 @@ namespace VM
         public StringValue(string value)
         {
             this.value = value;
+        }
+        
+        public bool equals(IVMValue other)
+        {
+            return other is StringValue strValue && strValue.value == this.value;
         }
     }
     
@@ -35,6 +45,11 @@ namespace VM
         {
             this.value = value;
         }
+        
+        public bool equals(IVMValue other)
+        {
+            return other is NumericValue numValue && numValue.value == this.value;
+        }
     }
     
     public class BooleanValue : IVMValue {
@@ -44,6 +59,11 @@ namespace VM
         {
             this.value = value;
         }
+        
+        public bool equals(IVMValue other)
+        {
+            return other is BooleanValue boolValue && boolValue.value == this.value;
+        }
     }
     
     public class ArrayValue : IVMValue {
@@ -52,6 +72,11 @@ namespace VM
         public ArrayValue(IVMValue[] items)
         {
             this.items = items;
+        }
+        
+        public bool equals(IVMValue other)
+        {
+            return false;
         }
     }
 }

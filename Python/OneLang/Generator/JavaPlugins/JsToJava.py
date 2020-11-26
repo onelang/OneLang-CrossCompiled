@@ -6,7 +6,6 @@ import OneLang.One.Ast.AstTypes as astTypes
 import OneLang.One.Ast.Types as types
 import OneLang.One.Ast.Interfaces as ints
 import OneLang.Generator.JavaGenerator as javaGen
-import json
 
 class JsToJava:
     def __init__(self, main):
@@ -16,15 +15,16 @@ class JsToJava:
     def convert_method(self, cls_, obj, method, args):
         obj_r = None if obj == None else self.main.expr(obj)
         args_r = list(map(lambda x: self.main.expr(x), args))
-        if cls_.name == "TsString":
-            if method.name == "replace":
-                if isinstance(args[0], exprs.RegexLiteral):
-                    self.main.imports["java.util.regex.Pattern"] = None
-                    return f'''{obj_r}.replaceAll({json.dumps((args[0]).pattern)}, {args_r[1]})'''
-                
-                return f'''{args_r[0]}.replace({obj_r}, {args_r[1]})'''
-        else:
-            return None
+        # if (cls.name === "TsString") {
+        #     if (method.name === "replace") {
+        #         if (args[0] instanceof RegexLiteral) {
+        #             this.main.imports.add("java.util.regex.Pattern");
+        #             return `${objR}.replaceAll(${JSON.stringify((<RegexLiteral>args[0]).pattern)}, ${argsR[1]})`;
+        #         }
+        
+        #         return `${argsR[0]}.replace(${objR}, ${argsR[1]})`;
+        #     }
+        # }
         
         return None
     

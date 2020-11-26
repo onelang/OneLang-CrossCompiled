@@ -26,18 +26,16 @@ class JsToJava implements IGeneratorPlugin {
     function convertMethod($cls, $obj, $method, $args) {
         $objR = $obj === null ? null : $this->main->expr($obj);
         $argsR = array_map(function ($x) { return $this->main->expr($x); }, $args);
-        if ($cls->name === "TsString") {
-            if ($method->name === "replace") {
-                if ($args[0] instanceof RegexLiteral) {
-                    $this->main->imports->add("java.util.regex.Pattern");
-                    return $objR . ".replaceAll(" . json_encode(($args[0])->pattern, JSON_UNESCAPED_SLASHES) . ", " . $argsR[1] . ")";
-                }
-                
-                return $argsR[0] . ".replace(" . $objR . ", " . $argsR[1] . ")";
-            }
-        }
-        else
-            return null;
+        // if (cls.name === "TsString") {
+        //     if (method.name === "replace") {
+        //         if (args[0] instanceof RegexLiteral) {
+        //             this.main.imports.add("java.util.regex.Pattern");
+        //             return `${objR}.replaceAll(${JSON.stringify((<RegexLiteral>args[0]).pattern)}, ${argsR[1]})`;
+        //         }
+        
+        //         return `${argsR[0]}.replace(${objR}, ${argsR[1]})`;
+        //     }
+        // }
         
         return null;
     }

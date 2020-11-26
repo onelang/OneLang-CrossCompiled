@@ -94,7 +94,6 @@ use OneLang\Generator\IGenerator\IGenerator;
 use OneLang\One\Ast\Interfaces\IExpression;
 use OneLang\One\Ast\Interfaces\IType;
 use OneLang\Generator\IGeneratorPlugin\IGeneratorPlugin;
-use OneLang\Generator\JavaPlugins\JsToJava\JsToJava;
 use OneLang\One\ITransformer\ITransformer;
 use OneLang\One\Transforms\ConvertNullCoalesce\ConvertNullCoalesce;
 use OneLang\One\Transforms\UseDefaultCallArgsExplicitly\UseDefaultCallArgsExplicitly;
@@ -118,7 +117,6 @@ class JavaGenerator implements IGenerator {
         $this->reservedWords = array("class", "interface", "throws", "package", "throw", "boolean");
         $this->fieldToMethodHack = array();
         $this->plugins = array();
-        $this->plugins[] = new JsToJava($this);
     }
     
     function getLangName() {

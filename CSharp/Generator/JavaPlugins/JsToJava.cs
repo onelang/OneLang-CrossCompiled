@@ -17,18 +17,16 @@ namespace Generator.JavaPlugins
         {
             var objR = obj == null ? null : this.main.expr(obj);
             var argsR = args.map(x => this.main.expr(x));
-            if (cls.name == "TsString") {
-                if (method.name == "replace") {
-                    if (args.get(0) is RegexLiteral) {
-                        this.main.imports.add("java.util.regex.Pattern");
-                        return $"{objR}.replaceAll({JSON.stringify((((RegexLiteral)args.get(0))).pattern)}, {argsR.get(1)})";
-                    }
-                    
-                    return $"{argsR.get(0)}.replace({objR}, {argsR.get(1)})";
-                }
-            }
-            else
-                return null;
+            // if (cls.name === "TsString") {
+            //     if (method.name === "replace") {
+            //         if (args[0] instanceof RegexLiteral) {
+            //             this.main.imports.add("java.util.regex.Pattern");
+            //             return `${objR}.replaceAll(${JSON.stringify((<RegexLiteral>args[0]).pattern)}, ${argsR[1]})`;
+            //         }
+            
+            //         return `${argsR[0]}.replace(${objR}, ${argsR[1]})`;
+            //     }
+            // }
             
             return null;
         }

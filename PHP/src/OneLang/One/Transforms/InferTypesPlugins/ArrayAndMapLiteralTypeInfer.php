@@ -54,13 +54,15 @@ class ArrayAndMapLiteralTypeInfer extends InferTypesPlugin {
     }
     
     function detectType($expr) {
-        // make this work: `<{ [name: string]: SomeObject }> {}`
-        if ($expr->parentNode instanceof CastExpression)
-            $expr->setExpectedType($expr->parentNode->newType);
-        else if ($expr->parentNode instanceof BinaryExpression && $expr->parentNode->operator === "=" && $expr->parentNode->right === $expr)
-            $expr->setExpectedType($expr->parentNode->left->actualType);
-        else if ($expr->parentNode instanceof ConditionalExpression && ($expr->parentNode->whenTrue === $expr || $expr->parentNode->whenFalse === $expr))
-            $expr->setExpectedType($expr->parentNode->whenTrue === $expr ? $expr->parentNode->whenFalse->actualType : $expr->parentNode->whenTrue->actualType);
+        if ($expr->expectedType === null) {
+            // make this work: `<{ [name: string]: SomeObject }> {}`
+            if ($expr->parentNode instanceof CastExpression)
+                $expr->setExpectedType($expr->parentNode->newType);
+            else if ($expr->parentNode instanceof BinaryExpression && $expr->parentNode->operator === "=" && $expr->parentNode->right === $expr)
+                $expr->setExpectedType($expr->parentNode->left->actualType);
+            else if ($expr->parentNode instanceof ConditionalExpression && ($expr->parentNode->whenTrue === $expr || $expr->parentNode->whenFalse === $expr))
+                $expr->setExpectedType($expr->parentNode->whenTrue === $expr ? $expr->parentNode->whenFalse->actualType : $expr->parentNode->whenTrue->actualType);
+        }
         
         if ($expr instanceof ArrayLiteral) {
             $itemType = $this->inferArrayOrMapItemType($expr->items, $expr->expectedType, false);

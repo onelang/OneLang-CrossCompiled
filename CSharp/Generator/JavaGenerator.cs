@@ -1,4 +1,3 @@
-using Generator.JavaPlugins;
 using Generator;
 using One.Ast;
 using One.Transforms;
@@ -22,7 +21,6 @@ namespace Generator
             this.reservedWords = new string[] { "class", "interface", "throws", "package", "throw", "boolean" };
             this.fieldToMethodHack = new string[0];
             this.plugins = new List<IGeneratorPlugin>();
-            this.plugins.push(new JsToJava(this));
         }
         
         public string getLangName()

@@ -1,8 +1,10 @@
 package OneLang.VM.ExprVM;
 
+import OneLang.One.Ast.Expressions.BinaryExpression;
 import OneLang.One.Ast.Expressions.ConditionalExpression;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Expressions.Identifier;
+import OneLang.One.Ast.Expressions.InstanceOfExpression;
 import OneLang.One.Ast.Expressions.NumericLiteral;
 import OneLang.One.Ast.Expressions.PropertyAccessExpression;
 import OneLang.One.Ast.Expressions.StringLiteral;
@@ -30,6 +32,8 @@ import OneLang.VM.Values.NumericValue;
 import OneLang.One.Ast.Expressions.ConditionalExpression;
 import OneLang.VM.Values.BooleanValue;
 import OneLang.One.Ast.Expressions.TemplateString;
+import OneLang.One.Ast.Expressions.BinaryExpression;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Expressions.Expression;
 
 public class ExprVM {
@@ -40,7 +44,13 @@ public class ExprVM {
         this.context = context;
     }
     
-    public static IVMValue propAccess(IVMValue obj, String propName) {
+    public IVMValue propAccess(IVMValue obj, String propName) {
+        if (this.context.hooks != null) {
+            var value = this.context.hooks.propAccess(obj, propName);
+            if (value != null)
+                return value;
+        }
+        
         if (!(obj instanceof ObjectValue))
             throw new Error("You can only access a property of an object!");
         if (!((((ObjectValue)obj)).props.containsKey(propName)))
@@ -50,10 +60,10 @@ public class ExprVM {
     
     public IVMValue evaluate(Expression expr) {
         if (expr instanceof Identifier)
-            return ExprVM.propAccess(this.context.model, ((Identifier)expr).text);
+            return this.propAccess(this.context.model, ((Identifier)expr).text);
         else if (expr instanceof PropertyAccessExpression) {
             var objValue = this.evaluate(((PropertyAccessExpression)expr).object);
-            return ExprVM.propAccess(objValue, ((PropertyAccessExpression)expr).propertyName);
+            return this.propAccess(objValue, ((PropertyAccessExpression)expr).propertyName);
         }
         else if (expr instanceof UnresolvedCallExpression) {
             var func = ((ICallableValue)this.evaluate(((UnresolvedCallExpression)expr).func));
@@ -81,6 +91,16 @@ public class ExprVM {
                 }
             }
             return new StringValue(result);
+        }
+        else if (expr instanceof BinaryExpression) {
+            var left = this.evaluate(((BinaryExpression)expr).left);
+            var right = this.evaluate(((BinaryExpression)expr).right);
+            if (Objects.equals(((BinaryExpression)expr).operator, "==") || Objects.equals(((BinaryExpression)expr).operator, "==="))
+                return new BooleanValue(left.equals(right));
+            else if (Objects.equals(((BinaryExpression)expr).operator, "!=") || Objects.equals(((BinaryExpression)expr).operator, "!=="))
+                return new BooleanValue(!left.equals(right));
+            else
+                throw new Error("Unsupported binary operator: " + ((BinaryExpression)expr).operator);
         }
         else
             throw new Error("Unsupported expression!");

@@ -616,7 +616,7 @@ public class PythonGenerator implements IGenerator {
         if (staticFields.length > 0) {
             this.imports.add("import onelang_core as one");
             classAttributes.add("@one.static_init");
-            var fieldInits = Arrays.stream(staticFields).map(f -> "cls." + this.vis(f.getVisibility()) + cls.getName().replace(this.var(f, f), "cls")).toArray(String[]::new);
+            var fieldInits = Arrays.stream(staticFields).map(f -> "cls." + this.vis(f.getVisibility()) + this.var(f, f).replace(cls.getName(), "cls")).toArray(String[]::new);
             resList.add("@classmethod\ndef static_init(cls):\n" + this.pad(Arrays.stream(fieldInits).collect(Collectors.joining("\n"))));
         }
         

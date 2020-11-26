@@ -12,4 +12,8 @@ public class ObjectValue implements IVMValue {
     {
         this.props = props;
     }
+    
+    public Boolean equals(IVMValue other) {
+        return false;
+    }
 }

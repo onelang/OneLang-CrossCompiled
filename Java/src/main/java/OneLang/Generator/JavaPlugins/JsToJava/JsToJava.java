@@ -17,9 +17,6 @@ import java.util.Set;
 import OneLang.Generator.JavaGenerator.JavaGenerator;
 import java.util.LinkedHashSet;
 import java.util.Arrays;
-import io.onelang.std.core.Objects;
-import OneLang.One.Ast.Expressions.RegexLiteral;
-import io.onelang.std.json.JSON;
 import OneLang.One.Ast.Types.Class;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Types.Method;
@@ -42,18 +39,16 @@ public class JsToJava implements IGeneratorPlugin {
     public String convertMethod(Class cls, Expression obj, Method method, Expression[] args) {
         var objR = obj == null ? null : this.main.expr(obj);
         var argsR = Arrays.stream(args).map(x -> this.main.expr(x)).toArray(String[]::new);
-        if (Objects.equals(cls.getName(), "TsString")) {
-            if (Objects.equals(method.getName(), "replace")) {
-                if (args[0] instanceof RegexLiteral) {
-                    this.main.imports.add("java.util.regex.Pattern");
-                    return objR + ".replaceAll(" + JSON.stringify((((RegexLiteral)args[0])).pattern) + ", " + argsR[1] + ")";
-                }
-                
-                return argsR[0] + ".replace(" + objR + ", " + argsR[1] + ")";
-            }
-        }
-        else
-            return null;
+        // if (cls.name === "TsString") {
+        //     if (method.name === "replace") {
+        //         if (args[0] instanceof RegexLiteral) {
+        //             this.main.imports.add("java.util.regex.Pattern");
+        //             return `${objR}.replaceAll(${JSON.stringify((<RegexLiteral>args[0]).pattern)}, ${argsR[1]})`;
+        //         }
+        
+        //         return `${argsR[0]}.replace(${objR}, ${argsR[1]})`;
+        //     }
+        // }
         
         return null;
     }

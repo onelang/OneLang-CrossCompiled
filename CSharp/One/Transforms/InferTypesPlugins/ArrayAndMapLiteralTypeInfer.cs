@@ -47,13 +47,15 @@ namespace One.Transforms.InferTypesPlugins
         
         public override bool detectType(Expression expr)
         {
-            // make this work: `<{ [name: string]: SomeObject }> {}`
-            if (expr.parentNode is CastExpression castExpr)
-                expr.setExpectedType(castExpr.newType);
-            else if (expr.parentNode is BinaryExpression binExpr && binExpr.operator_ == "=" && binExpr.right == expr)
-                expr.setExpectedType(binExpr.left.actualType);
-            else if (expr.parentNode is ConditionalExpression condExpr && (condExpr.whenTrue == expr || condExpr.whenFalse == expr))
-                expr.setExpectedType(condExpr.whenTrue == expr ? condExpr.whenFalse.actualType : condExpr.whenTrue.actualType);
+            if (expr.expectedType == null) {
+                // make this work: `<{ [name: string]: SomeObject }> {}`
+                if (expr.parentNode is CastExpression castExpr)
+                    expr.setExpectedType(castExpr.newType);
+                else if (expr.parentNode is BinaryExpression binExpr && binExpr.operator_ == "=" && binExpr.right == expr)
+                    expr.setExpectedType(binExpr.left.actualType);
+                else if (expr.parentNode is ConditionalExpression condExpr && (condExpr.whenTrue == expr || condExpr.whenFalse == expr))
+                    expr.setExpectedType(condExpr.whenTrue == expr ? condExpr.whenFalse.actualType : condExpr.whenTrue.actualType);
+            }
             
             if (expr is ArrayLiteral arrayLit2) {
                 var itemType = this.inferArrayOrMapItemType(arrayLit2.items, arrayLit2.expectedType, false);

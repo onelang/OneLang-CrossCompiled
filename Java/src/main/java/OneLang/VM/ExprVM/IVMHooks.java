@@ -1,8 +1,10 @@
 package OneLang.VM.ExprVM;
 
+import OneLang.One.Ast.Expressions.BinaryExpression;
 import OneLang.One.Ast.Expressions.ConditionalExpression;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Expressions.Identifier;
+import OneLang.One.Ast.Expressions.InstanceOfExpression;
 import OneLang.One.Ast.Expressions.NumericLiteral;
 import OneLang.One.Ast.Expressions.PropertyAccessExpression;
 import OneLang.One.Ast.Expressions.StringLiteral;
@@ -18,5 +20,6 @@ import OneLang.VM.Values.StringValue;
 import OneLang.VM.Values.IVMValue;
 
 public interface IVMHooks {
+    IVMValue propAccess(IVMValue obj, String propName);
     String stringifyValue(IVMValue value);
 }

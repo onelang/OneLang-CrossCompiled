@@ -9,7 +9,6 @@ import OneLang.Generator.NameUtils as nameUtils
 import OneLang.Generator.IGenerator as iGen
 import OneLang.One.Ast.Interfaces as ints
 import OneLang.Generator.IGeneratorPlugin as iGenPlug
-import OneLang.Generator.JavaPlugins.JsToJava as jsToJava
 import OneLang.One.ITransformer as iTrans
 import OneLang.One.Transforms.ConvertNullCoalesce as convNullCoal
 import OneLang.One.Transforms.UseDefaultCallArgsExplicitly as useDefCallArgsExpl
@@ -25,7 +24,6 @@ class JavaGenerator:
         self.reserved_words = ["class", "interface", "throws", "package", "throw", "boolean"]
         self.field_to_method_hack = []
         self.plugins = []
-        self.plugins.append(jsToJava.JsToJava(self))
     
     def get_lang_name(self):
         return "Java"

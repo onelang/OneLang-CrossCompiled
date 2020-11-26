@@ -12,11 +12,14 @@ import OneLang.One.Ast.Types as types
 import OneLang.Template.TemplateParser as templPars
 import OneLang.Generator.IGenerator as iGen
 import OneLang.VM.ExprVM as exprVM
+import OneLang.Parsers.TypeScriptParser as typeScrPars
+import OneLang.One.Ast.AstTypes as astTypes
 
 class CodeTemplate:
-    def __init__(self, template, includes):
+    def __init__(self, template, includes, if_expr):
         self.template = template
         self.includes = includes
+        self.if_expr = if_expr
 
 class CallTemplate:
     def __init__(self, class_name, method_name, args, template):
@@ -34,14 +37,23 @@ class FieldAccessTemplate:
 class ExpressionValue:
     def __init__(self, value):
         self.value = value
+    
+    def equals(self, other):
+        return isinstance(other, ExpressionValue) and other.value == self.value
 
 class TypeValue:
     def __init__(self, type):
         self.type = type
+    
+    def equals(self, other):
+        return isinstance(other, TypeValue) and astTypes.TypeHelper.equals(other.type, self.type)
 
 class LambdaValue:
     def __init__(self, callback):
         self.callback = callback
+    
+    def equals(self, other):
+        return False
     
     def call(self, args):
         return self.callback(args)
@@ -57,9 +69,18 @@ class TemplateFileGeneratorPlugin:
         
         for expr_str in expr_dict.keys():
             val = expr_dict.get(expr_str)
-            tmpl = CodeTemplate(val.as_str(), []) if val.type() == index.VALUE_TYPE.STRING else CodeTemplate(val.str("template"), val.str_arr("includes"))
+            if_str = val.str("if")
+            if_expr = None if if_str == None else typeScrPars.TypeScriptParser2(if_str, None).parse_expression()
+            tmpl = CodeTemplate(val.as_str(), [], None) if val.type() == index.VALUE_TYPE.STRING else CodeTemplate(val.str("template"), val.str_arr("includes"), if_expr)
             
             self.add_expr_template(expr_str, tmpl)
+    
+    def prop_access(self, obj, prop_name):
+        if isinstance(obj, ExpressionValue) and prop_name == "type":
+            return TypeValue(obj.value.get_type())
+        if isinstance(obj, TypeValue) and prop_name == "name" and isinstance(obj.type, astTypes.ClassType):
+            return vals.StringValue(obj.type.decl.name)
+        return None
     
     def stringify_value(self, value):
         if isinstance(value, ExpressionValue):
@@ -67,14 +88,19 @@ class TemplateFileGeneratorPlugin:
             return result
         return None
     
+    def add_method(self, name, call_tmpl):
+        if not (name in self.methods):
+            self.methods[name] = []
+        self.methods.get(name).append(call_tmpl)
+    
     def add_expr_template(self, expr_str, tmpl):
         expr = exprPars.ExpressionParser(read.Reader(expr_str)).parse()
         if isinstance(expr, exprs.UnresolvedCallExpression) and isinstance(expr.func, exprs.PropertyAccessExpression) and isinstance(expr.func.object, exprs.Identifier):
             call_tmpl = CallTemplate(expr.func.object.text, expr.func.property_name, list(map(lambda x: (x).text, expr.args)), tmpl)
-            self.methods[f'''{call_tmpl.class_name}.{call_tmpl.method_name}@{len(call_tmpl.args)}'''] = call_tmpl
+            self.add_method(f'''{call_tmpl.class_name}.{call_tmpl.method_name}@{len(call_tmpl.args)}''', call_tmpl)
         elif isinstance(expr, exprs.UnresolvedCallExpression) and isinstance(expr.func, exprs.Identifier):
             call_tmpl = CallTemplate(None, expr.func.text, list(map(lambda x: (x).text, expr.args)), tmpl)
-            self.methods[f'''{call_tmpl.method_name}@{len(call_tmpl.args)}'''] = call_tmpl
+            self.add_method(f'''{call_tmpl.method_name}@{len(call_tmpl.args)}''', call_tmpl)
         elif isinstance(expr, exprs.PropertyAccessExpression) and isinstance(expr.object, exprs.Identifier):
             field_tmpl = FieldAccessTemplate(expr.object.text, expr.property_name, tmpl)
             self.fields[f'''{field_tmpl.class_name}.{field_tmpl.field_name}'''] = field_tmpl
@@ -82,26 +108,42 @@ class TemplateFileGeneratorPlugin:
             raise Error(f'''This expression template format is not supported: \'{expr_str}\'''')
     
     def expr(self, expr):
+        is_call_expr = isinstance(expr, exprs.StaticMethodCallExpression) or isinstance(expr, exprs.InstanceMethodCallExpression) or isinstance(expr, exprs.GlobalFunctionCallExpression)
+        is_field_ref = isinstance(expr, refs.StaticFieldReference) or isinstance(expr, refs.StaticPropertyReference) or isinstance(expr, refs.InstanceFieldReference) or isinstance(expr, refs.InstancePropertyReference)
+        
+        if not is_call_expr and not is_field_ref:
+            return None
+        # quick return
+        
         code_tmpl = None
         model = {}
+        context = exprVM.VMContext(vals.ObjectValue(model), self)
         
-        if isinstance(expr, exprs.StaticMethodCallExpression) or isinstance(expr, exprs.InstanceMethodCallExpression) or isinstance(expr, exprs.GlobalFunctionCallExpression):
+        model["type"] = TypeValue(expr.get_type())
+        for name in self.model_globals.keys():
+            model[name] = self.model_globals.get(name)
+        
+        if is_call_expr:
             call = expr
             parent_intf = call.get_parent_interface()
             method_name = f'''{("" if parent_intf == None else f'{parent_intf.name}.')}{call.get_name()}@{len(call.args)}'''
-            call_tmpl = self.methods.get(method_name)
-            if call_tmpl == None:
+            call_tmpls = self.methods.get(method_name)
+            if call_tmpls == None:
                 return None
             
-            if isinstance(expr, exprs.InstanceMethodCallExpression):
-                model["this"] = ExpressionValue(expr.object)
-            i = 0
-            
-            while i < len(call_tmpl.args):
-                model[call_tmpl.args[i]] = ExpressionValue(call.args[i])
-                i = i + 1
-            code_tmpl = call_tmpl.template
-        elif isinstance(expr, refs.StaticFieldReference) or isinstance(expr, refs.StaticPropertyReference) or isinstance(expr, refs.InstanceFieldReference) or isinstance(expr, refs.InstancePropertyReference):
+            for call_tmpl in call_tmpls:
+                if isinstance(expr, exprs.InstanceMethodCallExpression):
+                    model["this"] = ExpressionValue(expr.object)
+                i = 0
+                
+                while i < len(call_tmpl.args):
+                    model[call_tmpl.args[i]] = ExpressionValue(call.args[i])
+                    i = i + 1
+                
+                if call_tmpl.template.if_expr == None or (exprVM.ExprVM(context).evaluate(call_tmpl.template.if_expr)).value:
+                    code_tmpl = call_tmpl.template
+                    break
+        elif is_field_ref:
             cm = (expr).get_variable()
             field = self.fields.get(f'''{cm.get_parent_interface().name}.{cm.name}''')
             if field == None:
@@ -113,15 +155,14 @@ class TemplateFileGeneratorPlugin:
         else:
             return None
         
-        model["type"] = TypeValue(expr.get_type())
-        for name in self.model_globals.keys():
-            model[name] = self.model_globals.get(name)
+        if code_tmpl == None:
+            return None
         
         for inc in code_tmpl.includes or []:
             self.generator.add_include(inc)
         
         tmpl = templPars.TemplateParser(code_tmpl.template).parse()
-        result = tmpl.format(exprVM.VMContext(vals.ObjectValue(model), self))
+        result = tmpl.format(context)
         return result
     
     def stmt(self, stmt):

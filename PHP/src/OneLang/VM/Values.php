@@ -3,7 +3,7 @@
 namespace OneLang\VM\Values;
 
 interface IVMValue {
-    
+    function equals($other);
 }
 
 interface ICallableValue extends IVMValue {
@@ -16,6 +16,10 @@ class ObjectValue implements IVMValue {
     function __construct($props) {
         $this->props = $props;
     }
+    
+    function equals($other) {
+        return false;
+    }
 }
 
 class StringValue implements IVMValue {
@@ -23,6 +27,10 @@ class StringValue implements IVMValue {
     
     function __construct($value) {
         $this->value = $value;
+    }
+    
+    function equals($other) {
+        return $other instanceof StringValue && $other->value === $this->value;
     }
 }
 
@@ -32,6 +40,10 @@ class NumericValue implements IVMValue {
     function __construct($value) {
         $this->value = $value;
     }
+    
+    function equals($other) {
+        return $other instanceof NumericValue && $other->value === $this->value;
+    }
 }
 
 class BooleanValue implements IVMValue {
@@ -40,6 +52,10 @@ class BooleanValue implements IVMValue {
     function __construct($value) {
         $this->value = $value;
     }
+    
+    function equals($other) {
+        return $other instanceof BooleanValue && $other->value === $this->value;
+    }
 }
 
 class ArrayValue implements IVMValue {
@@ -47,5 +63,9 @@ class ArrayValue implements IVMValue {
     
     function __construct($items) {
         $this->items = $items;
+    }
+    
+    function equals($other) {
+        return false;
     }
 }

@@ -4,6 +4,8 @@ using VM;
 namespace VM
 {
     public interface IVMHooks {
+        IVMValue propAccess(IVMValue obj, string propName);
+        
         string stringifyValue(IVMValue value);
     }
     
@@ -26,8 +28,14 @@ namespace VM
             this.context = context;
         }
         
-        public static IVMValue propAccess(IVMValue obj, string propName)
+        public IVMValue propAccess(IVMValue obj, string propName)
         {
+            if (this.context.hooks != null) {
+                var value = this.context.hooks.propAccess(obj, propName);
+                if (value != null)
+                    return value;
+            }
+            
             if (!(obj is ObjectValue))
                 throw new Error("You can only access a property of an object!");
             if (!((((ObjectValue)obj)).props.hasKey(propName)))
@@ -38,10 +46,10 @@ namespace VM
         public IVMValue evaluate(Expression expr)
         {
             if (expr is Identifier ident)
-                return ExprVM.propAccess(this.context.model, ident.text);
+                return this.propAccess(this.context.model, ident.text);
             else if (expr is PropertyAccessExpression propAccExpr) {
                 var objValue = this.evaluate(propAccExpr.object_);
-                return ExprVM.propAccess(objValue, propAccExpr.propertyName);
+                return this.propAccess(objValue, propAccExpr.propertyName);
             }
             else if (expr is UnresolvedCallExpression unrCallExpr) {
                 var func = ((ICallableValue)this.evaluate(unrCallExpr.func));
@@ -69,6 +77,16 @@ namespace VM
                     }
                 }
                 return new StringValue(result);
+            }
+            else if (expr is BinaryExpression binExpr) {
+                var left = this.evaluate(binExpr.left);
+                var right = this.evaluate(binExpr.right);
+                if (binExpr.operator_ == "==" || binExpr.operator_ == "===")
+                    return new BooleanValue(left.equals(right));
+                else if (binExpr.operator_ == "!=" || binExpr.operator_ == "!==")
+                    return new BooleanValue(!left.equals(right));
+                else
+                    throw new Error($"Unsupported binary operator: {binExpr.operator_}");
             }
             else
                 throw new Error("Unsupported expression!");

@@ -68,13 +68,15 @@ public class ArrayAndMapLiteralTypeInfer extends InferTypesPlugin {
     }
     
     public Boolean detectType(Expression expr) {
-        // make this work: `<{ [name: string]: SomeObject }> {}`
-        if (expr.parentNode instanceof CastExpression)
-            expr.setExpectedType(((CastExpression)expr.parentNode).newType, false);
-        else if (expr.parentNode instanceof BinaryExpression && Objects.equals(((BinaryExpression)expr.parentNode).operator, "=") && ((BinaryExpression)expr.parentNode).right == expr)
-            expr.setExpectedType(((BinaryExpression)expr.parentNode).left.actualType, false);
-        else if (expr.parentNode instanceof ConditionalExpression && (((ConditionalExpression)expr.parentNode).whenTrue == expr || ((ConditionalExpression)expr.parentNode).whenFalse == expr))
-            expr.setExpectedType(((ConditionalExpression)expr.parentNode).whenTrue == expr ? ((ConditionalExpression)expr.parentNode).whenFalse.actualType : ((ConditionalExpression)expr.parentNode).whenTrue.actualType, false);
+        if (expr.expectedType == null) {
+            // make this work: `<{ [name: string]: SomeObject }> {}`
+            if (expr.parentNode instanceof CastExpression)
+                expr.setExpectedType(((CastExpression)expr.parentNode).newType, false);
+            else if (expr.parentNode instanceof BinaryExpression && Objects.equals(((BinaryExpression)expr.parentNode).operator, "=") && ((BinaryExpression)expr.parentNode).right == expr)
+                expr.setExpectedType(((BinaryExpression)expr.parentNode).left.actualType, false);
+            else if (expr.parentNode instanceof ConditionalExpression && (((ConditionalExpression)expr.parentNode).whenTrue == expr || ((ConditionalExpression)expr.parentNode).whenFalse == expr))
+                expr.setExpectedType(((ConditionalExpression)expr.parentNode).whenTrue == expr ? ((ConditionalExpression)expr.parentNode).whenFalse.actualType : ((ConditionalExpression)expr.parentNode).whenTrue.actualType, false);
+        }
         
         if (expr instanceof ArrayLiteral) {
             var itemType = this.inferArrayOrMapItemType(((ArrayLiteral)expr).items, ((ArrayLiteral)expr).expectedType, false);

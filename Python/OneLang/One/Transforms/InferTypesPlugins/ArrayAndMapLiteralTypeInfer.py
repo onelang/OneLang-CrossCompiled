@@ -36,13 +36,14 @@ class ArrayAndMapLiteralTypeInfer(inferTypesPlug.InferTypesPlugin):
         return isinstance(expr, exprs.ArrayLiteral) or isinstance(expr, exprs.MapLiteral)
     
     def detect_type(self, expr):
-        # make this work: `<{ [name: string]: SomeObject }> {}`
-        if isinstance(expr.parent_node, exprs.CastExpression):
-            expr.set_expected_type(expr.parent_node.new_type)
-        elif isinstance(expr.parent_node, exprs.BinaryExpression) and expr.parent_node.operator == "=" and expr.parent_node.right == expr:
-            expr.set_expected_type(expr.parent_node.left.actual_type)
-        elif isinstance(expr.parent_node, exprs.ConditionalExpression) and (expr.parent_node.when_true == expr or expr.parent_node.when_false == expr):
-            expr.set_expected_type(expr.parent_node.when_false.actual_type if expr.parent_node.when_true == expr else expr.parent_node.when_true.actual_type)
+        if expr.expected_type == None:
+            # make this work: `<{ [name: string]: SomeObject }> {}`
+            if isinstance(expr.parent_node, exprs.CastExpression):
+                expr.set_expected_type(expr.parent_node.new_type)
+            elif isinstance(expr.parent_node, exprs.BinaryExpression) and expr.parent_node.operator == "=" and expr.parent_node.right == expr:
+                expr.set_expected_type(expr.parent_node.left.actual_type)
+            elif isinstance(expr.parent_node, exprs.ConditionalExpression) and (expr.parent_node.when_true == expr or expr.parent_node.when_false == expr):
+                expr.set_expected_type(expr.parent_node.when_false.actual_type if expr.parent_node.when_true == expr else expr.parent_node.when_true.actual_type)
         
         if isinstance(expr, exprs.ArrayLiteral):
             item_type = self.infer_array_or_map_item_type(expr.items, expr.expected_type, False)

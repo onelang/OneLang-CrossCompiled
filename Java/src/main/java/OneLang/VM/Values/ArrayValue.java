@@ -11,4 +11,8 @@ public class ArrayValue implements IVMValue {
     {
         this.items = items;
     }
+    
+    public Boolean equals(IVMValue other) {
+        return false;
+    }
 }

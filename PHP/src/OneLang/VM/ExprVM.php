@@ -2,9 +2,11 @@
 
 namespace OneLang\VM\ExprVM;
 
+use OneLang\One\Ast\Expressions\BinaryExpression;
 use OneLang\One\Ast\Expressions\ConditionalExpression;
 use OneLang\One\Ast\Expressions\Expression;
 use OneLang\One\Ast\Expressions\Identifier;
+use OneLang\One\Ast\Expressions\InstanceOfExpression;
 use OneLang\One\Ast\Expressions\NumericLiteral;
 use OneLang\One\Ast\Expressions\PropertyAccessExpression;
 use OneLang\One\Ast\Expressions\StringLiteral;
@@ -18,6 +20,8 @@ use OneLang\VM\Values\ObjectValue;
 use OneLang\VM\Values\StringValue;
 
 interface IVMHooks {
+    function propAccess($obj, $propName);
+    
     function stringifyValue($value);
 }
 
@@ -38,7 +42,13 @@ class ExprVM {
         $this->context = $context;
     }
     
-    static function propAccess($obj, $propName) {
+    function propAccess($obj, $propName) {
+        if ($this->context->hooks !== null) {
+            $value = $this->context->hooks->propAccess($obj, $propName);
+            if ($value !== null)
+                return $value;
+        }
+        
         if (!($obj instanceof ObjectValue))
             throw new \OneLang\Core\Error("You can only access a property of an object!");
         if (!(array_key_exists($propName, ($obj)->props)))
@@ -48,10 +58,10 @@ class ExprVM {
     
     function evaluate($expr) {
         if ($expr instanceof Identifier)
-            return ExprVM::propAccess($this->context->model, $expr->text);
+            return $this->propAccess($this->context->model, $expr->text);
         else if ($expr instanceof PropertyAccessExpression) {
             $objValue = $this->evaluate($expr->object);
-            return ExprVM::propAccess($objValue, $expr->propertyName);
+            return $this->propAccess($objValue, $expr->propertyName);
         }
         else if ($expr instanceof UnresolvedCallExpression) {
             $func = $this->evaluate($expr->func);
@@ -79,6 +89,16 @@ class ExprVM {
                 }
             }
             return new StringValue($result);
+        }
+        else if ($expr instanceof BinaryExpression) {
+            $left = $this->evaluate($expr->left);
+            $right = $this->evaluate($expr->right);
+            if ($expr->operator === "==" || $expr->operator === "===")
+                return new BooleanValue($left->equals($right));
+            else if ($expr->operator === "!=" || $expr->operator === "!==")
+                return new BooleanValue(!$left->equals($right));
+            else
+                throw new \OneLang\Core\Error("Unsupported binary operator: " . $expr->operator);
         }
         else
             throw new \OneLang\Core\Error("Unsupported expression!");

@@ -1,6 +1,7 @@
 using Generator;
 using One.Ast;
 using Parsers.Common;
+using Parsers;
 using System.Collections.Generic;
 using System;
 using Template;
@@ -11,11 +12,13 @@ namespace Generator
     public class CodeTemplate {
         public string template;
         public string[] includes;
+        public Expression ifExpr;
         
-        public CodeTemplate(string template, string[] includes)
+        public CodeTemplate(string template, string[] includes, Expression ifExpr)
         {
             this.template = template;
             this.includes = includes;
+            this.ifExpr = ifExpr;
         }
     }
     
@@ -54,6 +57,11 @@ namespace Generator
         {
             this.value = value;
         }
+        
+        public bool equals(IVMValue other)
+        {
+            return other is ExpressionValue exprValue && exprValue.value == this.value;
+        }
     }
     
     public class TypeValue : IVMValue {
@@ -62,6 +70,11 @@ namespace Generator
         public TypeValue(IType type)
         {
             this.type = type;
+        }
+        
+        public bool equals(IVMValue other)
+        {
+            return other is TypeValue typeValue && TypeHelper.equals(typeValue.type, this.type);
         }
     }
     
@@ -73,6 +86,11 @@ namespace Generator
             this.callback = callback;
         }
         
+        public bool equals(IVMValue other)
+        {
+            return false;
+        }
+        
         public IVMValue call(IVMValue[] args)
         {
             return this.callback(args);
@@ -80,7 +98,7 @@ namespace Generator
     }
     
     public class TemplateFileGeneratorPlugin : IGeneratorPlugin, IVMHooks {
-        public Dictionary<string, CallTemplate> methods;
+        public Dictionary<string, List<CallTemplate>> methods;
         public Dictionary<string, FieldAccessTemplate> fields;
         public Dictionary<string, IVMValue> modelGlobals;
         public IGenerator generator;
@@ -88,7 +106,7 @@ namespace Generator
         public TemplateFileGeneratorPlugin(IGenerator generator, string templateYaml)
         {
             this.generator = generator;
-            this.methods = new Dictionary<string, CallTemplate> {};
+            this.methods = new Dictionary<string, List<CallTemplate>> {};
             this.fields = new Dictionary<string, FieldAccessTemplate> {};
             this.modelGlobals = new Dictionary<string, IVMValue> {};
             var root = OneYaml.load(templateYaml);
@@ -96,19 +114,37 @@ namespace Generator
             
             foreach (var exprStr in Object.keys(exprDict)) {
                 var val = exprDict.get(exprStr);
-                var tmpl = val.type() == ValueType.String ? new CodeTemplate(val.asStr(), new string[0]) : new CodeTemplate(val.str("template"), val.strArr("includes"));
+                var ifStr = val.str("if");
+                var ifExpr = ifStr == null ? null : new TypeScriptParser2(ifStr, null).parseExpression();
+                var tmpl = val.type() == ValueType.String ? new CodeTemplate(val.asStr(), new string[0], null) : new CodeTemplate(val.str("template"), val.strArr("includes"), ifExpr);
                 
                 this.addExprTemplate(exprStr, tmpl);
             }
         }
         
+        public IVMValue propAccess(IVMValue obj, string propName)
+        {
+            if (obj is ExpressionValue exprValue2 && propName == "type")
+                return new TypeValue(exprValue2.value.getType());
+            if (obj is TypeValue typeValue2 && propName == "name" && typeValue2.type is ClassType classType)
+                return new StringValue(classType.decl.name);
+            return null;
+        }
+        
         public string stringifyValue(IVMValue value)
         {
-            if (value is ExpressionValue exprValue) {
-                var result = this.generator.expr(exprValue.value);
+            if (value is ExpressionValue exprValue3) {
+                var result = this.generator.expr(exprValue3.value);
                 return result;
             }
             return null;
+        }
+        
+        public void addMethod(string name, CallTemplate callTmpl)
+        {
+            if (!(this.methods.hasKey(name)))
+                this.methods.set(name, new List<CallTemplate>());
+            this.methods.get(name).push(callTmpl);
         }
         
         public void addExprTemplate(string exprStr, CodeTemplate tmpl)
@@ -116,11 +152,11 @@ namespace Generator
             var expr = new ExpressionParser(new Reader(exprStr)).parse();
             if (expr is UnresolvedCallExpression unrCallExpr && unrCallExpr.func is PropertyAccessExpression propAccExpr && propAccExpr.object_ is Identifier ident) {
                 var callTmpl = new CallTemplate(ident.text, propAccExpr.propertyName, unrCallExpr.args.map(x => (((Identifier)x)).text), tmpl);
-                this.methods.set($"{callTmpl.className}.{callTmpl.methodName}@{callTmpl.args.length()}", callTmpl);
+                this.addMethod($"{callTmpl.className}.{callTmpl.methodName}@{callTmpl.args.length()}", callTmpl);
             }
             else if (expr is UnresolvedCallExpression unrCallExpr2 && unrCallExpr2.func is Identifier ident2) {
                 var callTmpl = new CallTemplate(null, ident2.text, unrCallExpr2.args.map(x => (((Identifier)x)).text), tmpl);
-                this.methods.set($"{callTmpl.methodName}@{callTmpl.args.length()}", callTmpl);
+                this.addMethod($"{callTmpl.methodName}@{callTmpl.args.length()}", callTmpl);
             }
             else if (expr is PropertyAccessExpression propAccExpr2 && propAccExpr2.object_ is Identifier ident3) {
                 var fieldTmpl = new FieldAccessTemplate(ident3.text, propAccExpr2.propertyName, tmpl);
@@ -132,24 +168,42 @@ namespace Generator
         
         public string expr(IExpression expr)
         {
+            var isCallExpr = expr is StaticMethodCallExpression statMethCallExpr || expr is InstanceMethodCallExpression || expr is GlobalFunctionCallExpression;
+            var isFieldRef = expr is StaticFieldReference statFieldRef || expr is StaticPropertyReference || expr is InstanceFieldReference || expr is InstancePropertyReference;
+            
+            if (!isCallExpr && !isFieldRef)
+                return null;
+            // quick return
+            
             CodeTemplate codeTmpl = null;
             var model = new Dictionary<string, IVMValue> {};
+            var context = new VMContext(new ObjectValue(model), this);
             
-            if (expr is StaticMethodCallExpression statMethCallExpr || expr is InstanceMethodCallExpression || expr is GlobalFunctionCallExpression) {
+            model.set("type", new TypeValue(expr.getType()));
+            foreach (var name in Object.keys(this.modelGlobals))
+                model.set(name, this.modelGlobals.get(name));
+            
+            if (isCallExpr) {
                 var call = ((ICallExpression)expr);
                 var parentIntf = call.getParentInterface();
                 var methodName = $"{(parentIntf == null ? "" : $"{parentIntf.name}.")}{call.getName()}@{call.args.length()}";
-                var callTmpl = this.methods.get(methodName);
-                if (callTmpl == null)
+                var callTmpls = this.methods.get(methodName);
+                if (callTmpls == null)
                     return null;
                 
-                if (expr is InstanceMethodCallExpression instMethCallExpr)
-                    model.set("this", new ExpressionValue(instMethCallExpr.object_));
-                for (int i = 0; i < callTmpl.args.length(); i++)
-                    model.set(callTmpl.args.get(i), new ExpressionValue(call.args.get(i)));
-                codeTmpl = callTmpl.template;
+                foreach (var callTmpl in callTmpls) {
+                    if (expr is InstanceMethodCallExpression instMethCallExpr)
+                        model.set("this", new ExpressionValue(instMethCallExpr.object_));
+                    for (int i = 0; i < callTmpl.args.length(); i++)
+                        model.set(callTmpl.args.get(i), new ExpressionValue(call.args.get(i)));
+                    
+                    if (callTmpl.template.ifExpr == null || (((BooleanValue)new ExprVM(context).evaluate(callTmpl.template.ifExpr))).value) {
+                        codeTmpl = callTmpl.template;
+                        break;
+                    }
+                }
             }
-            else if (expr is StaticFieldReference statFieldRef || expr is StaticPropertyReference || expr is InstanceFieldReference || expr is InstancePropertyReference) {
+            else if (isFieldRef) {
                 var cm = ((IClassMember)((object)(((VariableReference)expr)).getVariable()));
                 var field = this.fields.get($"{cm.getParentInterface().name}.{cm.name}");
                 if (field == null)
@@ -162,15 +216,14 @@ namespace Generator
             else
                 return null;
             
-            model.set("type", new TypeValue(expr.getType()));
-            foreach (var name in Object.keys(this.modelGlobals))
-                model.set(name, this.modelGlobals.get(name));
+            if (codeTmpl == null)
+                return null;
             
             foreach (var inc in codeTmpl.includes ?? new string[0])
                 this.generator.addInclude(inc);
             
             var tmpl = new TemplateParser(codeTmpl.template).parse();
-            var result = tmpl.format(new VMContext(new ObjectValue(model), this));
+            var result = tmpl.format(context);
             return result;
         }
         

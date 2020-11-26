@@ -92,7 +92,6 @@ import OneLang.Generator.IGenerator.IGenerator;
 import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
-import OneLang.Generator.JavaPlugins.JsToJava.JsToJava;
 import OneLang.One.ITransformer.ITransformer;
 import OneLang.One.Transforms.ConvertNullCoalesce.ConvertNullCoalesce;
 import OneLang.One.Transforms.UseDefaultCallArgsExplicitly.UseDefaultCallArgsExplicitly;
@@ -111,7 +110,6 @@ import java.util.List;
 import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
 import java.util.LinkedHashSet;
 import java.util.ArrayList;
-import OneLang.Generator.JavaPlugins.JsToJava.JsToJava;
 import OneLang.One.ITransformer.ITransformer;
 import OneLang.One.Transforms.ConvertNullCoalesce.ConvertNullCoalesce;
 import OneLang.One.Transforms.UseDefaultCallArgsExplicitly.UseDefaultCallArgsExplicitly;
@@ -229,7 +227,6 @@ public class JavaGenerator implements IGenerator {
         this.reservedWords = new String[] { "class", "interface", "throws", "package", "throw", "boolean" };
         this.fieldToMethodHack = new String[0];
         this.plugins = new ArrayList<IGeneratorPlugin>();
-        this.plugins.add(new JsToJava(this));
     }
     
     public String getLangName() {

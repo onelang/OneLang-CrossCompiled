@@ -18,9 +18,11 @@ import OneLang.One.Ast.Interfaces.IType;
 import OneLang.One.Ast.Statements.Statement;
 import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
 import OneLang.Parsers.Common.Reader.Reader;
+import OneLang.VM.Values.BooleanValue;
 import OneLang.VM.Values.ICallableValue;
 import OneLang.VM.Values.IVMValue;
 import OneLang.VM.Values.ObjectValue;
+import OneLang.VM.Values.StringValue;
 import OneLang.One.Ast.References.IInstanceMemberReference;
 import OneLang.One.Ast.References.InstanceFieldReference;
 import OneLang.One.Ast.References.InstancePropertyReference;
@@ -30,11 +32,16 @@ import OneLang.One.Ast.References.VariableReference;
 import OneLang.One.Ast.Types.IClassMember;
 import OneLang.Template.TemplateParser.TemplateParser;
 import OneLang.Generator.IGenerator.IGenerator;
+import OneLang.VM.ExprVM.ExprVM;
 import OneLang.VM.ExprVM.IVMHooks;
 import OneLang.VM.ExprVM.VMContext;
+import OneLang.Parsers.TypeScriptParser.TypeScriptParser2;
+import OneLang.One.Ast.AstTypes.ClassType;
+import OneLang.One.Ast.AstTypes.TypeHelper;
 
 import OneLang.VM.Values.IVMValue;
 import OneLang.One.Ast.Interfaces.IType;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TypeValue;
 
 public class TypeValue implements IVMValue {
     public IType type;
@@ -42,5 +49,9 @@ public class TypeValue implements IVMValue {
     public TypeValue(IType type)
     {
         this.type = type;
+    }
+    
+    public Boolean equals(IVMValue other) {
+        return other instanceof TypeValue && TypeHelper.equals(((TypeValue)other).type, this.type);
     }
 }
