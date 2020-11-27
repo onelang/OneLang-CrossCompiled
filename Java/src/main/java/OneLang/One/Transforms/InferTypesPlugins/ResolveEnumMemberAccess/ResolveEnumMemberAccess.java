@@ -10,8 +10,8 @@ import OneLang.One.Transforms.InferTypesPlugins.Helpers.InferTypesPlugin.InferTy
 import OneLang.One.Ast.Expressions.PropertyAccessExpression;
 import OneLang.One.Ast.References.EnumReference;
 import OneLang.One.Ast.Expressions.Expression;
-import io.onelang.std.core.Objects;
 import java.util.Arrays;
+import io.onelang.std.core.Objects;
 import OneLang.One.Ast.References.EnumMemberReference;
 
 public class ResolveEnumMemberAccess extends InferTypesPlugin {

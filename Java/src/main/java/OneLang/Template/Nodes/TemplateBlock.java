@@ -8,8 +8,8 @@ import OneLang.VM.Values.ArrayValue;
 import OneLang.VM.Values.StringValue;
 
 import OneLang.Template.Nodes.ITemplateNode;
-import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 import OneLang.VM.ExprVM.VMContext;
 
 public class TemplateBlock implements ITemplateNode {

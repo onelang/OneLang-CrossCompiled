@@ -13,9 +13,13 @@ import OneLang.One.Ast.Interfaces.IType;
 
 import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Expressions.ICallExpression;
+import OneLang.One.Ast.Interfaces.IType;
 import OneLang.One.Ast.Types.Method;
 
 public interface IMethodCallExpression extends IExpression, ICallExpression {
+    IType[] getTypeArgs();
+    void setTypeArgs(IType[] value);
+    
     Method getMethod();
     void setMethod(Method value);
 }

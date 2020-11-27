@@ -10,9 +10,11 @@ import OneLang.One.Ast.Expressions.ICallExpression;
 import OneLang.One.Ast.Expressions.Identifier;
 import OneLang.One.Ast.Expressions.IMethodCallExpression;
 import OneLang.One.Ast.Expressions.InstanceMethodCallExpression;
+import OneLang.One.Ast.Expressions.NewExpression;
 import OneLang.One.Ast.Expressions.PropertyAccessExpression;
 import OneLang.One.Ast.Expressions.StaticMethodCallExpression;
 import OneLang.One.Ast.Expressions.UnresolvedCallExpression;
+import OneLang.One.Ast.Expressions.UnresolvedNewExpression;
 import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 import OneLang.One.Ast.Statements.Statement;
@@ -38,6 +40,7 @@ import OneLang.VM.ExprVM.VMContext;
 import OneLang.Parsers.TypeScriptParser.TypeScriptParser2;
 import OneLang.One.Ast.AstTypes.ClassType;
 import OneLang.One.Ast.AstTypes.TypeHelper;
+import OneLang.One.Ast.AstTypes.UnresolvedType;
 
 import OneLang.One.Ast.Expressions.Expression;
 

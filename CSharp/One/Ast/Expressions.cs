@@ -7,15 +7,15 @@ namespace One.Ast
     public enum UnaryType { Postfix, Prefix }
     
     public interface ICallExpression : IExpression {
-        IType[] typeArgs { get; set; }
         Expression[] args { get; set; }
         
-        string getName();
+        string getMethodName();
         
         IInterface getParentInterface();
     }
     
     public interface IMethodCallExpression : IExpression, ICallExpression {
+        IType[] typeArgs { get; set; }
         Method method { get; set; }
     }
     
@@ -213,14 +213,24 @@ namespace One.Ast
         }
     }
     
-    public class NewExpression : Expression {
+    public class NewExpression : Expression, ICallExpression {
         public ClassType cls;
-        public Expression[] args;
+        public Expression[] args { get; set; }
         
         public NewExpression(ClassType cls, Expression[] args): base()
         {
             this.cls = cls;
             this.args = args;
+        }
+        
+        public string getMethodName()
+        {
+            return "constructor";
+        }
+        
+        public IInterface getParentInterface()
+        {
+            return this.cls.decl;
         }
     }
     
@@ -360,7 +370,7 @@ namespace One.Ast
             this.isThisCall = isThisCall;
         }
         
-        public string getName()
+        public string getMethodName()
         {
             return this.method.name;
         }
@@ -385,7 +395,7 @@ namespace One.Ast
             this.args = args;
         }
         
-        public string getName()
+        public string getMethodName()
         {
             return this.method.name;
         }
@@ -396,9 +406,9 @@ namespace One.Ast
         }
     }
     
-    public class GlobalFunctionCallExpression : Expression {
+    public class GlobalFunctionCallExpression : Expression, ICallExpression {
         public GlobalFunction func;
-        public Expression[] args;
+        public Expression[] args { get; set; }
         
         public GlobalFunctionCallExpression(GlobalFunction func, Expression[] args): base()
         {
@@ -406,7 +416,7 @@ namespace One.Ast
             this.args = args;
         }
         
-        public string getName()
+        public string getMethodName()
         {
             return this.func.name;
         }

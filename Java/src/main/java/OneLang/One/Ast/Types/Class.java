@@ -43,8 +43,8 @@ import OneLang.One.Ast.References.StaticThisReference;
 import OneLang.One.Ast.References.SuperReference;
 import OneLang.One.Ast.AstTypes.ClassType;
 import java.util.ArrayList;
-import OneLang.One.Ast.AstTypes.GenericsType;
 import java.util.Arrays;
+import OneLang.One.Ast.AstTypes.GenericsType;
 import OneLang.One.Ast.References.Reference;
 
 public class Class implements IHasAttributesAndTrivia, IInterface, IResolvedImportable, ISourceFileMember, IReferencable {

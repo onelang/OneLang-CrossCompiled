@@ -88,9 +88,9 @@ import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 
 import OneLang.Utils.TSOverviewGenerator.TSOverviewGenerator;
-import io.onelang.std.json.JSON;
-import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.Arrays;
+import io.onelang.std.json.JSON;
 import OneLang.One.Ast.Types.IHasAttributesAndTrivia;
 import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Interfaces.IType;
@@ -170,7 +170,6 @@ import OneLang.One.Ast.Types.IMethodBase;
 import java.util.ArrayList;
 import OneLang.One.Ast.Types.Class;
 import OneLang.One.Ast.Types.IInterface;
-import io.onelang.std.core.RegExp;
 import OneLang.One.Ast.Types.UnresolvedImport;
 import OneLang.One.Ast.Types.Interface;
 import OneLang.One.Ast.Types.Enum;
@@ -252,7 +251,7 @@ public class TSOverviewGenerator {
     public String expr(IExpression expr) {
         var res = "UNKNOWN-EXPR";
         if (expr instanceof NewExpression)
-            res = "new " + this.type(((NewExpression)expr).cls, false) + "(" + (this.previewOnly ? "..." : Arrays.stream(Arrays.stream(((NewExpression)expr).args).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", "))) + ")";
+            res = "new " + this.type(((NewExpression)expr).cls, false) + "(" + (this.previewOnly ? "..." : Arrays.stream(Arrays.stream(((NewExpression)expr).getArgs()).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", "))) + ")";
         else if (expr instanceof UnresolvedNewExpression)
             res = "new " + this.type(((UnresolvedNewExpression)expr).cls, false) + "(" + (this.previewOnly ? "..." : Arrays.stream(Arrays.stream(((UnresolvedNewExpression)expr).args).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", "))) + ")";
         else if (expr instanceof Identifier)
@@ -276,7 +275,7 @@ public class TSOverviewGenerator {
             res = ((StaticMethodCallExpression)expr).getMethod().parentInterface.getName() + ".{M}" + ((StaticMethodCallExpression)expr).getMethod().getName() + typeArgs + "(" + (this.previewOnly ? "..." : Arrays.stream(Arrays.stream(((StaticMethodCallExpression)expr).getArgs()).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", "))) + ")";
         }
         else if (expr instanceof GlobalFunctionCallExpression)
-            res = ((GlobalFunctionCallExpression)expr).func.getName() + "(" + (this.previewOnly ? "..." : Arrays.stream(Arrays.stream(((GlobalFunctionCallExpression)expr).args).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", "))) + ")";
+            res = ((GlobalFunctionCallExpression)expr).func.getName() + "(" + (this.previewOnly ? "..." : Arrays.stream(Arrays.stream(((GlobalFunctionCallExpression)expr).getArgs()).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", "))) + ")";
         else if (expr instanceof LambdaCallExpression)
             res = this.expr(((LambdaCallExpression)expr).method) + "(" + (this.previewOnly ? "..." : Arrays.stream(Arrays.stream(((LambdaCallExpression)expr).args).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", "))) + ")";
         else if (expr instanceof BooleanLiteral)

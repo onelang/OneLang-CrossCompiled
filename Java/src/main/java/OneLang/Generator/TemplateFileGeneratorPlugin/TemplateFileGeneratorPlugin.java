@@ -10,9 +10,11 @@ import OneLang.One.Ast.Expressions.ICallExpression;
 import OneLang.One.Ast.Expressions.Identifier;
 import OneLang.One.Ast.Expressions.IMethodCallExpression;
 import OneLang.One.Ast.Expressions.InstanceMethodCallExpression;
+import OneLang.One.Ast.Expressions.NewExpression;
 import OneLang.One.Ast.Expressions.PropertyAccessExpression;
 import OneLang.One.Ast.Expressions.StaticMethodCallExpression;
 import OneLang.One.Ast.Expressions.UnresolvedCallExpression;
+import OneLang.One.Ast.Expressions.UnresolvedNewExpression;
 import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 import OneLang.One.Ast.Statements.Statement;
@@ -38,6 +40,7 @@ import OneLang.VM.ExprVM.VMContext;
 import OneLang.Parsers.TypeScriptParser.TypeScriptParser2;
 import OneLang.One.Ast.AstTypes.ClassType;
 import OneLang.One.Ast.AstTypes.TypeHelper;
+import OneLang.One.Ast.AstTypes.UnresolvedType;
 
 import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
 import OneLang.VM.ExprVM.IVMHooks;
@@ -56,15 +59,16 @@ import OneLang.Generator.TemplateFileGeneratorPlugin.TypeValue;
 import OneLang.One.Ast.AstTypes.ClassType;
 import OneLang.VM.Values.StringValue;
 import java.util.ArrayList;
-import OneLang.Parsers.Common.ExpressionParser.ExpressionParser;
-import OneLang.Parsers.Common.Reader.Reader;
 import OneLang.One.Ast.Expressions.UnresolvedCallExpression;
 import OneLang.One.Ast.Expressions.PropertyAccessExpression;
 import OneLang.One.Ast.Expressions.Identifier;
 import java.util.Arrays;
+import OneLang.One.Ast.Expressions.UnresolvedNewExpression;
+import OneLang.One.Ast.AstTypes.UnresolvedType;
 import OneLang.One.Ast.Expressions.StaticMethodCallExpression;
 import OneLang.One.Ast.Expressions.InstanceMethodCallExpression;
 import OneLang.One.Ast.Expressions.GlobalFunctionCallExpression;
+import OneLang.One.Ast.Expressions.NewExpression;
 import OneLang.One.Ast.References.StaticFieldReference;
 import OneLang.One.Ast.References.StaticPropertyReference;
 import OneLang.One.Ast.References.InstanceFieldReference;
@@ -129,7 +133,7 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
     }
     
     public void addExprTemplate(String exprStr, CodeTemplate tmpl) {
-        var expr = new ExpressionParser(new Reader(exprStr), null, null, null).parse(0, true);
+        var expr = new TypeScriptParser2(exprStr, null).parseExpression();
         if (expr instanceof UnresolvedCallExpression && ((UnresolvedCallExpression)expr).func instanceof PropertyAccessExpression && ((PropertyAccessExpression)((UnresolvedCallExpression)expr).func).object instanceof Identifier) {
             var callTmpl = new CallTemplate(((Identifier)((PropertyAccessExpression)((UnresolvedCallExpression)expr).func).object).text, ((PropertyAccessExpression)((UnresolvedCallExpression)expr).func).propertyName, Arrays.stream(((UnresolvedCallExpression)expr).args).map(x -> (((Identifier)x)).text).toArray(String[]::new), tmpl);
             this.addMethod(callTmpl.className + "." + callTmpl.methodName + "@" + callTmpl.args.length, callTmpl);
@@ -142,12 +146,16 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
             var fieldTmpl = new FieldAccessTemplate(((Identifier)((PropertyAccessExpression)expr).object).text, ((PropertyAccessExpression)expr).propertyName, tmpl);
             this.fields.put(fieldTmpl.className + "." + fieldTmpl.fieldName, fieldTmpl);
         }
+        else if (expr instanceof UnresolvedNewExpression && ((UnresolvedNewExpression)expr).cls instanceof UnresolvedType) {
+            var callTmpl = new CallTemplate(((UnresolvedType)((UnresolvedNewExpression)expr).cls).typeName, "constructor", Arrays.stream(((UnresolvedNewExpression)expr).args).map(x -> (((Identifier)x)).text).toArray(String[]::new), tmpl);
+            this.addMethod(callTmpl.className + "." + callTmpl.methodName + "@" + callTmpl.args.length, callTmpl);
+        }
         else
             throw new Error("This expression template format is not supported: '" + exprStr + "'");
     }
     
     public String expr(IExpression expr) {
-        var isCallExpr = expr instanceof StaticMethodCallExpression || expr instanceof InstanceMethodCallExpression || expr instanceof GlobalFunctionCallExpression;
+        var isCallExpr = expr instanceof StaticMethodCallExpression || expr instanceof InstanceMethodCallExpression || expr instanceof GlobalFunctionCallExpression || expr instanceof NewExpression;
         var isFieldRef = expr instanceof StaticFieldReference || expr instanceof StaticPropertyReference || expr instanceof InstanceFieldReference || expr instanceof InstancePropertyReference;
         
         if (!isCallExpr && !isFieldRef)
@@ -165,7 +173,7 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
         if (isCallExpr) {
             var call = ((ICallExpression)expr);
             var parentIntf = call.getParentInterface();
-            var methodName = (parentIntf == null ? "" : parentIntf.getName() + ".") + call.getName() + "@" + call.getArgs().length;
+            var methodName = (parentIntf == null ? "" : parentIntf.getName() + ".") + call.getMethodName() + "@" + call.getArgs().length;
             var callTmpls = this.methods.get(methodName);
             if (callTmpls == null)
                 return null;

@@ -41,7 +41,7 @@ public class StaticMethodCallExpression extends Expression implements IMethodCal
         this.isThisCall = isThisCall;
     }
     
-    public String getName() {
+    public String getMethodName() {
         return this.getMethod().getName();
     }
     

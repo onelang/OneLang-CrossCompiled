@@ -12,17 +12,13 @@ import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 
 import OneLang.One.Ast.Interfaces.IExpression;
-import OneLang.One.Ast.Interfaces.IType;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Types.IInterface;
 
 public interface ICallExpression extends IExpression {
-    IType[] getTypeArgs();
-    void setTypeArgs(IType[] value);
-    
     Expression[] getArgs();
     void setArgs(Expression[] value);
     
-    String getName();
+    String getMethodName();
     IInterface getParentInterface();
 }

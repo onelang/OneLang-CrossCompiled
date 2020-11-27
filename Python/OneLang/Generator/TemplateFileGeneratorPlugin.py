@@ -94,7 +94,7 @@ class TemplateFileGeneratorPlugin:
         self.methods.get(name).append(call_tmpl)
     
     def add_expr_template(self, expr_str, tmpl):
-        expr = exprPars.ExpressionParser(read.Reader(expr_str)).parse()
+        expr = typeScrPars.TypeScriptParser2(expr_str, None).parse_expression()
         if isinstance(expr, exprs.UnresolvedCallExpression) and isinstance(expr.func, exprs.PropertyAccessExpression) and isinstance(expr.func.object, exprs.Identifier):
             call_tmpl = CallTemplate(expr.func.object.text, expr.func.property_name, list(map(lambda x: (x).text, expr.args)), tmpl)
             self.add_method(f'''{call_tmpl.class_name}.{call_tmpl.method_name}@{len(call_tmpl.args)}''', call_tmpl)
@@ -104,11 +104,14 @@ class TemplateFileGeneratorPlugin:
         elif isinstance(expr, exprs.PropertyAccessExpression) and isinstance(expr.object, exprs.Identifier):
             field_tmpl = FieldAccessTemplate(expr.object.text, expr.property_name, tmpl)
             self.fields[f'''{field_tmpl.class_name}.{field_tmpl.field_name}'''] = field_tmpl
+        elif isinstance(expr, exprs.UnresolvedNewExpression) and isinstance(expr.cls_, astTypes.UnresolvedType):
+            call_tmpl = CallTemplate(expr.cls_.type_name, "constructor", list(map(lambda x: (x).text, expr.args)), tmpl)
+            self.add_method(f'''{call_tmpl.class_name}.{call_tmpl.method_name}@{len(call_tmpl.args)}''', call_tmpl)
         else:
             raise Error(f'''This expression template format is not supported: \'{expr_str}\'''')
     
     def expr(self, expr):
-        is_call_expr = isinstance(expr, exprs.StaticMethodCallExpression) or isinstance(expr, exprs.InstanceMethodCallExpression) or isinstance(expr, exprs.GlobalFunctionCallExpression)
+        is_call_expr = isinstance(expr, exprs.StaticMethodCallExpression) or isinstance(expr, exprs.InstanceMethodCallExpression) or isinstance(expr, exprs.GlobalFunctionCallExpression) or isinstance(expr, exprs.NewExpression)
         is_field_ref = isinstance(expr, refs.StaticFieldReference) or isinstance(expr, refs.StaticPropertyReference) or isinstance(expr, refs.InstanceFieldReference) or isinstance(expr, refs.InstancePropertyReference)
         
         if not is_call_expr and not is_field_ref:
@@ -126,7 +129,7 @@ class TemplateFileGeneratorPlugin:
         if is_call_expr:
             call = expr
             parent_intf = call.get_parent_interface()
-            method_name = f'''{("" if parent_intf == None else f'{parent_intf.name}.')}{call.get_name()}@{len(call.args)}'''
+            method_name = f'''{("" if parent_intf == None else f'{parent_intf.name}.')}{call.get_method_name()}@{len(call.args)}'''
             call_tmpls = self.methods.get(method_name)
             if call_tmpls == None:
                 return None

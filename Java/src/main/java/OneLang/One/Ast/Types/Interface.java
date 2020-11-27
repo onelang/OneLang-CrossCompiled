@@ -34,8 +34,8 @@ import OneLang.One.Ast.Types.Method;
 import OneLang.One.Ast.Types.SourceFile;
 import java.util.Map;
 import OneLang.One.Ast.AstTypes.InterfaceType;
-import OneLang.One.Ast.AstTypes.GenericsType;
 import java.util.Arrays;
+import OneLang.One.Ast.AstTypes.GenericsType;
 
 public class Interface implements IHasAttributesAndTrivia, IInterface, IResolvedImportable, ISourceFileMember {
     public InterfaceType type;

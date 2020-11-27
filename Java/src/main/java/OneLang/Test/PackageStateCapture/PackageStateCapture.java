@@ -8,8 +8,8 @@ import OneLang.One.Ast.Types.Package;
 import java.util.LinkedHashMap;
 import OneLang.One.Ast.Types.SourceFile;
 import OneLang.Utils.TSOverviewGenerator.TSOverviewGenerator;
-import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 public class PackageStateCapture {
     public Map<String, String> overviews;

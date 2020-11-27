@@ -7,8 +7,8 @@ import OneLang.One.Ast.Types.MethodParameter;
 import OneLang.One.Ast.Types.IInterface;
 import OneLang.One.Ast.Interfaces.IType;
 
-import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 import OneLang.One.Ast.Interfaces.IType;
 import OneLang.One.Ast.AstTypes.GenericsType;
 import OneLang.One.Ast.AstTypes.ClassType;

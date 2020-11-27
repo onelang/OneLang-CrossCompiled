@@ -47,7 +47,7 @@ public class UseDefaultCallArgsExplicitly extends AstTransformer {
     protected Expression visitExpression(Expression expr) {
         super.visitExpression(expr);
         if (expr instanceof NewExpression && ((NewExpression)expr).cls.decl.constructor_ != null)
-            ((NewExpression)expr).args = this.getNewArgs(((NewExpression)expr).args, ((NewExpression)expr).cls.decl.constructor_);
+            ((NewExpression)expr).setArgs(this.getNewArgs(((NewExpression)expr).getArgs(), ((NewExpression)expr).cls.decl.constructor_));
         else if (expr instanceof InstanceMethodCallExpression)
             ((InstanceMethodCallExpression)expr).setArgs(this.getNewArgs(((InstanceMethodCallExpression)expr).getArgs(), ((InstanceMethodCallExpression)expr).getMethod()));
         else if (expr instanceof StaticMethodCallExpression)

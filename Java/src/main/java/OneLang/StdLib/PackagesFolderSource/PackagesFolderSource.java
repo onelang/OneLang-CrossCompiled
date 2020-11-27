@@ -14,7 +14,6 @@ import OneLang.StdLib.PackageManager.PackageContent;
 import java.util.LinkedHashMap;
 import java.util.Arrays;
 import java.util.ArrayList;
-import io.onelang.std.core.RegExp;
 import io.onelang.std.core.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;

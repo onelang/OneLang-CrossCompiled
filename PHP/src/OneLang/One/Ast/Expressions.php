@@ -25,7 +25,7 @@ class UnaryType {
 }
 
 interface ICallExpression extends IExpression {
-    function getName();
+    function getMethodName();
     
     function getParentInterface();
 }
@@ -220,7 +220,7 @@ class UnresolvedNewExpression extends Expression {
     }
 }
 
-class NewExpression extends Expression {
+class NewExpression extends Expression implements ICallExpression {
     public $cls;
     public $args;
     
@@ -228,6 +228,14 @@ class NewExpression extends Expression {
         parent::__construct();
         $this->cls = $cls;
         $this->args = $args;
+    }
+    
+    function getMethodName() {
+        return "constructor";
+    }
+    
+    function getParentInterface() {
+        return $this->cls->decl;
     }
 }
 
@@ -367,7 +375,7 @@ class StaticMethodCallExpression extends Expression implements IMethodCallExpres
         $this->isThisCall = $isThisCall;
     }
     
-    function getName() {
+    function getMethodName() {
         return $this->method->name;
     }
     
@@ -390,7 +398,7 @@ class InstanceMethodCallExpression extends Expression implements IMethodCallExpr
         $this->args = $args;
     }
     
-    function getName() {
+    function getMethodName() {
         return $this->method->name;
     }
     
@@ -399,7 +407,7 @@ class InstanceMethodCallExpression extends Expression implements IMethodCallExpr
     }
 }
 
-class GlobalFunctionCallExpression extends Expression {
+class GlobalFunctionCallExpression extends Expression implements ICallExpression {
     public $func;
     public $args;
     
@@ -409,7 +417,7 @@ class GlobalFunctionCallExpression extends Expression {
         $this->args = $args;
     }
     
-    function getName() {
+    function getMethodName() {
         return $this->func->name;
     }
     

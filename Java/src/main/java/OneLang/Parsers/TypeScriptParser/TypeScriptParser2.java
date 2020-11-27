@@ -77,7 +77,6 @@ import OneLang.Parsers.Common.NodeManager.NodeManager;
 import OneLang.One.Ast.Types.ExportScopeRef;
 import OneLang.One.Ast.Types.SourcePath;
 import java.util.ArrayList;
-import io.onelang.std.core.RegExp;
 import java.util.regex.Pattern;
 import OneLang.One.Ast.AstTypes.UnresolvedType;
 import OneLang.One.Ast.Interfaces.IType;

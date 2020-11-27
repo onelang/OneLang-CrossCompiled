@@ -366,7 +366,7 @@ public class AstTransformer implements ITransformer {
         }
         else if (expr instanceof NewExpression) {
             this.visitType(((NewExpression)expr).cls);
-            ((NewExpression)expr).args = Arrays.stream(((NewExpression)expr).args).map(x -> this.visitExpression(x)).toArray(Expression[]::new);
+            ((NewExpression)expr).setArgs(Arrays.stream(((NewExpression)expr).getArgs()).map(x -> this.visitExpression(x)).toArray(Expression[]::new));
         }
         else if (expr instanceof TemplateString)
             return this.visitTemplateString(((TemplateString)expr));
@@ -436,7 +436,7 @@ public class AstTransformer implements ITransformer {
             ((StaticMethodCallExpression)expr).setArgs(Arrays.stream(((StaticMethodCallExpression)expr).getArgs()).map(x -> this.visitExpression(x)).toArray(Expression[]::new));
         }
         else if (expr instanceof GlobalFunctionCallExpression)
-            ((GlobalFunctionCallExpression)expr).args = Arrays.stream(((GlobalFunctionCallExpression)expr).args).map(x -> this.visitExpression(x)).toArray(Expression[]::new);
+            ((GlobalFunctionCallExpression)expr).setArgs(Arrays.stream(((GlobalFunctionCallExpression)expr).getArgs()).map(x -> this.visitExpression(x)).toArray(Expression[]::new));
         else if (expr instanceof InstanceMethodCallExpression) {
             ((InstanceMethodCallExpression)expr).object = this.visitExpression(((InstanceMethodCallExpression)expr).object);
             ((InstanceMethodCallExpression)expr).setTypeArgs(Arrays.stream(((InstanceMethodCallExpression)expr).getTypeArgs()).map(x -> this.visitType(x)).toArray(IType[]::new));

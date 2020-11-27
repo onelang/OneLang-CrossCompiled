@@ -9,9 +9,11 @@ use OneLang\One\Ast\Expressions\ICallExpression;
 use OneLang\One\Ast\Expressions\Identifier;
 use OneLang\One\Ast\Expressions\IMethodCallExpression;
 use OneLang\One\Ast\Expressions\InstanceMethodCallExpression;
+use OneLang\One\Ast\Expressions\NewExpression;
 use OneLang\One\Ast\Expressions\PropertyAccessExpression;
 use OneLang\One\Ast\Expressions\StaticMethodCallExpression;
 use OneLang\One\Ast\Expressions\UnresolvedCallExpression;
+use OneLang\One\Ast\Expressions\UnresolvedNewExpression;
 use OneLang\One\Ast\Interfaces\IExpression;
 use OneLang\One\Ast\Interfaces\IType;
 use OneLang\One\Ast\Statements\Statement;
@@ -37,6 +39,7 @@ use OneLang\VM\ExprVM\VMContext;
 use OneLang\Parsers\TypeScriptParser\TypeScriptParser2;
 use OneLang\One\Ast\AstTypes\ClassType;
 use OneLang\One\Ast\AstTypes\TypeHelper;
+use OneLang\One\Ast\AstTypes\UnresolvedType;
 
 class CodeTemplate {
     public $template;
@@ -163,7 +166,7 @@ class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
     }
     
     function addExprTemplate($exprStr, $tmpl) {
-        $expr = (new ExpressionParser(new Reader($exprStr)))->parse();
+        $expr = (new TypeScriptParser2($exprStr, null))->parseExpression();
         if ($expr instanceof UnresolvedCallExpression && $expr->func instanceof PropertyAccessExpression && $expr->func->object instanceof Identifier) {
             $callTmpl = new CallTemplate($expr->func->object->text, $expr->func->propertyName, array_map(function ($x) { return ($x)->text; }, $expr->args), $tmpl);
             $this->addMethod($callTmpl->className . "." . $callTmpl->methodName . "@" . count($callTmpl->args), $callTmpl);
@@ -176,12 +179,16 @@ class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
             $fieldTmpl = new FieldAccessTemplate($expr->object->text, $expr->propertyName, $tmpl);
             $this->fields[$fieldTmpl->className . "." . $fieldTmpl->fieldName] = $fieldTmpl;
         }
+        else if ($expr instanceof UnresolvedNewExpression && $expr->cls instanceof UnresolvedType) {
+            $callTmpl = new CallTemplate($expr->cls->typeName, "constructor", array_map(function ($x) { return ($x)->text; }, $expr->args), $tmpl);
+            $this->addMethod($callTmpl->className . "." . $callTmpl->methodName . "@" . count($callTmpl->args), $callTmpl);
+        }
         else
             throw new \OneLang\Core\Error("This expression template format is not supported: '" . $exprStr . "'");
     }
     
     function expr($expr) {
-        $isCallExpr = $expr instanceof StaticMethodCallExpression || $expr instanceof InstanceMethodCallExpression || $expr instanceof GlobalFunctionCallExpression;
+        $isCallExpr = $expr instanceof StaticMethodCallExpression || $expr instanceof InstanceMethodCallExpression || $expr instanceof GlobalFunctionCallExpression || $expr instanceof NewExpression;
         $isFieldRef = $expr instanceof StaticFieldReference || $expr instanceof StaticPropertyReference || $expr instanceof InstanceFieldReference || $expr instanceof InstancePropertyReference;
         
         if (!$isCallExpr && !$isFieldRef)
@@ -199,7 +206,7 @@ class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
         if ($isCallExpr) {
             $call = $expr;
             $parentIntf = $call->getParentInterface();
-            $methodName = ($parentIntf === null ? "" : $parentIntf->name . ".") . $call->getName() . "@" . count($call->args);
+            $methodName = ($parentIntf === null ? "" : $parentIntf->name . ".") . $call->getMethodName() . "@" . count($call->args);
             $callTmpls = @$this->methods[$methodName] ?? null;
             if ($callTmpls === null)
                 return null;

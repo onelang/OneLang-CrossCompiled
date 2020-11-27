@@ -22,7 +22,6 @@ import java.util.LinkedHashSet;
 import io.onelang.std.core.Objects;
 import java.util.Arrays;
 import OneLang.One.Ast.Expressions.RegexLiteral;
-import io.onelang.std.core.RegExp;
 import java.util.regex.Pattern;
 import io.onelang.std.json.JSON;
 import OneLang.One.Ast.Types.Class;

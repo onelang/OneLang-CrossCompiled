@@ -12,21 +12,25 @@ import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 
 import OneLang.One.Ast.Expressions.Expression;
+import OneLang.One.Ast.Expressions.ICallExpression;
 import OneLang.One.Ast.Types.GlobalFunction;
 import OneLang.One.Ast.Types.IInterface;
 
-public class GlobalFunctionCallExpression extends Expression {
+public class GlobalFunctionCallExpression extends Expression implements ICallExpression {
     public GlobalFunction func;
-    public Expression[] args;
+    
+    Expression[] args;
+    public Expression[] getArgs() { return this.args; }
+    public void setArgs(Expression[] value) { this.args = value; }
     
     public GlobalFunctionCallExpression(GlobalFunction func, Expression[] args)
     {
         super();
         this.func = func;
-        this.args = args;
+        this.setArgs(args);
     }
     
-    public String getName() {
+    public String getMethodName() {
         return this.func.getName();
     }
     

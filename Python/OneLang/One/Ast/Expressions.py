@@ -139,6 +139,12 @@ class NewExpression(Expression):
         self.cls_ = cls_
         self.args = args
         super().__init__()
+    
+    def get_method_name(self):
+        return "constructor"
+    
+    def get_parent_interface(self):
+        return self.cls_.decl
 
 class BinaryExpression(Expression):
     def __init__(self, left, operator, right):
@@ -214,7 +220,7 @@ class StaticMethodCallExpression(Expression):
         self.is_this_call = is_this_call
         super().__init__()
     
-    def get_name(self):
+    def get_method_name(self):
         return self.method.name
     
     def get_parent_interface(self):
@@ -228,7 +234,7 @@ class InstanceMethodCallExpression(Expression):
         self.args = args
         super().__init__()
     
-    def get_name(self):
+    def get_method_name(self):
         return self.method.name
     
     def get_parent_interface(self):
@@ -240,7 +246,7 @@ class GlobalFunctionCallExpression(Expression):
         self.args = args
         super().__init__()
     
-    def get_name(self):
+    def get_method_name(self):
         return self.func.name
     
     def get_parent_interface(self):

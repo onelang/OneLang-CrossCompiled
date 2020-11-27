@@ -9,8 +9,8 @@ import OneLang.One.Ast.Interfaces.IType;
 
 import OneLang.One.Ast.Interfaces.IType;
 import OneLang.One.Ast.Types.MethodParameter;
-import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 public class LambdaType implements IType {
     public MethodParameter[] parameters;

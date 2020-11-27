@@ -124,7 +124,6 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import OneLang.One.Ast.Types.ExportScopeRef;
 import OneLang.One.Ast.Types.Enum;
-import io.onelang.std.core.RegExp;
 import java.util.regex.Pattern;
 import OneLang.One.Ast.Statements.Statement;
 import OneLang.One.Ast.Types.IVariable;
@@ -372,9 +371,9 @@ public class PythonGenerator implements IGenerator {
         if (expr instanceof NewExpression) {
             // TODO: hack
             if (Objects.equals(((NewExpression)expr).cls.decl.getName(), "Set"))
-                res = ((NewExpression)expr).args.length == 0 ? "dict()" : "dict.fromkeys" + this.callParams(((NewExpression)expr).args);
+                res = ((NewExpression)expr).getArgs().length == 0 ? "dict()" : "dict.fromkeys" + this.callParams(((NewExpression)expr).getArgs());
             else
-                res = this.clsName(((NewExpression)expr).cls.decl, false) + this.callParams(((NewExpression)expr).args);
+                res = this.clsName(((NewExpression)expr).cls.decl, false) + this.callParams(((NewExpression)expr).getArgs());
         }
         else if (expr instanceof UnresolvedNewExpression)
             res = "/* TODO: UnresolvedNewExpression */ " + ((UnresolvedNewExpression)expr).cls.typeName + "(" + Arrays.stream(Arrays.stream(((UnresolvedNewExpression)expr).args).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")";
@@ -395,7 +394,7 @@ public class PythonGenerator implements IGenerator {
         }
         else if (expr instanceof GlobalFunctionCallExpression) {
             this.imports.add("from onelang_core import *");
-            res = this.name_(((GlobalFunctionCallExpression)expr).func.getName()) + this.exprCall(((GlobalFunctionCallExpression)expr).args);
+            res = this.name_(((GlobalFunctionCallExpression)expr).func.getName()) + this.exprCall(((GlobalFunctionCallExpression)expr).getArgs());
         }
         else if (expr instanceof LambdaCallExpression)
             res = this.expr(((LambdaCallExpression)expr).method) + "(" + Arrays.stream(Arrays.stream(((LambdaCallExpression)expr).args).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")";

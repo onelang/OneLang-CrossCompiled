@@ -7,8 +7,8 @@ import OneLang.One.Ast.Types.SourceFile;
 import OneLang.One.ITransformer.ITransformer;
 
 import OneLang.One.ITransformer.ITransformer;
-import OneLang.One.Ast.Types.Interface;
 import java.util.Arrays;
+import OneLang.One.Ast.Types.Interface;
 import OneLang.One.Ast.Types.Class;
 import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Types.Field;

@@ -149,7 +149,7 @@ namespace Generator
         
         public void addExprTemplate(string exprStr, CodeTemplate tmpl)
         {
-            var expr = new ExpressionParser(new Reader(exprStr)).parse();
+            var expr = new TypeScriptParser2(exprStr, null).parseExpression();
             if (expr is UnresolvedCallExpression unrCallExpr && unrCallExpr.func is PropertyAccessExpression propAccExpr && propAccExpr.object_ is Identifier ident) {
                 var callTmpl = new CallTemplate(ident.text, propAccExpr.propertyName, unrCallExpr.args.map(x => (((Identifier)x)).text), tmpl);
                 this.addMethod($"{callTmpl.className}.{callTmpl.methodName}@{callTmpl.args.length()}", callTmpl);
@@ -162,13 +162,17 @@ namespace Generator
                 var fieldTmpl = new FieldAccessTemplate(ident3.text, propAccExpr2.propertyName, tmpl);
                 this.fields.set($"{fieldTmpl.className}.{fieldTmpl.fieldName}", fieldTmpl);
             }
+            else if (expr is UnresolvedNewExpression unrNewExpr && unrNewExpr.cls is UnresolvedType unrType) {
+                var callTmpl = new CallTemplate(unrType.typeName, "constructor", unrNewExpr.args.map(x => (((Identifier)x)).text), tmpl);
+                this.addMethod($"{callTmpl.className}.{callTmpl.methodName}@{callTmpl.args.length()}", callTmpl);
+            }
             else
                 throw new Error($"This expression template format is not supported: '{exprStr}'");
         }
         
         public string expr(IExpression expr)
         {
-            var isCallExpr = expr is StaticMethodCallExpression statMethCallExpr || expr is InstanceMethodCallExpression || expr is GlobalFunctionCallExpression;
+            var isCallExpr = expr is StaticMethodCallExpression statMethCallExpr || expr is InstanceMethodCallExpression || expr is GlobalFunctionCallExpression || expr is NewExpression;
             var isFieldRef = expr is StaticFieldReference statFieldRef || expr is StaticPropertyReference || expr is InstanceFieldReference || expr is InstancePropertyReference;
             
             if (!isCallExpr && !isFieldRef)
@@ -186,7 +190,7 @@ namespace Generator
             if (isCallExpr) {
                 var call = ((ICallExpression)expr);
                 var parentIntf = call.getParentInterface();
-                var methodName = $"{(parentIntf == null ? "" : $"{parentIntf.name}.")}{call.getName()}@{call.args.length()}";
+                var methodName = $"{(parentIntf == null ? "" : $"{parentIntf.name}.")}{call.getMethodName()}@{call.args.length()}";
                 var callTmpls = this.methods.get(methodName);
                 if (callTmpls == null)
                     return null;

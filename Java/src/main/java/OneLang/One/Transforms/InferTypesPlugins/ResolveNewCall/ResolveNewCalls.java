@@ -21,9 +21,9 @@ public class ResolveNewCalls extends InferTypesPlugin {
     
     public Expression transform(Expression expr) {
         var newExpr = ((NewExpression)expr);
-        for (Integer i = 0; i < newExpr.args.length; i++) {
-            newExpr.args[i].setExpectedType(newExpr.cls.decl.constructor_.getParameters()[i].getType(), false);
-            newExpr.args[i] = this.main.runPluginsOn(newExpr.args[i]);
+        for (Integer i = 0; i < newExpr.getArgs().length; i++) {
+            newExpr.getArgs()[i].setExpectedType(newExpr.cls.decl.constructor_.getParameters()[i].getType(), false);
+            newExpr.getArgs()[i] = this.main.runPluginsOn(newExpr.getArgs()[i]);
         }
         expr.setActualType(newExpr.cls, false, false);
         return expr;

@@ -5,7 +5,6 @@ package OneLang.Parsers.Common.Utils;
 import io.onelang.std.core.Objects;
 import java.util.Arrays;
 import java.util.ArrayList;
-import io.onelang.std.core.RegExp;
 import java.util.stream.Collectors;
 
 public class Utils {

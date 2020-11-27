@@ -101,7 +101,6 @@ import java.util.ArrayList;
 import OneLang.Generator.PhpPlugins.JsToPhp.JsToPhp;
 import OneLang.One.ITransformer.ITransformer;
 import java.util.Arrays;
-import io.onelang.std.core.RegExp;
 import java.util.stream.Collectors;
 import OneLang.One.Ast.Statements.Statement;
 import OneLang.One.Ast.Interfaces.IType;
@@ -135,8 +134,8 @@ import OneLang.One.Ast.Expressions.GlobalFunctionCallExpression;
 import OneLang.One.Ast.Expressions.LambdaCallExpression;
 import OneLang.One.Ast.Expressions.BooleanLiteral;
 import OneLang.One.Ast.Expressions.StringLiteral;
-import io.onelang.std.json.JSON;
 import java.util.regex.Pattern;
+import io.onelang.std.json.JSON;
 import OneLang.One.Ast.Expressions.NumericLiteral;
 import OneLang.One.Ast.Expressions.CharacterLiteral;
 import OneLang.One.Ast.Expressions.ElementAccessExpression;
@@ -413,7 +412,7 @@ public class PhpGenerator implements IGenerator {
         
         var res = "UNKNOWN-EXPR";
         if (expr instanceof NewExpression)
-            res = "new " + this.type(((NewExpression)expr).cls, true) + this.callParams(((NewExpression)expr).args, ((NewExpression)expr).cls.decl.constructor_ != null ? ((NewExpression)expr).cls.decl.constructor_.getParameters() : new MethodParameter[0]);
+            res = "new " + this.type(((NewExpression)expr).cls, true) + this.callParams(((NewExpression)expr).getArgs(), ((NewExpression)expr).cls.decl.constructor_ != null ? ((NewExpression)expr).cls.decl.constructor_.getParameters() : new MethodParameter[0]);
         else if (expr instanceof UnresolvedNewExpression)
             res = "/* TODO: UnresolvedNewExpression */ new " + this.type(((UnresolvedNewExpression)expr).cls, true) + "(" + Arrays.stream(Arrays.stream(((UnresolvedNewExpression)expr).args).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")";
         else if (expr instanceof Identifier)
@@ -438,7 +437,7 @@ public class PhpGenerator implements IGenerator {
                 res = "\\OneLang\\Core\\" + res;
         }
         else if (expr instanceof GlobalFunctionCallExpression)
-            res = "Global." + this.name_(((GlobalFunctionCallExpression)expr).func.getName()) + this.exprCall(new IType[0], ((GlobalFunctionCallExpression)expr).args);
+            res = "Global." + this.name_(((GlobalFunctionCallExpression)expr).func.getName()) + this.exprCall(new IType[0], ((GlobalFunctionCallExpression)expr).getArgs());
         else if (expr instanceof LambdaCallExpression)
             res = this.expr(((LambdaCallExpression)expr).method) + "(" + Arrays.stream(Arrays.stream(((LambdaCallExpression)expr).args).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")";
         else if (expr instanceof BooleanLiteral)

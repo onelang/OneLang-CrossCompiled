@@ -41,7 +41,7 @@ public class InstanceMethodCallExpression extends Expression implements IMethodC
         this.setArgs(args);
     }
     
-    public String getName() {
+    public String getMethodName() {
         return this.getMethod().getName();
     }
     

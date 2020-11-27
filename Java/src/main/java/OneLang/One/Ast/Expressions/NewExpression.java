@@ -12,16 +12,29 @@ import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 
 import OneLang.One.Ast.Expressions.Expression;
+import OneLang.One.Ast.Expressions.ICallExpression;
 import OneLang.One.Ast.AstTypes.ClassType;
+import OneLang.One.Ast.Types.IInterface;
 
-public class NewExpression extends Expression {
+public class NewExpression extends Expression implements ICallExpression {
     public ClassType cls;
-    public Expression[] args;
+    
+    Expression[] args;
+    public Expression[] getArgs() { return this.args; }
+    public void setArgs(Expression[] value) { this.args = value; }
     
     public NewExpression(ClassType cls, Expression[] args)
     {
         super();
         this.cls = cls;
-        this.args = args;
+        this.setArgs(args);
+    }
+    
+    public String getMethodName() {
+        return "constructor";
+    }
+    
+    public IInterface getParentInterface() {
+        return this.cls.decl;
     }
 }
