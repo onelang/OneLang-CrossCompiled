@@ -65,7 +65,7 @@ class JsToPhp implements IGeneratorPlugin {
             if ($method->name === "split") {
                 if ($args[0] instanceof RegexLiteral) {
                     $pattern = ($args[0])->pattern;
-                    $modPattern = "/" . preg_replace("///", "\\/", $pattern) . "/";
+                    $modPattern = "/" . preg_replace("/\\//", "\\/", $pattern) . "/";
                     return "preg_split(" . json_encode($modPattern, JSON_UNESCAPED_SLASHES) . ", " . $objR . ")";
                 }
                 

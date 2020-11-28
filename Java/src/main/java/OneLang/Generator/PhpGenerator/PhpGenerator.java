@@ -89,8 +89,12 @@ import OneLang.Generator.IGenerator.IGenerator;
 import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
-import OneLang.Generator.PhpPlugins.JsToPhp.JsToPhp;
 import OneLang.One.ITransformer.ITransformer;
+import OneLang.Generator.TemplateFileGeneratorPlugin.ExpressionValue;
+import OneLang.Generator.TemplateFileGeneratorPlugin.LambdaValue;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
+import OneLang.VM.Values.IVMValue;
+import OneLang.VM.Values.StringValue;
 
 import OneLang.Generator.IGenerator.IGenerator;
 import java.util.Set;
@@ -98,8 +102,15 @@ import OneLang.One.Ast.Types.IInterface;
 import java.util.List;
 import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
 import java.util.ArrayList;
-import OneLang.Generator.PhpPlugins.JsToPhp.JsToPhp;
 import OneLang.One.ITransformer.ITransformer;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
+import OneLang.Generator.TemplateFileGeneratorPlugin.LambdaValue;
+import OneLang.VM.Values.StringValue;
+import OneLang.Generator.TemplateFileGeneratorPlugin.ExpressionValue;
+import OneLang.One.Ast.Expressions.RegexLiteral;
+import io.onelang.std.json.JSON;
+import java.util.regex.Pattern;
+import OneLang.VM.Values.IVMValue;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import OneLang.One.Ast.Statements.Statement;
@@ -134,8 +145,6 @@ import OneLang.One.Ast.Expressions.GlobalFunctionCallExpression;
 import OneLang.One.Ast.Expressions.LambdaCallExpression;
 import OneLang.One.Ast.Expressions.BooleanLiteral;
 import OneLang.One.Ast.Expressions.StringLiteral;
-import java.util.regex.Pattern;
-import io.onelang.std.json.JSON;
 import OneLang.One.Ast.Expressions.NumericLiteral;
 import OneLang.One.Ast.Expressions.CharacterLiteral;
 import OneLang.One.Ast.Expressions.ElementAccessExpression;
@@ -146,7 +155,6 @@ import OneLang.One.Ast.Expressions.ArrayLiteral;
 import OneLang.One.Ast.Expressions.CastExpression;
 import OneLang.One.Ast.Expressions.InstanceOfExpression;
 import OneLang.One.Ast.Expressions.ParenthesizedExpression;
-import OneLang.One.Ast.Expressions.RegexLiteral;
 import OneLang.One.Ast.Types.Lambda;
 import OneLang.One.Ast.Expressions.UnaryExpression;
 import OneLang.One.Ast.Expressions.MapLiteral;
@@ -205,7 +213,6 @@ public class PhpGenerator implements IGenerator {
         this.reservedWords = new String[] { "Generator", "Array", "List", "Interface", "Class" };
         this.fieldToMethodHack = new String[] { "length" };
         this.plugins = new ArrayList<IGeneratorPlugin>();
-        this.plugins.add(new JsToPhp(this));
     }
     
     public String getLangName() {
@@ -220,12 +227,24 @@ public class PhpGenerator implements IGenerator {
         return new ITransformer[0];
     }
     
-    public void addPlugin(IGeneratorPlugin plugin) {
-        this.plugins.add(plugin);
-    }
-    
     public void addInclude(String include) {
         this.usings.add(include);
+    }
+    
+    public void addPlugin(IGeneratorPlugin plugin) {
+        this.plugins.add(plugin);
+        
+        // TODO: hack?
+        if (plugin instanceof TemplateFileGeneratorPlugin)
+            ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("escape", new LambdaValue(args -> new StringValue(this.escape(args[0]))));
+    }
+    
+    public String escape(IVMValue value) {
+        if (value instanceof ExpressionValue && ((ExpressionValue)value).value instanceof RegexLiteral)
+            return JSON.stringify("/" + ((RegexLiteral)((ExpressionValue)value).value).pattern.replaceAll("/", "\\/") + "/");
+        else if (value instanceof StringValue)
+            return JSON.stringify(((StringValue)value).value);
+        throw new Error("Not supported VMValue for escape()");
     }
     
     public String name_(String name) {

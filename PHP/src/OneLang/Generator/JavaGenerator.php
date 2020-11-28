@@ -777,7 +777,7 @@ class JavaGenerator implements IGenerator {
         // TODO: hack
         if ($scope->scopeName === "index")
             return "io.onelang.std." . strtolower(preg_replace("/One\\./", "", preg_split("/-/", $scope->packageName)[0]));
-        return $scope->packageName . "." . preg_replace("///", ".", $scope->scopeName);
+        return $scope->packageName . "." . preg_replace("/\\//", ".", $scope->scopeName);
     }
     
     function generate($pkg) {
@@ -786,7 +786,7 @@ class JavaGenerator implements IGenerator {
             $file = @$pkg->files[$path] ?? null;
             $packagePath = $pkg->name . "/" . $file->sourcePath->path;
             $dstDir = "src/main/java/" . $packagePath;
-            $packageName = preg_replace("///", ".", $packagePath);
+            $packageName = preg_replace("/\\//", ".", $packagePath);
             
             $imports = new \OneLang\Core\Set();
             foreach ($file->imports as $impList) {

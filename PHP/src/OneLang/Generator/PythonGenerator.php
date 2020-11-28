@@ -221,7 +221,7 @@ class PythonGenerator implements IGenerator {
     function leading($item) {
         $result = "";
         if ($item->leadingTrivia !== null && strlen($item->leadingTrivia) > 0)
-            $result .= preg_replace("////", "#", $item->leadingTrivia);
+            $result .= preg_replace("/\\/\\//", "#", $item->leadingTrivia);
         //if (item.attributes !== null)
         //    result += Object.keys(item.attributes).map(x => `// @${x} ${item.attributes[x]}\n`).join("");
         return $result;
@@ -525,7 +525,7 @@ class PythonGenerator implements IGenerator {
         if (count($staticFields) > 0) {
             $this->imports->add("import onelang_core as one");
             $classAttributes[] = "@one.static_init";
-            $fieldInits = array_map(function ($f) use ($cls) { return "cls." . $this->vis($f->visibility) . $cls->name.replace($this->var($f, $f), "cls"); }, $staticFields);
+            $fieldInits = array_map(function ($f) use ($cls) { return "cls." . $this->vis($f->visibility) . str_replace($cls->name, "cls", $this->var($f, $f)); }, $staticFields);
             $resList[] = "@classmethod\ndef static_init(cls):\n" . $this->pad(implode("\n", $fieldInits));
         }
         
@@ -616,7 +616,7 @@ class PythonGenerator implements IGenerator {
             }
             else {
                 $alias = $this->calcImportAlias($import_->exportScope);
-                $this->imports->add("import " . $this->package->name . "." . preg_replace("///", ".", $import_->exportScope->scopeName) . " as " . $alias);
+                $this->imports->add("import " . $this->package->name . "." . preg_replace("/\\//", ".", $import_->exportScope->scopeName) . " as " . $alias);
             }
         }
         

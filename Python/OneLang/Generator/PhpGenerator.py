@@ -9,8 +9,9 @@ import OneLang.Generator.NameUtils as nameUtils
 import OneLang.Generator.IGenerator as iGen
 import OneLang.One.Ast.Interfaces as ints
 import OneLang.Generator.IGeneratorPlugin as iGenPlug
-import OneLang.Generator.PhpPlugins.JsToPhp as jsToPhp
 import OneLang.One.ITransformer as iTrans
+import OneLang.Generator.TemplateFileGeneratorPlugin as templFileGenPlug
+import OneLang.VM.Values as vals
 import re
 import json
 
@@ -21,7 +22,6 @@ class PhpGenerator:
         self.reserved_words = ["Generator", "Array", "List", "Interface", "Class"]
         self.field_to_method_hack = ["length"]
         self.plugins = []
-        self.plugins.append(jsToPhp.JsToPhp(self))
     
     def get_lang_name(self):
         return "PHP"
@@ -32,11 +32,22 @@ class PhpGenerator:
     def get_transforms(self):
         return []
     
-    def add_plugin(self, plugin):
-        self.plugins.append(plugin)
-    
     def add_include(self, include):
         self.usings[include] = None
+    
+    def add_plugin(self, plugin):
+        self.plugins.append(plugin)
+        
+        # TODO: hack?
+        if isinstance(plugin, templFileGenPlug.TemplateFileGeneratorPlugin):
+            plugin.model_globals["escape"] = templFileGenPlug.LambdaValue(lambda args: vals.StringValue(self.escape(args[0])))
+    
+    def escape(self, value):
+        if isinstance(value, templFileGenPlug.ExpressionValue) and isinstance(value.value, exprs.RegexLiteral):
+            return json.dumps("/" + re.sub("/", "\\/", value.value.pattern) + "/")
+        elif isinstance(value, vals.StringValue):
+            return json.dumps(value.value)
+        raise Error(f'''Not supported VMValue for escape()''')
     
     def name_(self, name):
         if name in self.reserved_words:

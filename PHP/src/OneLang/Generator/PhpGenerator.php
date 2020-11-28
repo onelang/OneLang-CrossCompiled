@@ -91,8 +91,12 @@ use OneLang\Generator\IGenerator\IGenerator;
 use OneLang\One\Ast\Interfaces\IExpression;
 use OneLang\One\Ast\Interfaces\IType;
 use OneLang\Generator\IGeneratorPlugin\IGeneratorPlugin;
-use OneLang\Generator\PhpPlugins\JsToPhp\JsToPhp;
 use OneLang\One\ITransformer\ITransformer;
+use OneLang\Generator\TemplateFileGeneratorPlugin\ExpressionValue;
+use OneLang\Generator\TemplateFileGeneratorPlugin\LambdaValue;
+use OneLang\Generator\TemplateFileGeneratorPlugin\TemplateFileGeneratorPlugin;
+use OneLang\VM\Values\IVMValue;
+use OneLang\VM\Values\StringValue;
 
 class PhpGenerator implements IGenerator {
     public $usings;
@@ -101,11 +105,11 @@ class PhpGenerator implements IGenerator {
     public $fieldToMethodHack;
     public $plugins;
     
-    function __construct() {
+    function __construct()
+    {
         $this->reservedWords = array("Generator", "Array", "List", "Interface", "Class");
         $this->fieldToMethodHack = array("length");
         $this->plugins = array();
-        $this->plugins[] = new JsToPhp($this);
     }
     
     function getLangName() {
@@ -120,12 +124,24 @@ class PhpGenerator implements IGenerator {
         return array();
     }
     
-    function addPlugin($plugin) {
-        $this->plugins[] = $plugin;
-    }
-    
     function addInclude($include) {
         $this->usings->add($include);
+    }
+    
+    function addPlugin($plugin) {
+        $this->plugins[] = $plugin;
+        
+        // TODO: hack?
+        if ($plugin instanceof TemplateFileGeneratorPlugin)
+            $plugin->modelGlobals["escape"] = new LambdaValue(function ($args) { return new StringValue($this->escape($args[0])); });
+    }
+    
+    function escape($value) {
+        if ($value instanceof ExpressionValue && $value->value instanceof RegexLiteral)
+            return json_encode("/" . preg_replace("/\\//", "\\/", $value->value->pattern) . "/", JSON_UNESCAPED_SLASHES);
+        else if ($value instanceof StringValue)
+            return json_encode($value->value, JSON_UNESCAPED_SLASHES);
+        throw new \OneLang\Core\Error("Not supported VMValue for escape()");
     }
     
     function name_($name) {

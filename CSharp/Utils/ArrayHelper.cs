@@ -9,6 +9,7 @@ namespace Utils
             // @java-import java.util.Arrays
             // @java Arrays.sort(items, (a, b) -> keySelector.apply(a) - keySelector.apply(b));
             // @java return items;
+            // @php return sort(items);
             return items.sort((a, b) => keySelector(a) - keySelector(b));
         }
         

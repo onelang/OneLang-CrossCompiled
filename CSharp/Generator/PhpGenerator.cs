@@ -1,9 +1,9 @@
-using Generator.PhpPlugins;
 using Generator;
 using One.Ast;
 using One;
 using System.Collections.Generic;
 using System.Linq;
+using VM;
 
 namespace Generator
 {
@@ -19,7 +19,6 @@ namespace Generator
             this.reservedWords = new string[] { "Generator", "Array", "List", "Interface", "Class" };
             this.fieldToMethodHack = new string[] { "length" };
             this.plugins = new List<IGeneratorPlugin>();
-            this.plugins.push(new JsToPhp(this));
         }
         
         public string getLangName()
@@ -37,14 +36,27 @@ namespace Generator
             return new ITransformer[0];
         }
         
-        public void addPlugin(IGeneratorPlugin plugin)
-        {
-            this.plugins.push(plugin);
-        }
-        
         public void addInclude(string include)
         {
             this.usings.add(include);
+        }
+        
+        public void addPlugin(IGeneratorPlugin plugin)
+        {
+            this.plugins.push(plugin);
+            
+            // TODO: hack?
+            if (plugin is TemplateFileGeneratorPlugin templFileGenPlug)
+                templFileGenPlug.modelGlobals.set("escape", new LambdaValue(args => new StringValue(this.escape(args.get(0)))));
+        }
+        
+        public string escape(IVMValue value)
+        {
+            if (value is ExpressionValue exprValue && exprValue.value is RegexLiteral regexLit)
+                return JSON.stringify("/" + regexLit.pattern.replace(new RegExp("/"), "\\/") + "/");
+            else if (value is StringValue strValue)
+                return JSON.stringify(strValue.value);
+            throw new Error($"Not supported VMValue for escape()");
         }
         
         public string name_(string name)
@@ -355,8 +367,8 @@ namespace Generator
                 res = $"{this.expr(instOfExpr.expr)} instanceof {this.type(instOfExpr.checkType)}";
             else if (expr is ParenthesizedExpression parExpr)
                 res = $"({this.expr(parExpr.expression)})";
-            else if (expr is RegexLiteral regexLit)
-                res = $"new \\OneLang\\Core\\RegExp({JSON.stringify(regexLit.pattern)})";
+            else if (expr is RegexLiteral regexLit2)
+                res = $"new \\OneLang\\Core\\RegExp({JSON.stringify(regexLit2.pattern)})";
             else if (expr is Lambda lambd) {
                 var params_ = lambd.parameters.map(x => $"${this.name_(x.name)}");
                 // TODO: captures should not be null
