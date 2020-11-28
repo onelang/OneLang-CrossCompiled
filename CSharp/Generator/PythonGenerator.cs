@@ -1,4 +1,3 @@
-using Generator.PythonPlugins;
 using Generator;
 using One.Ast;
 using One;
@@ -23,7 +22,6 @@ namespace Generator
             this.reservedWords = new string[] { "from", "async", "global", "lambda", "cls", "import", "pass" };
             this.fieldToMethodHack = new string[0];
             this.plugins = new List<IGeneratorPlugin>();
-            this.plugins.push(new JsToPython(this));
         }
         
         public string getLangName()

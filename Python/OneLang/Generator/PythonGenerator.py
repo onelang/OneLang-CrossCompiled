@@ -7,7 +7,6 @@ import OneLang.One.Ast.References as refs
 import OneLang.Generator.GeneratedFile as genFile
 import OneLang.Utils.TSOverviewGenerator as tSOvervGen
 import OneLang.Generator.IGeneratorPlugin as iGenPlug
-import OneLang.Generator.PythonPlugins.JsToPython as jsToPyth
 import OneLang.Generator.NameUtils as nameUtils
 import OneLang.One.Ast.Interfaces as ints
 import OneLang.Generator.IGenerator as iGen
@@ -26,7 +25,6 @@ class PythonGenerator:
         self.reserved_words = ["from", "async", "global", "lambda", "cls", "import", "pass"]
         self.field_to_method_hack = []
         self.plugins = []
-        self.plugins.append(jsToPyth.JsToPython(self))
     
     def get_lang_name(self):
         return "Python"

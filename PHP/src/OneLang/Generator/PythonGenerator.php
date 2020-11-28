@@ -102,7 +102,6 @@ use OneLang\One\Ast\References\VariableReference;
 use OneLang\Generator\GeneratedFile\GeneratedFile;
 use OneLang\Utils\TSOverviewGenerator\TSOverviewGenerator;
 use OneLang\Generator\IGeneratorPlugin\IGeneratorPlugin;
-use OneLang\Generator\PythonPlugins\JsToPython\JsToPython;
 use OneLang\Generator\NameUtils\NameUtils;
 use OneLang\One\Ast\Interfaces\IExpression;
 use OneLang\One\Ast\Interfaces\IType;
@@ -124,7 +123,6 @@ class PythonGenerator implements IGenerator {
         $this->reservedWords = array("from", "async", "global", "lambda", "cls", "import", "pass");
         $this->fieldToMethodHack = array();
         $this->plugins = array();
-        $this->plugins[] = new JsToPython($this);
     }
     
     function getLangName() {

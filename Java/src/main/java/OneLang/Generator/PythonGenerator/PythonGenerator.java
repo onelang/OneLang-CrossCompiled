@@ -100,7 +100,6 @@ import OneLang.One.Ast.References.VariableReference;
 import OneLang.Generator.GeneratedFile.GeneratedFile;
 import OneLang.Utils.TSOverviewGenerator.TSOverviewGenerator;
 import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
-import OneLang.Generator.PythonPlugins.JsToPython.JsToPython;
 import OneLang.Generator.NameUtils.NameUtils;
 import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
@@ -115,7 +114,6 @@ import OneLang.One.Ast.Types.IInterface;
 import java.util.List;
 import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
 import java.util.ArrayList;
-import OneLang.Generator.PythonPlugins.JsToPython.JsToPython;
 import OneLang.One.ITransformer.ITransformer;
 import OneLang.One.Ast.AstTypes.ClassType;
 import io.onelang.std.core.Objects;
@@ -214,7 +212,6 @@ public class PythonGenerator implements IGenerator {
         this.reservedWords = new String[] { "from", "async", "global", "lambda", "cls", "import", "pass" };
         this.fieldToMethodHack = new String[0];
         this.plugins = new ArrayList<IGeneratorPlugin>();
-        this.plugins.add(new JsToPython(this));
     }
     
     public String getLangName() {
