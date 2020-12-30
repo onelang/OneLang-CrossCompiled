@@ -2,7 +2,8 @@ using System.Linq;
 
 namespace Parsers.Common
 {
-    public class Utils {
+    public class Utils
+    {
         public static int getPadLen(string line)
         {
             for (int i = 0; i < line.length(); i++) {

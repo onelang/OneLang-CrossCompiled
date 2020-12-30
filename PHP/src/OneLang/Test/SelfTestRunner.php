@@ -8,6 +8,7 @@ use OneLang\Generator\IGenerator\IGenerator;
 use OneLang\One\Compiler\Compiler;
 use OneLang\One\Compiler\ICompilerHooks;
 use OneLang\Test\PackageStateCapture\PackageStateCapture;
+use OneLang\Generator\ProjectGenerator\ProjectGenerator;
 
 class CompilerHooks implements ICompilerHooks {
     public $stage = 0;
@@ -21,9 +22,9 @@ class CompilerHooks implements ICompilerHooks {
     
     function afterStage($stageName) {
         $state = new PackageStateCapture($this->compiler->projectPkg);
-        $stageFn = $this->baseDir . "/test/artifacts/ProjectTest/OneLang/stages/" . $this->stage . "_" . $stageName . ".txt";
-        $this->stage++;
+        $stageFn = $this->baseDir . "/test/artifacts/ProjectTest/OneLang/stages/" . $this->stage++ . "_" . $stageName . ".txt";
         $stageSummary = $state->getSummary();
+        
         $expected = OneFile::readText($stageFn);
         if ($stageSummary !== $expected) {
             OneFile::writeText($stageFn . "_diff.txt", $stageSummary);
@@ -42,32 +43,32 @@ class SelfTestRunner {
         CompilerHelper::$baseDir = $baseDir;
     }
     
-    function runTest($generator) {
+    function runTest() {
         \OneLang\Core\console::log("[-] SelfTestRunner :: START");
-        $compiler = CompilerHelper::initProject("OneLang", $this->baseDir . "src/");
+        
+        $projGen = new ProjectGenerator($this->baseDir, $this->baseDir . "/xcompiled-src");
+        $projGen->outDir = $this->baseDir . "test/artifacts/SelfTestRunner_" . "PHP" . "/";
+        $compiler = CompilerHelper::initProject($projGen->projectFile->name, $projGen->srcDir, $projGen->projectFile->sourceLang, null);
         $compiler->hooks = new CompilerHooks($compiler, $this->baseDir);
         $compiler->processWorkspace();
-        $generated = $generator->generate($compiler->projectPkg);
-        
-        $langName = $generator->getLangName();
-        $ext = "." . $generator->getExtension();
+        $projGen->generate();
         
         $allMatch = true;
-        foreach ($generated as $genFile) {
-            $projBase = $this->baseDir . "test/artifacts/ProjectTest/OneLang";
-            $tsGenPath = $this->baseDir . "/xcompiled/" . $langName . "/" . $genFile->path;
-            $reGenPath = $projBase . "/" . $langName . "_Regen/" . $genFile->path;
-            $tsGenContent = OneFile::readText($tsGenPath);
-            $reGenContent = $genFile->content;
-            
-            if ($tsGenContent !== $reGenContent) {
-                OneFile::writeText($reGenPath, $genFile->content);
-                \OneLang\Core\console::error("Content does not match: " . $genFile->path);
-                $allMatch = false;
-            }
-            else
-                \OneLang\Core\console::log("[+] Content matches: " . $genFile->path);
-        }
+        // for (const genFile of generated) {
+        //     const projBase = `${this.baseDir}test/artifacts/ProjectTest/OneLang`;
+        //     const tsGenPath = `${this.baseDir}/xcompiled/${langName}/${genFile.path}`;
+        //     const reGenPath = `${projBase}/${langName}_Regen/${genFile.path}`;
+        //     const tsGenContent = OneFile.readText(tsGenPath);
+        //     const reGenContent = genFile.content;
+        
+        //     if (tsGenContent != reGenContent) {
+        //         OneFile.writeText(reGenPath, genFile.content);
+        //         console.error(`Content does not match: ${genFile.path}`);
+        //         allMatch = false;
+        //     } else {
+        //         console.log(`[+] Content matches: ${genFile.path}`);
+        //     }
+        // }
         
         \OneLang\Core\console::log($allMatch ? "[+} SUCCESS! All generated files are the same" : "[!] FAIL! Not all files are the same");
         \OneLang\Core\console::log("[-] SelfTestRunner :: DONE");

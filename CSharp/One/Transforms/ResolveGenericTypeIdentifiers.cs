@@ -3,7 +3,8 @@ using One;
 
 namespace One.Transforms
 {
-    public class ResolveGenericTypeIdentifiers : AstTransformer {
+    public class ResolveGenericTypeIdentifiers : AstTransformer
+    {
         public ResolveGenericTypeIdentifiers(): base("ResolveGenericTypeIdentifiers")
         {
             

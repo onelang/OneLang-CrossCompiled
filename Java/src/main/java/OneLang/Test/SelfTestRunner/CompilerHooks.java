@@ -1,11 +1,13 @@
 package OneLang.Test.SelfTestRunner;
 
+import io.onelang.std.core.One;
 import io.onelang.std.file.OneFile;
 import OneLang.One.CompilerHelper.CompilerHelper;
 import OneLang.Generator.IGenerator.IGenerator;
 import OneLang.One.Compiler.Compiler;
 import OneLang.One.Compiler.ICompilerHooks;
 import OneLang.Test.PackageStateCapture.PackageStateCapture;
+import OneLang.Generator.ProjectGenerator.ProjectGenerator;
 
 import OneLang.One.Compiler.ICompilerHooks;
 import OneLang.One.Compiler.Compiler;
@@ -25,9 +27,9 @@ public class CompilerHooks implements ICompilerHooks {
     
     public void afterStage(String stageName) {
         var state = new PackageStateCapture(this.compiler.projectPkg);
-        var stageFn = this.baseDir + "/test/artifacts/ProjectTest/OneLang/stages/" + this.stage + "_" + stageName + ".txt";
-        this.stage++;
+        var stageFn = this.baseDir + "/test/artifacts/ProjectTest/OneLang/stages/" + this.stage++ + "_" + stageName + ".txt";
         var stageSummary = state.getSummary();
+        
         var expected = OneFile.readText(stageFn);
         if (!Objects.equals(stageSummary, expected)) {
             OneFile.writeText(stageFn + "_diff.txt", stageSummary);

@@ -1,15 +1,16 @@
 package OneLang.Test.SelfTestRunner;
 
+import io.onelang.std.core.One;
 import io.onelang.std.file.OneFile;
 import OneLang.One.CompilerHelper.CompilerHelper;
 import OneLang.Generator.IGenerator.IGenerator;
 import OneLang.One.Compiler.Compiler;
 import OneLang.One.Compiler.ICompilerHooks;
 import OneLang.Test.PackageStateCapture.PackageStateCapture;
+import OneLang.Generator.ProjectGenerator.ProjectGenerator;
 
+import OneLang.Generator.ProjectGenerator.ProjectGenerator;
 import OneLang.Test.SelfTestRunner.CompilerHooks;
-import io.onelang.std.core.Objects;
-import OneLang.Generator.IGenerator.IGenerator;
 
 public class SelfTestRunner {
     public String baseDir;
@@ -20,32 +21,32 @@ public class SelfTestRunner {
         CompilerHelper.baseDir = baseDir;
     }
     
-    public Boolean runTest(IGenerator generator) {
+    public Boolean runTest() {
         System.out.println("[-] SelfTestRunner :: START");
-        var compiler = CompilerHelper.initProject("OneLang", this.baseDir + "src/", "ts", null);
+        
+        var projGen = new ProjectGenerator(this.baseDir, this.baseDir + "/xcompiled-src");
+        projGen.outDir = this.baseDir + "test/artifacts/SelfTestRunner_" + "Java" + "/";
+        var compiler = CompilerHelper.initProject(projGen.projectFile.name, projGen.srcDir, projGen.projectFile.sourceLang, null);
         compiler.hooks = new CompilerHooks(compiler, this.baseDir);
         compiler.processWorkspace();
-        var generated = generator.generate(compiler.projectPkg);
-        
-        var langName = generator.getLangName();
-        var ext = "." + generator.getExtension();
+        projGen.generate();
         
         var allMatch = true;
-        for (var genFile : generated) {
-            var projBase = this.baseDir + "test/artifacts/ProjectTest/OneLang";
-            var tsGenPath = this.baseDir + "/xcompiled/" + langName + "/" + genFile.path;
-            var reGenPath = projBase + "/" + langName + "_Regen/" + genFile.path;
-            var tsGenContent = OneFile.readText(tsGenPath);
-            var reGenContent = genFile.content;
-            
-            if (!Objects.equals(tsGenContent, reGenContent)) {
-                OneFile.writeText(reGenPath, genFile.content);
-                System.err.println("Content does not match: " + genFile.path);
-                allMatch = false;
-            }
-            else
-                System.out.println("[+] Content matches: " + genFile.path);
-        }
+        // for (const genFile of generated) {
+        //     const projBase = `${this.baseDir}test/artifacts/ProjectTest/OneLang`;
+        //     const tsGenPath = `${this.baseDir}/xcompiled/${langName}/${genFile.path}`;
+        //     const reGenPath = `${projBase}/${langName}_Regen/${genFile.path}`;
+        //     const tsGenContent = OneFile.readText(tsGenPath);
+        //     const reGenContent = genFile.content;
+        
+        //     if (tsGenContent != reGenContent) {
+        //         OneFile.writeText(reGenPath, genFile.content);
+        //         console.error(`Content does not match: ${genFile.path}`);
+        //         allMatch = false;
+        //     } else {
+        //         console.log(`[+] Content matches: ${genFile.path}`);
+        //     }
+        // }
         
         System.out.println(allMatch ? "[+} SUCCESS! All generated files are the same" : "[!] FAIL! Not all files are the same");
         System.out.println("[-] SelfTestRunner :: DONE");

@@ -3,7 +3,8 @@ using System.Collections.Generic;
 
 namespace Parsers.Common
 {
-    public class NodeManager {
+    public class NodeManager
+    {
         public List<object> nodes;
         public Reader reader;
         

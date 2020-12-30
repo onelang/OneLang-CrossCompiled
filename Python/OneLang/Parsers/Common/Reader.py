@@ -43,14 +43,14 @@ class Reader:
         return self.cursor_search.get_cursor_for_offset(self.offset)
     
     def get_preview(self):
-        preview = re.sub("\\n", "\\n", self.input[self.offset:self.offset + 30])
+        preview = re.sub("\\n", "\\\\n", self.input[self.offset:self.offset + 30])
         if len(preview) == 30:
             preview += "..."
         return preview
     
     def line_preview(self, cursor):
         line = self.input[cursor.line_start:cursor.line_end - 1]
-        return f'''{line}\n{" " * (cursor.column - 1)}^^^'''
+        return f'''{line}\n{" " * cursor.column - 1}^^^'''
     
     def fail(self, message, offset = -1):
         error = ParseError(message, self.cursor_search.get_cursor_for_offset(self.offset if offset == -1 else offset), self)

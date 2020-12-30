@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 namespace One.Transforms
 {
-    public class SymbolLookup {
+    public class SymbolLookup
+    {
         public ErrorManager errorMan;
         public List<List<string>> levelStack;
         public List<string> levelNames;
@@ -53,12 +54,18 @@ namespace One.Transforms
         }
     }
     
-    public class ResolveIdentifiers : AstTransformer {
+    public class ResolveIdentifiers : AstTransformer
+    {
         public SymbolLookup symbolLookup;
         
         public ResolveIdentifiers(): base("ResolveIdentifiers")
         {
             this.symbolLookup = new SymbolLookup();
+        }
+        
+        protected override IType visitType(IType type)
+        {
+            return type;
         }
         
         protected override Expression visitIdentifier(Identifier id)
@@ -142,20 +149,16 @@ namespace One.Transforms
             return base.visitVariableDeclaration(stmt);
         }
         
+        protected override void visitMethodParameter(MethodParameter param)
+        {
+            this.symbolLookup.addSymbol(param.name, param);
+            base.visitMethodParameter(param);
+        }
+        
         protected override void visitMethodBase(IMethodBase method)
         {
             this.symbolLookup.pushContext(method is Method meth2 ? $"Method: {meth2.name}" : method is Constructor ? "constructor" : "???");
-            
-            foreach (var param in method.parameters) {
-                this.symbolLookup.addSymbol(param.name, param);
-                if (param.initializer != null)
-                    this.visitExpression(param.initializer);
-            }
-            
-            if (method.body != null)
-                base.visitBlock(method.body);
-            // directly process method's body without opening a new scope again
-            
+            base.visitMethodBase(method);
             this.symbolLookup.popContext();
         }
         

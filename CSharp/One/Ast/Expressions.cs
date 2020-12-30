@@ -19,7 +19,8 @@ namespace One.Ast
         Method method { get; set; }
     }
     
-    public class Expression : IAstNode, IExpression {
+    public class Expression : IAstNode, IExpression
+    {
         public IAstNode parentNode;
         public IType expectedType;
         public IType actualType;
@@ -79,7 +80,8 @@ namespace One.Ast
         }
     }
     
-    public class Identifier : Expression {
+    public class Identifier : Expression
+    {
         public string text;
         
         public Identifier(string text): base()
@@ -88,7 +90,8 @@ namespace One.Ast
         }
     }
     
-    public class NumericLiteral : Expression {
+    public class NumericLiteral : Expression
+    {
         public string valueAsText;
         
         public NumericLiteral(string valueAsText): base()
@@ -97,7 +100,8 @@ namespace One.Ast
         }
     }
     
-    public class BooleanLiteral : Expression {
+    public class BooleanLiteral : Expression
+    {
         public bool boolValue;
         
         public BooleanLiteral(bool boolValue): base()
@@ -106,7 +110,8 @@ namespace One.Ast
         }
     }
     
-    public class CharacterLiteral : Expression {
+    public class CharacterLiteral : Expression
+    {
         public string charValue;
         
         public CharacterLiteral(string charValue): base()
@@ -115,7 +120,8 @@ namespace One.Ast
         }
     }
     
-    public class StringLiteral : Expression {
+    public class StringLiteral : Expression
+    {
         public string stringValue;
         
         public StringLiteral(string stringValue): base()
@@ -124,11 +130,13 @@ namespace One.Ast
         }
     }
     
-    public class NullLiteral : Expression {
+    public class NullLiteral : Expression
+    {
         
     }
     
-    public class RegexLiteral : Expression {
+    public class RegexLiteral : Expression
+    {
         public string pattern;
         public bool caseInsensitive;
         public bool global;
@@ -141,7 +149,8 @@ namespace One.Ast
         }
     }
     
-    public class TemplateStringPart : IAstNode {
+    public class TemplateStringPart : IAstNode
+    {
         public bool isLiteral;
         public string literalText;
         public Expression expression;
@@ -164,7 +173,8 @@ namespace One.Ast
         }
     }
     
-    public class TemplateString : Expression {
+    public class TemplateString : Expression
+    {
         public TemplateStringPart[] parts;
         
         public TemplateString(TemplateStringPart[] parts): base()
@@ -173,7 +183,8 @@ namespace One.Ast
         }
     }
     
-    public class ArrayLiteral : Expression {
+    public class ArrayLiteral : Expression
+    {
         public Expression[] items;
         
         public ArrayLiteral(Expression[] items): base()
@@ -182,7 +193,8 @@ namespace One.Ast
         }
     }
     
-    public class MapLiteralItem : IAstNode {
+    public class MapLiteralItem : IAstNode
+    {
         public string key;
         public Expression value;
         
@@ -193,7 +205,8 @@ namespace One.Ast
         }
     }
     
-    public class MapLiteral : Expression {
+    public class MapLiteral : Expression
+    {
         public MapLiteralItem[] items;
         
         public MapLiteral(MapLiteralItem[] items): base()
@@ -202,7 +215,8 @@ namespace One.Ast
         }
     }
     
-    public class UnresolvedNewExpression : Expression {
+    public class UnresolvedNewExpression : Expression
+    {
         public UnresolvedType cls;
         public Expression[] args;
         
@@ -213,7 +227,8 @@ namespace One.Ast
         }
     }
     
-    public class NewExpression : Expression, ICallExpression {
+    public class NewExpression : Expression, ICallExpression
+    {
         public ClassType cls;
         public Expression[] args { get; set; }
         
@@ -234,7 +249,8 @@ namespace One.Ast
         }
     }
     
-    public class BinaryExpression : Expression {
+    public class BinaryExpression : Expression
+    {
         public Expression left;
         public string operator_;
         public Expression right;
@@ -247,7 +263,8 @@ namespace One.Ast
         }
     }
     
-    public class NullCoalesceExpression : Expression {
+    public class NullCoalesceExpression : Expression
+    {
         public Expression defaultExpr;
         public Expression exprIfNull;
         
@@ -258,7 +275,8 @@ namespace One.Ast
         }
     }
     
-    public class UnaryExpression : Expression {
+    public class UnaryExpression : Expression
+    {
         public UnaryType unaryType;
         public string operator_;
         public Expression operand;
@@ -271,7 +289,8 @@ namespace One.Ast
         }
     }
     
-    public class CastExpression : Expression {
+    public class CastExpression : Expression
+    {
         public IType newType;
         public Expression expression;
         public InstanceOfExpression instanceOfCast;
@@ -284,7 +303,8 @@ namespace One.Ast
         }
     }
     
-    public class ParenthesizedExpression : Expression {
+    public class ParenthesizedExpression : Expression
+    {
         public Expression expression;
         
         public ParenthesizedExpression(Expression expression): base()
@@ -293,7 +313,8 @@ namespace One.Ast
         }
     }
     
-    public class ConditionalExpression : Expression {
+    public class ConditionalExpression : Expression
+    {
         public Expression condition;
         public Expression whenTrue;
         public Expression whenFalse;
@@ -306,7 +327,8 @@ namespace One.Ast
         }
     }
     
-    public class PropertyAccessExpression : Expression {
+    public class PropertyAccessExpression : Expression
+    {
         public Expression object_;
         public string propertyName;
         
@@ -317,7 +339,8 @@ namespace One.Ast
         }
     }
     
-    public class ElementAccessExpression : Expression {
+    public class ElementAccessExpression : Expression
+    {
         public Expression object_;
         public Expression elementExpr;
         
@@ -328,7 +351,8 @@ namespace One.Ast
         }
     }
     
-    public class UnresolvedCallExpression : Expression {
+    public class UnresolvedCallExpression : Expression
+    {
         public Expression func;
         public IType[] typeArgs;
         public Expression[] args;
@@ -341,7 +365,8 @@ namespace One.Ast
         }
     }
     
-    public class UnresolvedMethodCallExpression : Expression {
+    public class UnresolvedMethodCallExpression : Expression
+    {
         public Expression object_;
         public string methodName;
         public IType[] typeArgs;
@@ -356,7 +381,8 @@ namespace One.Ast
         }
     }
     
-    public class StaticMethodCallExpression : Expression, IMethodCallExpression {
+    public class StaticMethodCallExpression : Expression, IMethodCallExpression
+    {
         public Method method { get; set; }
         public IType[] typeArgs { get; set; }
         public Expression[] args { get; set; }
@@ -381,7 +407,8 @@ namespace One.Ast
         }
     }
     
-    public class InstanceMethodCallExpression : Expression, IMethodCallExpression {
+    public class InstanceMethodCallExpression : Expression, IMethodCallExpression
+    {
         public Expression object_;
         public Method method { get; set; }
         public IType[] typeArgs { get; set; }
@@ -406,7 +433,8 @@ namespace One.Ast
         }
     }
     
-    public class GlobalFunctionCallExpression : Expression, ICallExpression {
+    public class GlobalFunctionCallExpression : Expression, ICallExpression
+    {
         public GlobalFunction func;
         public Expression[] args { get; set; }
         
@@ -427,7 +455,8 @@ namespace One.Ast
         }
     }
     
-    public class LambdaCallExpression : Expression {
+    public class LambdaCallExpression : Expression
+    {
         public Expression method;
         public Expression[] args;
         
@@ -438,7 +467,8 @@ namespace One.Ast
         }
     }
     
-    public class TodoExpression : Expression {
+    public class TodoExpression : Expression
+    {
         public Expression expr;
         
         public TodoExpression(Expression expr): base()
@@ -447,7 +477,8 @@ namespace One.Ast
         }
     }
     
-    public class InstanceOfExpression : Expression {
+    public class InstanceOfExpression : Expression
+    {
         public Expression expr;
         public IType checkType;
         public List<CastExpression> implicitCasts;
@@ -462,7 +493,8 @@ namespace One.Ast
         }
     }
     
-    public class AwaitExpression : Expression {
+    public class AwaitExpression : Expression
+    {
         public Expression expr;
         
         public AwaitExpression(Expression expr): base()

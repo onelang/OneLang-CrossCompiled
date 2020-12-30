@@ -89,14 +89,18 @@ import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 import OneLang.One.ITransformer.ITransformer;
 import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
 
 import OneLang.Generator.IGenerator.IGenerator;
 import java.util.Set;
 import OneLang.One.Ast.Types.IInterface;
 import java.util.Map;
-import java.util.LinkedHashMap;
-import OneLang.One.ITransformer.ITransformer;
+import java.util.List;
 import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
+import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import OneLang.One.ITransformer.ITransformer;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import OneLang.One.Ast.Statements.Statement;
@@ -110,7 +114,6 @@ import OneLang.One.Ast.AstTypes.AnyType;
 import OneLang.One.Ast.AstTypes.NullType;
 import OneLang.One.Ast.AstTypes.GenericsType;
 import OneLang.One.Ast.AstTypes.LambdaType;
-import java.util.ArrayList;
 import OneLang.One.Ast.Types.IVariable;
 import OneLang.One.Ast.Types.IHasAttributesAndTrivia;
 import OneLang.One.Ast.Types.IVariableWithInitializer;
@@ -186,7 +189,6 @@ import java.util.stream.Stream;
 import OneLang.One.Ast.Types.Interface;
 import java.util.LinkedHashSet;
 import java.util.Collections;
-import java.util.List;
 import OneLang.One.Ast.Types.SourceFile;
 import OneLang.Generator.GeneratedFile.GeneratedFile;
 import OneLang.One.Ast.Types.Package;
@@ -197,12 +199,14 @@ public class CsharpGenerator implements IGenerator {
     public String[] reservedWords;
     public String[] fieldToMethodHack;
     public Map<String, Integer> instanceOfIds;
+    public List<IGeneratorPlugin> plugins;
     
     public CsharpGenerator()
     {
         this.reservedWords = new String[] { "object", "else", "operator", "class", "enum", "void", "string", "implicit", "Type", "Enum", "params", "using", "throw", "ref", "base", "virtual", "interface", "int", "const" };
         this.fieldToMethodHack = new String[] { "length", "size" };
         this.instanceOfIds = new LinkedHashMap<String, Integer>();
+        this.plugins = new ArrayList<IGeneratorPlugin>();
     }
     
     public String getLangName() {
@@ -217,12 +221,15 @@ public class CsharpGenerator implements IGenerator {
         return new ITransformer[0];
     }
     
-    public void addPlugin(IGeneratorPlugin plugin) {
-        
-    }
-    
     public void addInclude(String include) {
         this.usings.add(include);
+    }
+    
+    public void addPlugin(IGeneratorPlugin plugin) {
+        this.plugins.add(plugin);
+        
+        // TODO: hack?
+        if (plugin instanceof TemplateFileGeneratorPlugin) { }
     }
     
     public String name_(String name) {
@@ -408,6 +415,12 @@ public class CsharpGenerator implements IGenerator {
     }
     
     public String expr(IExpression expr) {
+        for (var plugin : this.plugins) {
+            var result = plugin.expr(expr);
+            if (result != null)
+                return result;
+        }
+        
         var res = "UNKNOWN-EXPR";
         if (expr instanceof NewExpression)
             res = "new " + this.type(((NewExpression)expr).cls, true) + this.callParams(((NewExpression)expr).getArgs(), ((NewExpression)expr).cls.decl.constructor_ != null ? ((NewExpression)expr).cls.decl.constructor_.getParameters() : new MethodParameter[0]);
@@ -645,8 +658,10 @@ public class CsharpGenerator implements IGenerator {
                 var isInitializerComplex = field.getInitializer() != null && !(field.getInitializer() instanceof StringLiteral) && !(field.getInitializer() instanceof BooleanLiteral) && !(field.getInitializer() instanceof NumericLiteral);
                 
                 var prefix = this.vis(field.getVisibility()) + " " + this.preIf("static ", field.getIsStatic());
-                if (field.interfaceDeclarations.length > 0)
-                    fieldReprs.add(prefix + this.varWoInit(field, field) + " { get; set; }");
+                if (field.interfaceDeclarations.length > 0) {
+                    var init = field.getInitializer() != null ? " = " + this.expr(field.getInitializer()) + ";" : "";
+                    fieldReprs.add(prefix + this.varWoInit(field, field) + " { get; set; }" + init);
+                }
                 else if (isInitializerComplex) {
                     if (field.getIsStatic())
                         staticConstructorStmts.add(new ExpressionStatement(new BinaryExpression(new StaticFieldReference(field), "=", field.getInitializer())));
@@ -722,7 +737,7 @@ public class CsharpGenerator implements IGenerator {
                 baseClasses.add(cls.baseClass);
             for (var intf : cls.getBaseInterfaces())
                 baseClasses.add(intf);
-            classes.add("public class " + this.name_(cls.getName()) + this.typeArgs(cls.getTypeArguments()) + this.preArr(" : ", baseClasses.stream().map(x -> this.type(x, true)).toArray(String[]::new)) + " {\n" + this.classLike(cls) + "\n}");
+            classes.add("public class " + this.name_(cls.getName()) + this.typeArgs(cls.getTypeArguments()) + this.preArr(" : ", baseClasses.stream().map(x -> this.type(x, true)).toArray(String[]::new)) + "\n{\n" + this.classLike(cls) + "\n}");
         }
         
         var main = sourceFile.mainBlock.statements.size() > 0 ? "public class Program\n{\n    static void Main(string[] args)\n    {\n" + this.pad(this.rawBlock(sourceFile.mainBlock)) + "\n    }\n}" : "";

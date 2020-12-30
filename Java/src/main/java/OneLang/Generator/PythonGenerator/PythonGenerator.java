@@ -105,6 +105,11 @@ import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Interfaces.IType;
 import OneLang.Generator.IGenerator.IGenerator;
 import OneLang.One.ITransformer.ITransformer;
+import OneLang.VM.Values.IVMValue;
+import OneLang.Generator.TemplateFileGeneratorPlugin.ExpressionValue;
+import OneLang.Generator.TemplateFileGeneratorPlugin.LambdaValue;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
+import OneLang.VM.Values.StringValue;
 
 import OneLang.Generator.IGenerator.IGenerator;
 import OneLang.One.Ast.Types.Package;
@@ -115,6 +120,15 @@ import java.util.List;
 import OneLang.Generator.IGeneratorPlugin.IGeneratorPlugin;
 import java.util.ArrayList;
 import OneLang.One.ITransformer.ITransformer;
+import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
+import OneLang.Generator.TemplateFileGeneratorPlugin.LambdaValue;
+import OneLang.VM.Values.StringValue;
+import OneLang.Generator.TemplateFileGeneratorPlugin.ExpressionValue;
+import OneLang.One.Ast.Expressions.RegexLiteral;
+import io.onelang.std.json.JSON;
+import OneLang.VM.Values.IVMValue;
+import OneLang.One.Ast.Expressions.StringLiteral;
+import java.util.regex.Pattern;
 import OneLang.One.Ast.AstTypes.ClassType;
 import io.onelang.std.core.Objects;
 import OneLang.One.Ast.Interfaces.IType;
@@ -122,7 +136,6 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import OneLang.One.Ast.Types.ExportScopeRef;
 import OneLang.One.Ast.Types.Enum;
-import java.util.regex.Pattern;
 import OneLang.One.Ast.Statements.Statement;
 import OneLang.One.Ast.Types.IVariable;
 import OneLang.One.Ast.Types.IHasAttributesAndTrivia;
@@ -140,8 +153,6 @@ import OneLang.One.Ast.Expressions.StaticMethodCallExpression;
 import OneLang.One.Ast.Expressions.GlobalFunctionCallExpression;
 import OneLang.One.Ast.Expressions.LambdaCallExpression;
 import OneLang.One.Ast.Expressions.BooleanLiteral;
-import OneLang.One.Ast.Expressions.StringLiteral;
-import io.onelang.std.json.JSON;
 import OneLang.One.Ast.Expressions.NumericLiteral;
 import OneLang.One.Ast.Expressions.CharacterLiteral;
 import OneLang.One.Ast.Expressions.ElementAccessExpression;
@@ -152,7 +163,6 @@ import OneLang.One.Ast.Expressions.ArrayLiteral;
 import OneLang.One.Ast.Expressions.CastExpression;
 import OneLang.One.Ast.Expressions.InstanceOfExpression;
 import OneLang.One.Ast.Expressions.ParenthesizedExpression;
-import OneLang.One.Ast.Expressions.RegexLiteral;
 import OneLang.One.Ast.Types.Lambda;
 import OneLang.One.Ast.Statements.ReturnStatement;
 import OneLang.One.Ast.Expressions.UnaryExpression;
@@ -209,7 +219,7 @@ public class PythonGenerator implements IGenerator {
     
     public PythonGenerator()
     {
-        this.reservedWords = new String[] { "from", "async", "global", "lambda", "cls", "import", "pass" };
+        this.reservedWords = new String[] { "from", "async", "global", "lambda", "cls", "import", "pass", "class" };
         this.fieldToMethodHack = new String[0];
         this.plugins = new ArrayList<IGeneratorPlugin>();
     }
@@ -226,12 +236,31 @@ public class PythonGenerator implements IGenerator {
         return new ITransformer[0];
     }
     
-    public void addPlugin(IGeneratorPlugin plugin) {
-        this.plugins.add(plugin);
+    public void addInclude(String include) {
+        this.imports.add("import " + include);
     }
     
-    public void addInclude(String include) {
-        this.imports.add(include);
+    public void addPlugin(IGeneratorPlugin plugin) {
+        this.plugins.add(plugin);
+        
+        if (plugin instanceof TemplateFileGeneratorPlugin) {
+            ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("escape", new LambdaValue(args -> new StringValue(this.escape(args[0]))));
+            ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("escapeBackslash", new LambdaValue(args -> new StringValue(this.escapeBackslash(args[0]))));
+        }
+    }
+    
+    public String escape(IVMValue value) {
+        if (value instanceof ExpressionValue && ((ExpressionValue)value).value instanceof RegexLiteral)
+            return JSON.stringify(((RegexLiteral)((ExpressionValue)value).value).pattern);
+        else if (value instanceof StringValue)
+            return JSON.stringify(((StringValue)value).value);
+        throw new Error("Not supported VMValue for escape()");
+    }
+    
+    public String escapeBackslash(IVMValue value) {
+        if (value instanceof ExpressionValue && ((ExpressionValue)value).value instanceof StringLiteral)
+            return JSON.stringify(((StringLiteral)((ExpressionValue)value).value).stringValue.replaceAll("\\\\", "\\\\\\\\"));
+        throw new Error("Not supported VMValue for escape()");
     }
     
     public String type(IType type) {
@@ -541,8 +570,12 @@ public class PythonGenerator implements IGenerator {
             return "break";
         else if (stmt instanceof ReturnStatement)
             return ((ReturnStatement)stmt).expression == null ? "return" : "return " + this.expr(((ReturnStatement)stmt).expression);
-        else if (stmt instanceof UnsetStatement)
-            return "/* unset " + this.expr(((UnsetStatement)stmt).expression) + "; */";
+        else if (stmt instanceof UnsetStatement) {
+            var obj = (((InstanceMethodCallExpression)((UnsetStatement)stmt).expression)).object;
+            var key = (((InstanceMethodCallExpression)((UnsetStatement)stmt).expression)).getArgs()[0];
+            // TODO: hack: transform unsets before this
+            return "del " + this.expr(obj) + "[" + this.expr(key) + "]";
+        }
         else if (stmt instanceof ThrowStatement)
             return "raise " + this.expr(((ThrowStatement)stmt).expression);
         else if (stmt instanceof ExpressionStatement)
@@ -711,7 +744,7 @@ public class PythonGenerator implements IGenerator {
         for (var enum_ : sourceFile.enums) {
             var values = new ArrayList<String>();
             for (Integer i = 0; i < enum_.values.length; i++)
-                values.add(this.enumMemberName(enum_.values[i].name) + " = " + i + 1);
+                values.add(this.enumMemberName(enum_.values[i].name) + " = " + (i + 1));
             enums.add("class " + this.enumName(enum_, true) + "(Enum):\n" + this.pad(values.stream().collect(Collectors.joining("\n"))));
         }
         
@@ -722,7 +755,7 @@ public class PythonGenerator implements IGenerator {
         var main = sourceFile.mainBlock.statements.size() > 0 ? this.block(sourceFile.mainBlock, false) : "";
         
         var imports = new ArrayList<String>();
-        for (var imp : this.imports)
+        for (var imp : this.imports.toArray(String[]::new))
             imports.add(imp);
         
         return Arrays.stream(new ArrayList<>(List.of(imports.stream().collect(Collectors.joining("\n")), enums.stream().collect(Collectors.joining("\n\n")), classes.stream().collect(Collectors.joining("\n\n")), main)).stream().filter(x -> !Objects.equals(x, "")).toArray(String[]::new)).collect(Collectors.joining("\n\n"));

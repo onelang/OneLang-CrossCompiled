@@ -85,7 +85,7 @@ class ForNode implements ITemplateNode {
             $context->model->props[$this->variableName] = $item;
             $result .= $this->body->format($context);
         }
-        /* unset @$context->model->props[$this->variableName] ?? null; */
+        /* unset (@$context->model->props[$this->variableName] ?? null); */
         return $result;
     }
 }

@@ -54,10 +54,15 @@ class JavaGenerator:
     
     def escape(self, value):
         if isinstance(value, templFileGenPlug.ExpressionValue) and isinstance(value.value, exprs.RegexLiteral):
-            return json.dumps(value.value.pattern)
+            return json.dumps(value.value.pattern, separators=(',', ':'))
         elif isinstance(value, vals.StringValue):
-            return json.dumps(value.value)
+            return json.dumps(value.value, separators=(',', ':'))
         raise Error(f'''Not supported VMValue for escape()''')
+    
+    def escape_repl(self, value):
+        if isinstance(value, templFileGenPlug.ExpressionValue) and isinstance(value.value, exprs.StringLiteral):
+            return json.dumps(re.sub("\\$", "\\\\$", re.sub("\\\\", "\\\\\\\\", value.value.string_value)), separators=(',', ':'))
+        raise Error(f'''Not supported VMValue for escapeRepl()''')
     
     def add_plugin(self, plugin):
         self.plugins.append(plugin)
@@ -68,6 +73,7 @@ class JavaGenerator:
             plugin.model_globals["isArray"] = templFileGenPlug.LambdaValue(lambda args: vals.BooleanValue(self.is_array((args[0]).value)))
             plugin.model_globals["toArray"] = templFileGenPlug.LambdaValue(lambda args: vals.StringValue(self.to_array((args[0]).type)))
             plugin.model_globals["escape"] = templFileGenPlug.LambdaValue(lambda args: vals.StringValue(self.escape(args[0])))
+            plugin.model_globals["escapeRepl"] = templFileGenPlug.LambdaValue(lambda args: vals.StringValue(self.escape_repl(args[0])))
     
     def name_(self, name):
         if name in self.reserved_words:
@@ -108,7 +114,12 @@ class JavaGenerator:
     def type_args2(self, args):
         return self.type_args(list(map(lambda x: self.type(x), args)))
     
+    def unpack_promise(self, t):
+        return t.type_arguments[0] if isinstance(t, astTypes.ClassType) and t.decl == self.current_class.parent_file.literal_types.promise.decl else t
+    
     def type(self, t, mutates = True, is_new = False):
+        t = self.unpack_promise(t)
+        
         if isinstance(t, astTypes.ClassType) or isinstance(t, astTypes.InterfaceType):
             decl = (t).get_decl()
             if decl.parent_file.export_scope != None:
@@ -137,8 +148,6 @@ class JavaGenerator:
                 real_type = "LinkedHashSet" if is_new else "Set"
                 self.imports[f'''java.util.{real_type}'''] = None
                 return f'''{real_type}<{self.type(t.type_arguments[0])}>'''
-            elif t.decl.name == "Promise":
-                return "void" if isinstance(t.type_arguments[0], astTypes.VoidType) else f'''{self.type(t.type_arguments[0])}'''
             elif t.decl.name == "Object":
                 #this.imports.add("System");
                 return f'''Object'''
@@ -160,10 +169,11 @@ class JavaGenerator:
         elif isinstance(t, astTypes.GenericsType):
             return f'''{t.type_var_name}'''
         elif isinstance(t, astTypes.LambdaType):
-            is_func = not (isinstance(t.return_type, astTypes.VoidType))
+            ret_type = self.unpack_promise(t.return_type)
+            is_func = not (isinstance(ret_type, astTypes.VoidType))
             param_types = list(map(lambda x: self.type(x.type, False), t.parameters))
             if is_func:
-                param_types.append(self.type(t.return_type, False))
+                param_types.append(self.type(ret_type, False))
             self.imports["java.util.function." + ("Function" if is_func else "Consumer")] = None
             return f'''{("Function" if is_func else "Consumer")}<{", ".join(param_types)}>'''
         elif t == None:
@@ -274,11 +284,12 @@ class JavaGenerator:
         elif isinstance(expr, exprs.GlobalFunctionCallExpression):
             res = f'''Global.{self.name_(expr.func.name)}{self.expr_call([], expr.args)}'''
         elif isinstance(expr, exprs.LambdaCallExpression):
-            res = f'''{self.expr(expr.method)}.apply({", ".join(list(map(lambda x: self.expr(x), expr.args)))})'''
+            res_type = self.unpack_promise(expr.actual_type)
+            res = f'''{self.expr(expr.method)}.{("accept" if isinstance(res_type, astTypes.VoidType) else "apply")}({", ".join(list(map(lambda x: self.expr(x), expr.args)))})'''
         elif isinstance(expr, exprs.BooleanLiteral):
             res = f'''{("true" if expr.bool_value else "false")}'''
         elif isinstance(expr, exprs.StringLiteral):
-            res = f'''{json.dumps(expr.string_value)}'''
+            res = f'''{json.dumps(expr.string_value, separators=(',', ':'))}'''
         elif isinstance(expr, exprs.NumericLiteral):
             res = f'''{expr.value_as_text}'''
         elif isinstance(expr, exprs.CharacterLiteral):
@@ -314,7 +325,8 @@ class JavaGenerator:
                     parts.append(f'''"{lit}"''')
                 else:
                     repr = self.expr(part.expression)
-                    parts.append(f'''({repr})''' if isinstance(part.expression, exprs.ConditionalExpression) else repr)
+                    is_complex = isinstance(part.expression, exprs.ConditionalExpression) or isinstance(part.expression, exprs.BinaryExpression)
+                    parts.append(f'''({repr})''' if is_complex else repr)
             res = " + ".join(parts)
         elif isinstance(expr, exprs.BinaryExpression):
             modifies = expr.operator in ["=", "+=", "-="]
@@ -349,7 +361,7 @@ class JavaGenerator:
             res = f'''({self.expr(expr.expression)})'''
         elif isinstance(expr, exprs.RegexLiteral):
             self.imports[f'''io.onelang.std.core.RegExp'''] = None
-            res = f'''new RegExp({json.dumps(expr.pattern)})'''
+            res = f'''new RegExp({json.dumps(expr.pattern, separators=(',', ':'))})'''
         elif isinstance(expr, types.Lambda):
             
             if len(expr.body.statements) == 1 and isinstance(expr.body.statements[0], stats.ReturnStatement):
@@ -371,8 +383,9 @@ class JavaGenerator:
                 res = f'''new {self.type(expr.actual_type, True, True)}()'''
             else:
                 self.imports[f'''java.util.Map'''] = None
-                repr = ", ".join(list(map(lambda item: f'''{json.dumps(item.key)}, {self.expr(item.value)}''', expr.items)))
-                res = f'''Map.of({repr})'''
+                self.imports[f'''java.util.LinkedHashMap'''] = None
+                repr = ", ".join(list(map(lambda item: f'''{json.dumps(item.key, separators=(',', ':'))}, {self.expr(item.value)}''', expr.items)))
+                res = f'''new LinkedHashMap<>(Map.of({repr}))'''
         elif isinstance(expr, exprs.NullLiteral):
             res = f'''null'''
         elif isinstance(expr, exprs.AwaitExpression):
@@ -414,7 +427,7 @@ class JavaGenerator:
         elif isinstance(expr, refs.EnumMemberReference):
             res = f'''{self.name_(expr.decl.parent_enum.name)}.{self.name_(expr.decl.name)}'''
         elif isinstance(expr, exprs.NullCoalesceExpression):
-            res = f'''{self.expr(expr.default_expr)} != null ? {self.expr(expr.default_expr)} : {self.mutated_expr(expr.expr_if_null, expr.default_expr)}'''
+            res = f'''({self.expr(expr.default_expr)} != null ? ({self.expr(expr.default_expr)}) : ({self.mutated_expr(expr.expr_if_null, expr.default_expr)}))'''
         else:
             pass
         return res
@@ -474,7 +487,8 @@ class JavaGenerator:
         res = None
         
         if stmt.attributes != None and "java-import" in stmt.attributes:
-            self.imports[stmt.attributes.get("java-import")] = None
+            for imp in re.split("\\n", stmt.attributes.get("java-import")):
+                self.imports[imp] = None
         
         if stmt.attributes != None and "java" in stmt.attributes:
             res = stmt.attributes.get("java")
@@ -504,7 +518,7 @@ class JavaGenerator:
         
         return self.method_gen(prefix, method.parameters, ";" if method.body == None else f''' {{\n{self.pad(self.stmts(method.body.statements))}\n}}''')
     
-    def class(self, cls_):
+    def class_(self, cls_):
         self.current_class = cls_
         res_list = []
         
@@ -556,8 +570,13 @@ class JavaGenerator:
             
             super_call = f'''super({", ".join(list(map(lambda x: self.expr(x), cls_.constructor_.super_call_args)))});\n''' if cls_.constructor_.super_call_args != None else ""
             
+            # @java var stmts = Stream.of(constrFieldInits, complexFieldInits, cls.constructor_.getBody().statements).flatMap(Collection::stream).toArray(Statement[]::new);
+            # @java-import java.util.Collection
+            # @java-import java.util.stream.Stream
+            stmts = constr_field_inits + complex_field_inits + cls_.constructor_.body.statements
+            
             # TODO: super calls
-            res_list.append(self.method_gen("public " + self.pre_if("/* throws */ ", cls_.constructor_.throws) + self.name_(cls_.name), cls_.constructor_.parameters, f'''\n{{\n{self.pad(super_call + self.stmts(constr_field_inits + complex_field_inits + cls_.constructor_.body.statements))}\n}}'''))
+            res_list.append(self.method_gen("public " + self.pre_if("/* throws */ ", cls_.constructor_.throws) + self.name_(cls_.name), cls_.constructor_.parameters, f'''\n{{\n{self.pad(super_call + self.stmts(stmts))}\n}}'''))
         elif len(complex_field_inits) > 0:
             res_list.append(f'''public {self.name_(cls_.name)}()\n{{\n{self.pad(self.stmts(complex_field_inits))}\n}}''')
         
@@ -604,7 +623,8 @@ class JavaGenerator:
     def to_import(self, scope):
         # TODO: hack
         if scope.scope_name == "index":
-            return f'''io.onelang.std.{re.sub("One\\.", "", re.split("-", scope.package_name)[0]).lower()}'''
+            name = re.sub("One\\.", "", re.split("-", scope.package_name)[0]).lower()
+            return f'''io.onelang.std.{name}'''
         return f'''{scope.package_name}.{re.sub("/", ".", scope.scope_name)}'''
     
     def generate(self, pkg):
@@ -621,7 +641,8 @@ class JavaGenerator:
                 for imp in imp_list.imports:
                     imports[f'''{imp_pkg}.{imp.name}'''] = None
             
-            head = f'''package {package_name};\n\n{"\n".join(list(map(lambda x: f'import {x};', Array.from_(imports.keys()))))}\n\n'''
+            head_imports = "\n".join(list(map(lambda x: f'''import {x};''', Array.from_(imports.keys()))))
+            head = f'''package {package_name};\n\n{head_imports}\n\n'''
             
             for enum_ in file.enums:
                 result.append(genFile.GeneratedFile(f'''{dst_dir}/{enum_.name}.java''', f'''{head}public enum {self.name_(enum_.name)} {{ {", ".join(list(map(lambda x: self.name_(x.name), enum_.values)))} }}'''))
@@ -631,6 +652,6 @@ class JavaGenerator:
                 result.append(genFile.GeneratedFile(f'''{dst_dir}/{intf.name}.java''', f'''{head}{self.imports_head()}{res}'''))
             
             for cls_ in file.classes:
-                res = f'''public class {self.name_(cls_.name)}{self.type_args(cls_.type_arguments)}''' + (f''' extends {self.type(cls_.base_class)}''' if cls_.base_class != None else "") + self.pre_arr(" implements ", list(map(lambda x: self.type(x), cls_.base_interfaces))) + f''' {{\n{self.class(cls_)}\n}}'''
+                res = f'''public class {self.name_(cls_.name)}{self.type_args(cls_.type_arguments)}''' + (f''' extends {self.type(cls_.base_class)}''' if cls_.base_class != None else "") + self.pre_arr(" implements ", list(map(lambda x: self.type(x), cls_.base_interfaces))) + f''' {{\n{self.class_(cls_)}\n}}'''
                 result.append(genFile.GeneratedFile(f'''{dst_dir}/{cls_.name}.java''', f'''{head}{self.imports_head()}{res}'''))
         return result

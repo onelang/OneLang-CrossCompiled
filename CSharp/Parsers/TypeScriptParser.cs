@@ -5,7 +5,8 @@ using System.Linq;
 
 namespace Parsers
 {
-    public class TypeAndInit {
+    public class TypeAndInit
+    {
         public IType type;
         public Expression init;
         
@@ -16,7 +17,8 @@ namespace Parsers
         }
     }
     
-    public class MethodSignature {
+    public class MethodSignature
+    {
         public MethodParameter[] params_;
         public Field[] fields;
         public Block body;
@@ -33,7 +35,8 @@ namespace Parsers
         }
     }
     
-    public class TypeScriptParser2 : IParser, IExpressionParserHooks, IReaderHooks {
+    public class TypeScriptParser2 : IParser, IExpressionParserHooks, IReaderHooks
+    {
         public List<string> context;
         public Reader reader;
         public ExpressionParser expressionParser;

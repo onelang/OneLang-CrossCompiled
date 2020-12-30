@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 namespace One.Transforms.InferTypesPlugins
 {
-    public class BasicTypeInfer : InferTypesPlugin {
+    public class BasicTypeInfer : InferTypesPlugin
+    {
         public BasicTypeInfer(): base("BasicTypeInfer")
         {
             

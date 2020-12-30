@@ -3,7 +3,8 @@ using System.Collections.Generic;
 
 namespace One.Serialization
 {
-    public class JsonSerializer {
+    public class JsonSerializer
+    {
         public Map<object, string> circleDetector;
         public LiteralTypes litTypes;
         

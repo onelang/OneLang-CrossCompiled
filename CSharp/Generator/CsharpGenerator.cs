@@ -6,18 +6,21 @@ using System.Linq;
 
 namespace Generator
 {
-    public class CsharpGenerator : IGenerator {
+    public class CsharpGenerator : IGenerator
+    {
         public Set<string> usings;
         public IInterface currentClass;
         public string[] reservedWords;
         public string[] fieldToMethodHack;
         public Dictionary<string, int> instanceOfIds;
+        public List<IGeneratorPlugin> plugins;
         
         public CsharpGenerator()
         {
             this.reservedWords = new string[] { "object", "else", "operator", "class", "enum", "void", "string", "implicit", "Type", "Enum", "params", "using", "throw", "ref", "base", "virtual", "interface", "int", "const" };
             this.fieldToMethodHack = new string[] { "length", "size" };
             this.instanceOfIds = new Dictionary<string, int> {};
+            this.plugins = new List<IGeneratorPlugin>();
         }
         
         public string getLangName()
@@ -35,14 +38,17 @@ namespace Generator
             return new ITransformer[0];
         }
         
-        public void addPlugin(IGeneratorPlugin plugin)
-        {
-            
-        }
-        
         public void addInclude(string include)
         {
             this.usings.add(include);
+        }
+        
+        public void addPlugin(IGeneratorPlugin plugin)
+        {
+            this.plugins.push(plugin);
+            
+            // TODO: hack?
+            if (plugin is TemplateFileGeneratorPlugin) { }
         }
         
         public string name_(string name)
@@ -247,6 +253,12 @@ namespace Generator
         
         public string expr(IExpression expr)
         {
+            foreach (var plugin in this.plugins) {
+                var result = plugin.expr(expr);
+                if (result != null)
+                    return result;
+            }
+            
             var res = "UNKNOWN-EXPR";
             if (expr is NewExpression newExpr)
                 res = $"new {this.type(newExpr.cls)}{this.callParams(newExpr.args, newExpr.cls.decl.constructor_ != null ? newExpr.cls.decl.constructor_.parameters : new MethodParameter[0])}";
@@ -489,8 +501,10 @@ namespace Generator
                     var isInitializerComplex = field.initializer != null && !(field.initializer is StringLiteral) && !(field.initializer is BooleanLiteral) && !(field.initializer is NumericLiteral);
                     
                     var prefix = $"{this.vis(field.visibility)} {this.preIf("static ", field.isStatic)}";
-                    if (field.interfaceDeclarations.length() > 0)
-                        fieldReprs.push($"{prefix}{this.varWoInit(field, field)} {{ get; set; }}");
+                    if (field.interfaceDeclarations.length() > 0) {
+                        var init = field.initializer != null ? $" = {this.expr(field.initializer)};" : "";
+                        fieldReprs.push($"{prefix}{this.varWoInit(field, field)} {{ get; set; }}{init}");
+                    }
                     else if (isInitializerComplex) {
                         if (field.isStatic)
                             staticConstructorStmts.push(new ExpressionStatement(new BinaryExpression(new StaticFieldReference(field), "=", field.initializer)));
@@ -569,7 +583,7 @@ namespace Generator
                     baseClasses.push(cls.baseClass);
                 foreach (var intf in cls.baseInterfaces)
                     baseClasses.push(intf);
-                classes.push($"public class {this.name_(cls.name)}{this.typeArgs(cls.typeArguments)}{this.preArr(" : ", baseClasses.map(x => this.type(x)))} {{\n{this.classLike(cls)}\n}}");
+                classes.push($"public class {this.name_(cls.name)}{this.typeArgs(cls.typeArguments)}{this.preArr(" : ", baseClasses.map(x => this.type(x)))}\n{{\n{this.classLike(cls)}\n}}");
             }
             
             var main = sourceFile.mainBlock.statements.length() > 0 ? $"public class Program\n{{\n    static void Main(string[] args)\n    {{\n{this.pad(this.rawBlock(sourceFile.mainBlock))}\n    }}\n}}" : "";

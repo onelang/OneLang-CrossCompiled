@@ -112,7 +112,7 @@ public class ResolveMethodCalls extends InferTypesPlugin {
                 var lambdaField = Arrays.stream(intfType.getFields()).filter(x -> Objects.equals(x.getName(), expr.methodName) && x.getType() instanceof LambdaType && ((LambdaType)x.getType()).parameters.length == expr.args.length).findFirst().orElse(null);
                 if (lambdaField != null) {
                     var lambdaCall = new LambdaCallExpression(new InstanceFieldReference(expr.object, lambdaField), expr.args);
-                    lambdaCall.setActualType((((LambdaType)lambdaField.getType())).returnType, false, false);
+                    lambdaCall.setActualType((((LambdaType)lambdaField.getType())).returnType, true, false);
                     return lambdaCall;
                 }
                 

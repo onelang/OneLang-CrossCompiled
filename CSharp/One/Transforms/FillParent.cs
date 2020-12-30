@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 namespace One.Transforms
 {
-    public class FillParent : AstTransformer {
+    public class FillParent : AstTransformer
+    {
         public List<IAstNode> parentNodeStack;
         
         public FillParent(): base("FillParent")

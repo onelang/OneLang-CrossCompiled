@@ -61,7 +61,7 @@ public class ReturnTypeInferer {
         if (this.returnTypes.size() == 0) {
             if (this.throws_) {
                 var result = declaredType;
-                inferredType = result != null ? result : VoidType.instance;
+                inferredType = (result != null ? (result) : (VoidType.instance));
             }
             else if (this.returnsNull) {
                 if (declaredType != null)
@@ -84,6 +84,9 @@ public class ReturnTypeInferer {
         var checkType = declaredType;
         if (checkType != null && asyncType != null && checkType instanceof ClassType && ((ClassType)checkType).decl == asyncType.decl)
             checkType = ((ClassType)checkType).getTypeArguments()[0];
+        
+        if (inferredType != null && asyncType != null && inferredType instanceof ClassType && ((ClassType)inferredType).decl == asyncType.decl)
+            inferredType = ((ClassType)inferredType).getTypeArguments()[0];
         
         if (checkType != null && !TypeHelper.isAssignableTo(inferredType, checkType))
             this.errorMan.throw_(errorContext + " returns different type (" + inferredType.repr() + ") than expected " + checkType.repr());

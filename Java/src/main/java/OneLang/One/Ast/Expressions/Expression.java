@@ -69,6 +69,6 @@ public class Expression implements IAstNode, IExpression {
     }
     
     public IType getType() {
-        return this.actualType != null ? this.actualType : this.expectedType;
+        return (this.actualType != null ? (this.actualType) : (this.expectedType));
     }
 }

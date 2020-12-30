@@ -28,7 +28,6 @@ import OneLang.One.Ast.Types.IVariable;
 import OneLang.One.Ast.Types.Lambda;
 import OneLang.One.Ast.Types.IMethodBase;
 import OneLang.One.Ast.Statements.Block;
-import java.util.Arrays;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.Expressions.NullCoalesceExpression;
 import OneLang.One.Ast.References.InstanceFieldReference;
@@ -62,12 +61,16 @@ public class ConvertNullCoalesce extends AstTransformer {
     }
     
     protected Block visitBlock(Block block) {
-        var prevStatements = this.statements.toArray(Statement[]::new);
+        // @csharp var prevStatements = this.statements;
+        // @java var prevStatements = this.statements;
+        var prevStatements = this.statements;
         this.statements = new ArrayList<Statement>();
         for (var stmt : block.statements)
             this.statements.add(this.visitStatement(stmt));
         block.statements = this.statements;
-        this.statements = new ArrayList<>(Arrays.asList(prevStatements));
+        // @csharp this.statements = prevStatements;
+        // @java this.statements = prevStatements;
+        this.statements = prevStatements;
         return block;
     }
     

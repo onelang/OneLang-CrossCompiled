@@ -124,6 +124,8 @@ import OneLang.One.Ast.Expressions.RegexLiteral;
 import io.onelang.std.json.JSON;
 import OneLang.VM.Values.StringValue;
 import OneLang.VM.Values.IVMValue;
+import OneLang.One.Ast.Expressions.StringLiteral;
+import java.util.regex.Pattern;
 import OneLang.Generator.TemplateFileGeneratorPlugin.TemplateFileGeneratorPlugin;
 import OneLang.Generator.TemplateFileGeneratorPlugin.LambdaValue;
 import OneLang.VM.Values.BooleanValue;
@@ -157,7 +159,6 @@ import OneLang.One.Ast.Expressions.UnresolvedMethodCallExpression;
 import OneLang.One.Ast.Expressions.GlobalFunctionCallExpression;
 import OneLang.One.Ast.Expressions.LambdaCallExpression;
 import OneLang.One.Ast.Expressions.BooleanLiteral;
-import OneLang.One.Ast.Expressions.StringLiteral;
 import OneLang.One.Ast.Expressions.NumericLiteral;
 import OneLang.One.Ast.Expressions.CharacterLiteral;
 import OneLang.One.Ast.Expressions.ElementAccessExpression;
@@ -205,10 +206,10 @@ import OneLang.One.Ast.Statements.TryStatement;
 import OneLang.One.Ast.Statements.ContinueStatement;
 import OneLang.One.Ast.Types.Method;
 import OneLang.One.Ast.Types.Field;
+import java.util.Collection;
 import java.util.stream.Stream;
 import OneLang.One.Ast.Types.Class;
 import OneLang.One.Ast.Types.Interface;
-import java.util.regex.Pattern;
 import OneLang.One.Ast.Types.ExportScopeRef;
 import OneLang.Generator.GeneratedFile.GeneratedFile;
 import OneLang.One.Ast.Types.Package;
@@ -270,6 +271,12 @@ public class JavaGenerator implements IGenerator {
         throw new Error("Not supported VMValue for escape()");
     }
     
+    public String escapeRepl(IVMValue value) {
+        if (value instanceof ExpressionValue && ((ExpressionValue)value).value instanceof StringLiteral)
+            return JSON.stringify(((StringLiteral)((ExpressionValue)value).value).stringValue.replaceAll("\\\\", "\\\\\\\\").replaceAll("\\$", "\\\\\\$"));
+        throw new Error("Not supported VMValue for escapeRepl()");
+    }
+    
     public void addPlugin(IGeneratorPlugin plugin) {
         this.plugins.add(plugin);
         
@@ -279,6 +286,7 @@ public class JavaGenerator implements IGenerator {
             ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("isArray", new LambdaValue(args -> new BooleanValue(this.isArray((((ExpressionValue)args[0])).value))));
             ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("toArray", new LambdaValue(args -> new StringValue(this.toArray((((TypeValue)args[0])).type, 0))));
             ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("escape", new LambdaValue(args -> new StringValue(this.escape(args[0]))));
+            ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("escapeRepl", new LambdaValue(args -> new StringValue(this.escapeRepl(args[0]))));
         }
     }
     
@@ -325,7 +333,13 @@ public class JavaGenerator implements IGenerator {
         return this.typeArgs(Arrays.stream(args).map(x -> this.type(x, true, false)).toArray(String[]::new));
     }
     
+    public IType unpackPromise(IType t) {
+        return t instanceof ClassType && ((ClassType)t).decl == this.currentClass.getParentFile().literalTypes.promise.decl ? ((ClassType)t).getTypeArguments()[0] : t;
+    }
+    
     public String type(IType t, Boolean mutates, Boolean isNew) {
+        t = this.unpackPromise(t);
+        
         if (t instanceof ClassType || t instanceof InterfaceType) {
             var decl = (((IInterfaceType)t)).getDecl();
             if (decl.getParentFile().exportScope != null)
@@ -359,8 +373,6 @@ public class JavaGenerator implements IGenerator {
                 this.imports.add("java.util." + realType);
                 return realType + "<" + this.type(((ClassType)t).getTypeArguments()[0], true, false) + ">";
             }
-            else if (Objects.equals(((ClassType)t).decl.getName(), "Promise"))
-                return ((ClassType)t).getTypeArguments()[0] instanceof VoidType ? "void" : this.type(((ClassType)t).getTypeArguments()[0], true, false);
             else if (Objects.equals(((ClassType)t).decl.getName(), "Object"))
                 //this.imports.add("System");
                 return "Object";
@@ -384,10 +396,11 @@ public class JavaGenerator implements IGenerator {
         else if (t instanceof GenericsType)
             return ((GenericsType)t).typeVarName;
         else if (t instanceof LambdaType) {
-            var isFunc = !(((LambdaType)t).returnType instanceof VoidType);
+            var retType = this.unpackPromise(((LambdaType)t).returnType);
+            var isFunc = !(retType instanceof VoidType);
             var paramTypes = new ArrayList<>(Arrays.asList(Arrays.stream(((LambdaType)t).parameters).map(x -> this.type(x.getType(), false, false)).toArray(String[]::new)));
             if (isFunc)
-                paramTypes.add(this.type(((LambdaType)t).returnType, false, false));
+                paramTypes.add(this.type(retType, false, false));
             this.imports.add("java.util.function." + (isFunc ? "Function" : "Consumer"));
             return (isFunc ? "Function" : "Consumer") + "<" + paramTypes.stream().collect(Collectors.joining(", ")) + ">";
         }
@@ -515,8 +528,10 @@ public class JavaGenerator implements IGenerator {
             res = this.name_(((StaticMethodCallExpression)expr).getMethod().parentInterface.getName()) + "." + this.methodCall(((StaticMethodCallExpression)expr));
         else if (expr instanceof GlobalFunctionCallExpression)
             res = "Global." + this.name_(((GlobalFunctionCallExpression)expr).func.getName()) + this.exprCall(new IType[0], ((GlobalFunctionCallExpression)expr).getArgs());
-        else if (expr instanceof LambdaCallExpression)
-            res = this.expr(((LambdaCallExpression)expr).method) + ".apply(" + Arrays.stream(Arrays.stream(((LambdaCallExpression)expr).args).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")";
+        else if (expr instanceof LambdaCallExpression) {
+            var resType = this.unpackPromise(((LambdaCallExpression)expr).actualType);
+            res = this.expr(((LambdaCallExpression)expr).method) + "." + (resType instanceof VoidType ? "accept" : "apply") + "(" + Arrays.stream(Arrays.stream(((LambdaCallExpression)expr).args).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")";
+        }
         else if (expr instanceof BooleanLiteral)
             res = (((BooleanLiteral)expr).boolValue ? "true" : "false");
         else if (expr instanceof StringLiteral)
@@ -556,7 +571,8 @@ public class JavaGenerator implements IGenerator {
                 }
                 else {
                     var repr = this.expr(part.expression);
-                    parts.add(part.expression instanceof ConditionalExpression ? "(" + repr + ")" : repr);
+                    var isComplex = part.expression instanceof ConditionalExpression || part.expression instanceof BinaryExpression;
+                    parts.add(isComplex ? "(" + repr + ")" : repr);
                 }
             }
             res = parts.stream().collect(Collectors.joining(" + "));
@@ -623,8 +639,9 @@ public class JavaGenerator implements IGenerator {
                 res = "new " + this.type(((MapLiteral)expr).actualType, true, true) + "()";
             else {
                 this.imports.add("java.util.Map");
+                this.imports.add("java.util.LinkedHashMap");
                 var repr = Arrays.stream(Arrays.stream(((MapLiteral)expr).items).map(item -> JSON.stringify(item.key) + ", " + this.expr(item.value)).toArray(String[]::new)).collect(Collectors.joining(", "));
-                res = "Map.of(" + repr + ")";
+                res = "new LinkedHashMap<>(Map.of(" + repr + "))";
             }
         }
         else if (expr instanceof NullLiteral)
@@ -669,7 +686,7 @@ public class JavaGenerator implements IGenerator {
         else if (expr instanceof EnumMemberReference)
             res = this.name_(((EnumMemberReference)expr).decl.parentEnum.getName()) + "." + this.name_(((EnumMemberReference)expr).decl.name);
         else if (expr instanceof NullCoalesceExpression)
-            res = this.expr(((NullCoalesceExpression)expr).defaultExpr) + " != null ? " + this.expr(((NullCoalesceExpression)expr).defaultExpr) + " : " + this.mutatedExpr(((NullCoalesceExpression)expr).exprIfNull, ((NullCoalesceExpression)expr).defaultExpr);
+            res = "(" + this.expr(((NullCoalesceExpression)expr).defaultExpr) + " != null ? (" + this.expr(((NullCoalesceExpression)expr).defaultExpr) + ") : (" + this.mutatedExpr(((NullCoalesceExpression)expr).exprIfNull, ((NullCoalesceExpression)expr).defaultExpr) + "))";
         else { }
         return res;
     }
@@ -734,7 +751,8 @@ public class JavaGenerator implements IGenerator {
         String res = null;
         
         if (stmt.getAttributes() != null && stmt.getAttributes().containsKey("java-import"))
-            this.imports.add(stmt.getAttributes().get("java-import"));
+            for (var imp : stmt.getAttributes().get("java-import").split("\\n", -1))
+                this.imports.add(imp);
         
         if (stmt.getAttributes() != null && stmt.getAttributes().containsKey("java"))
             res = stmt.getAttributes().get("java");
@@ -828,8 +846,13 @@ public class JavaGenerator implements IGenerator {
             
             var superCall = cls.constructor_.superCallArgs != null ? "super(" + Arrays.stream(Arrays.stream(cls.constructor_.superCallArgs).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ");\n" : "";
             
+            // @java var stmts = Stream.of(constrFieldInits, complexFieldInits, cls.constructor_.getBody().statements).flatMap(Collection::stream).toArray(Statement[]::new);
+            // @java-import java.util.Collection
+            // @java-import java.util.stream.Stream
+            var stmts = Stream.of(constrFieldInits, complexFieldInits, cls.constructor_.getBody().statements).flatMap(Collection::stream).toArray(Statement[]::new);
+            
             // TODO: super calls
-            resList.add(this.methodGen("public " + this.preIf("/* throws */ ", cls.constructor_.getThrows()) + this.name_(cls.getName()), cls.constructor_.getParameters(), "\n{\n" + this.pad(superCall + this.stmts(Stream.of(Stream.of(constrFieldInits, complexFieldInits).flatMap(Stream::of).toArray(Statement[]::new), cls.constructor_.getBody().statements).flatMap(Stream::of).toArray(Statement[]::new))) + "\n}"));
+            resList.add(this.methodGen("public " + this.preIf("/* throws */ ", cls.constructor_.getThrows()) + this.name_(cls.getName()), cls.constructor_.getParameters(), "\n{\n" + this.pad(superCall + this.stmts(stmts)) + "\n}"));
         }
         else if (complexFieldInits.size() > 0)
             resList.add("public " + this.name_(cls.getName()) + "()\n{\n" + this.pad(this.stmts(complexFieldInits.toArray(Statement[]::new))) + "\n}");
@@ -884,8 +907,10 @@ public class JavaGenerator implements IGenerator {
     
     public String toImport(ExportScopeRef scope) {
         // TODO: hack
-        if (Objects.equals(scope.scopeName, "index"))
-            return "io.onelang.std." + scope.packageName.split("-", -1)[0].replaceAll("One\\.", "").toLowerCase();
+        if (Objects.equals(scope.scopeName, "index")) {
+            var name = scope.packageName.split("-", -1)[0].replaceAll("One\\.", "").toLowerCase();
+            return "io.onelang.std." + name;
+        }
         return scope.packageName + "." + scope.scopeName.replaceAll("/", ".");
     }
     
@@ -904,7 +929,8 @@ public class JavaGenerator implements IGenerator {
                     imports.add(impPkg + "." + imp.getName());
             }
             
-            var head = "package " + packageName + ";\n\n" + Arrays.stream(Arrays.stream(imports.toArray(String[]::new)).map(x -> "import " + x + ";").toArray(String[]::new)).collect(Collectors.joining("\n")) + "\n\n";
+            var headImports = Arrays.stream(Arrays.stream(imports.toArray(String[]::new)).map(x -> "import " + x + ";").toArray(String[]::new)).collect(Collectors.joining("\n"));
+            var head = "package " + packageName + ";\n\n" + headImports + "\n\n";
             
             for (var enum_ : file.enums)
                 result.add(new GeneratedFile(dstDir + "/" + enum_.getName() + ".java", head + "public enum " + this.name_(enum_.getName()) + " { " + Arrays.stream(Arrays.stream(enum_.values).map(x -> this.name_(x.name)).toArray(String[]::new)).collect(Collectors.joining(", ")) + " }"));

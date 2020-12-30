@@ -3,10 +3,12 @@ using One.Ast;
 using One;
 using System.Collections.Generic;
 using Utils;
+using VM;
 
 namespace Generator
 {
-    public class PythonGenerator : IGenerator {
+    public class PythonGenerator : IGenerator
+    {
         public int tmplStrLevel = 0;
         public Package package;
         public SourceFile currentFile;
@@ -19,7 +21,7 @@ namespace Generator
         
         public PythonGenerator()
         {
-            this.reservedWords = new string[] { "from", "async", "global", "lambda", "cls", "import", "pass" };
+            this.reservedWords = new string[] { "from", "async", "global", "lambda", "cls", "import", "pass", "class" };
             this.fieldToMethodHack = new string[0];
             this.plugins = new List<IGeneratorPlugin>();
         }
@@ -39,14 +41,35 @@ namespace Generator
             return new ITransformer[0];
         }
         
+        public void addInclude(string include)
+        {
+            this.imports.add($"import {include}");
+        }
+        
         public void addPlugin(IGeneratorPlugin plugin)
         {
             this.plugins.push(plugin);
+            
+            if (plugin is TemplateFileGeneratorPlugin templFileGenPlug) {
+                templFileGenPlug.modelGlobals.set("escape", new LambdaValue(args => new StringValue(this.escape(args.get(0)))));
+                templFileGenPlug.modelGlobals.set("escapeBackslash", new LambdaValue(args => new StringValue(this.escapeBackslash(args.get(0)))));
+            }
         }
         
-        public void addInclude(string include)
+        public string escape(IVMValue value)
         {
-            this.imports.add(include);
+            if (value is ExpressionValue exprValue && exprValue.value is RegexLiteral regexLit)
+                return JSON.stringify(regexLit.pattern);
+            else if (value is StringValue strValue)
+                return JSON.stringify(strValue.value);
+            throw new Error($"Not supported VMValue for escape()");
+        }
+        
+        public string escapeBackslash(IVMValue value)
+        {
+            if (value is ExpressionValue exprValue2 && exprValue2.value is StringLiteral strLit)
+                return JSON.stringify(strLit.stringValue.replace(new RegExp("\\\\"), "\\\\"));
+            throw new Error($"Not supported VMValue for escape()");
         }
         
         public string type(IType type)
@@ -231,8 +254,8 @@ namespace Generator
                 res = $"{this.expr(lambdCallExpr.method)}({lambdCallExpr.args.map(x => this.expr(x)).join(", ")})";
             else if (expr is BooleanLiteral boolLit)
                 res = $"{(boolLit.boolValue ? "True" : "False")}";
-            else if (expr is StringLiteral strLit)
-                res = $"{JSON.stringify(strLit.stringValue)}";
+            else if (expr is StringLiteral strLit2)
+                res = $"{JSON.stringify(strLit2.stringValue)}";
             else if (expr is NumericLiteral numLit)
                 res = $"{numLit.valueAsText}";
             else if (expr is CharacterLiteral charLit)
@@ -293,8 +316,8 @@ namespace Generator
                 res = $"isinstance({this.expr(instOfExpr.expr)}, {this.type(instOfExpr.checkType)})";
             else if (expr is ParenthesizedExpression parExpr)
                 res = $"({this.expr(parExpr.expression)})";
-            else if (expr is RegexLiteral regexLit)
-                res = $"RegExp({JSON.stringify(regexLit.pattern)})";
+            else if (expr is RegexLiteral regexLit2)
+                res = $"RegExp({JSON.stringify(regexLit2.pattern)})";
             else if (expr is Lambda lambd) {
                 var body = "INVALID-BODY";
                 if (lambd.body.statements.length() == 1 && lambd.body.statements.get(0) is ReturnStatement)
@@ -376,8 +399,12 @@ namespace Generator
                 return "break";
             else if (stmt is ReturnStatement retStat)
                 return retStat.expression == null ? "return" : $"return {this.expr(retStat.expression)}";
-            else if (stmt is UnsetStatement unsetStat)
-                return $"/* unset {this.expr(unsetStat.expression)}; */";
+            else if (stmt is UnsetStatement unsetStat) {
+                var obj = (((InstanceMethodCallExpression)unsetStat.expression)).object_;
+                var key = (((InstanceMethodCallExpression)unsetStat.expression)).args.get(0);
+                // TODO: hack: transform unsets before this
+                return $"del {this.expr(obj)}[{this.expr(key)}]";
+            }
             else if (stmt is ThrowStatement throwStat)
                 return $"raise {this.expr(throwStat.expression)}";
             else if (stmt is ExpressionStatement exprStat)
@@ -566,7 +593,7 @@ namespace Generator
             var main = sourceFile.mainBlock.statements.length() > 0 ? this.block(sourceFile.mainBlock) : "";
             
             var imports = new List<string>();
-            foreach (var imp in this.imports)
+            foreach (var imp in this.imports.values())
                 imports.push(imp);
             
             return new List<string> { imports.join("\n"), enums.join("\n\n"), classes.join("\n\n"), main }.filter(x => x != "").join("\n\n");

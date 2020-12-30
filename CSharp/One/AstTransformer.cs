@@ -4,7 +4,8 @@ using System.Linq;
 
 namespace One
 {
-    public class AstTransformer : ITransformer {
+    public class AstTransformer : ITransformer
+    {
         public ErrorManager errorMan;
         public SourceFile currentFile;
         public IInterface currentInterface;
@@ -285,7 +286,7 @@ namespace One
             return expr;
         }
         
-        protected void visitMethodParameter(MethodParameter methodParameter)
+        protected virtual void visitMethodParameter(MethodParameter methodParameter)
         {
             this.visitAttributesAndTrivia(methodParameter);
             this.visitVariableWithInitializer(methodParameter);
@@ -295,6 +296,10 @@ namespace One
         {
             foreach (var item in method.parameters)
                 this.visitMethodParameter(item);
+            
+            if (method is Constructor const_ && const_.superCallArgs != null)
+                for (int i = 0; i < const_.superCallArgs.length(); i++)
+                    const_.superCallArgs.set(i, this.visitExpression(const_.superCallArgs.get(i)));
             
             if (method.body != null)
                 method.body = this.visitBlock(method.body);

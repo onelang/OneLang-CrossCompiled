@@ -3,7 +3,8 @@ using One;
 
 namespace One.Transforms
 {
-    public class ResolveUnresolvedTypes : AstTransformer {
+    public class ResolveUnresolvedTypes : AstTransformer
+    {
         public ResolveUnresolvedTypes(): base("ResolveUnresolvedTypes")
         {
             

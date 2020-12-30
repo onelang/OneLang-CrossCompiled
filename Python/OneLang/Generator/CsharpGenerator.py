@@ -10,6 +10,7 @@ import OneLang.Generator.IGenerator as iGen
 import OneLang.One.Ast.Interfaces as ints
 import OneLang.One.ITransformer as iTrans
 import OneLang.Generator.IGeneratorPlugin as iGenPlug
+import OneLang.Generator.TemplateFileGeneratorPlugin as templFileGenPlug
 import re
 import json
 
@@ -20,6 +21,7 @@ class CsharpGenerator:
         self.reserved_words = ["object", "else", "operator", "class", "enum", "void", "string", "implicit", "Type", "Enum", "params", "using", "throw", "ref", "base", "virtual", "interface", "int", "const"]
         self.field_to_method_hack = ["length", "size"]
         self.instance_of_ids = {}
+        self.plugins = []
     
     def get_lang_name(self):
         return "CSharp"
@@ -30,11 +32,15 @@ class CsharpGenerator:
     def get_transforms(self):
         return []
     
-    def add_plugin(self, plugin):
-        pass
-    
     def add_include(self, include):
         self.usings[include] = None
+    
+    def add_plugin(self, plugin):
+        self.plugins.append(plugin)
+        
+        # TODO: hack?
+        if isinstance(plugin, templFileGenPlug.TemplateFileGeneratorPlugin):
+            pass
     
     def name_(self, name):
         if name in self.reserved_words:
@@ -193,6 +199,11 @@ class CsharpGenerator:
         return None
     
     def expr(self, expr):
+        for plugin in self.plugins:
+            result = plugin.expr(expr)
+            if result != None:
+                return result
+        
         res = "UNKNOWN-EXPR"
         if isinstance(expr, exprs.NewExpression):
             res = f'''new {self.type(expr.cls_)}{self.call_params(expr.args, expr.cls_.decl.constructor_.parameters if expr.cls_.decl.constructor_ != None else [])}'''
@@ -217,7 +228,7 @@ class CsharpGenerator:
         elif isinstance(expr, exprs.BooleanLiteral):
             res = f'''{("true" if expr.bool_value else "false")}'''
         elif isinstance(expr, exprs.StringLiteral):
-            res = f'''{json.dumps(expr.string_value)}'''
+            res = f'''{json.dumps(expr.string_value, separators=(',', ':'))}'''
         elif isinstance(expr, exprs.NumericLiteral):
             res = f'''{expr.value_as_text}'''
         elif isinstance(expr, exprs.CharacterLiteral):
@@ -286,7 +297,7 @@ class CsharpGenerator:
         elif isinstance(expr, exprs.ParenthesizedExpression):
             res = f'''({self.expr(expr.expression)})'''
         elif isinstance(expr, exprs.RegexLiteral):
-            res = f'''new RegExp({json.dumps(expr.pattern)})'''
+            res = f'''new RegExp({json.dumps(expr.pattern, separators=(',', ':'))})'''
         elif isinstance(expr, types.Lambda):
             
             if len(expr.body.statements) == 1 and isinstance(expr.body.statements[0], stats.ReturnStatement):
@@ -302,7 +313,7 @@ class CsharpGenerator:
         elif isinstance(expr, exprs.UnaryExpression) and expr.unary_type == exprs.UNARY_TYPE.POSTFIX:
             res = f'''{self.expr(expr.operand)}{expr.operator}'''
         elif isinstance(expr, exprs.MapLiteral):
-            repr = ",\n".join(list(map(lambda item: f'''[{json.dumps(item.key)}] = {self.expr(item.value)}''', expr.items)))
+            repr = ",\n".join(list(map(lambda item: f'''[{json.dumps(item.key, separators=(',', ':'))}] = {self.expr(item.value)}''', expr.items)))
             res = f'''new {self.type(expr.actual_type)} ''' + ("{}" if repr == "" else f'''{{\n{self.pad(repr)}\n}}''' if "\n" in repr else f'''{{ {repr} }}''')
         elif isinstance(expr, exprs.NullLiteral):
             res = f'''null'''
@@ -415,7 +426,8 @@ class CsharpGenerator:
                 
                 prefix = f'''{self.vis(field.visibility)} {self.pre_if("static ", field.is_static)}'''
                 if len(field.interface_declarations) > 0:
-                    field_reprs.append(f'''{prefix}{self.var_wo_init(field, field)} {{ get; set; }}''')
+                    init = f''' = {self.expr(field.initializer)};''' if field.initializer != None else ""
+                    field_reprs.append(f'''{prefix}{self.var_wo_init(field, field)} {{ get; set; }}{init}''')
                 elif is_initializer_complex:
                     if field.is_static:
                         static_constructor_stmts.append(stats.ExpressionStatement(exprs.BinaryExpression(refs.StaticFieldReference(field), "=", field.initializer)))
@@ -482,7 +494,7 @@ class CsharpGenerator:
                 base_classes.append(cls_.base_class)
             for intf in cls_.base_interfaces:
                 base_classes.append(intf)
-            classes.append(f'''public class {self.name_(cls_.name)}{self.type_args(cls_.type_arguments)}{self.pre_arr(" : ", list(map(lambda x: self.type(x), base_classes)))} {{\n{self.class_like(cls_)}\n}}''')
+            classes.append(f'''public class {self.name_(cls_.name)}{self.type_args(cls_.type_arguments)}{self.pre_arr(" : ", list(map(lambda x: self.type(x), base_classes)))}\n{{\n{self.class_like(cls_)}\n}}''')
         
         main = f'''public class Program\n{{\n    static void Main(string[] args)\n    {{\n{self.pad(self.raw_block(source_file.main_block))}\n    }}\n}}''' if len(source_file.main_block.statements) > 0 else ""
         

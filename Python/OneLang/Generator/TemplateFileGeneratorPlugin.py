@@ -1,5 +1,5 @@
 from onelang_core import *
-import OneLang.index as index
+from onelang_yaml import *
 import OneLang.Parsers.Common.ExpressionParser as exprPars
 import OneLang.One.Ast.Expressions as exprs
 import OneLang.One.Ast.Interfaces as ints
@@ -64,14 +64,17 @@ class TemplateFileGeneratorPlugin:
         self.fields = {}
         self.model_globals = {}
         self.generator = generator
-        root = index.OneYaml.load(template_yaml)
+        root = OneYaml.load(template_yaml)
         expr_dict = root.dict("expressions")
+        if expr_dict == None:
+            return
         
         for expr_str in expr_dict.keys():
             val = expr_dict.get(expr_str)
-            if_str = val.str("if")
+            tmpl_only = val.type() == VALUE_TYPE.STRING
+            if_str = None if tmpl_only else val.str("if")
             if_expr = None if if_str == None else typeScrPars.TypeScriptParser2(if_str, None).parse_expression()
-            tmpl = CodeTemplate(val.as_str(), [], None) if val.type() == index.VALUE_TYPE.STRING else CodeTemplate(val.str("template"), val.str_arr("includes"), if_expr)
+            tmpl = CodeTemplate(val.as_str(), [], None) if tmpl_only else CodeTemplate(val.str("template"), val.str_arr("includes"), if_expr)
             
             self.add_expr_template(expr_str, tmpl)
     
@@ -91,6 +94,7 @@ class TemplateFileGeneratorPlugin:
     def add_method(self, name, call_tmpl):
         if not (name in self.methods):
             self.methods[name] = []
+        # @php $this->methods[$name][] = $callTmpl;
         self.methods.get(name).append(call_tmpl)
     
     def add_expr_template(self, expr_str, tmpl):
@@ -119,12 +123,12 @@ class TemplateFileGeneratorPlugin:
         # quick return
         
         code_tmpl = None
-        model = {}
-        context = exprVM.VMContext(vals.ObjectValue(model), self)
+        model = vals.ObjectValue({})
+        context = exprVM.VMContext(model, self)
         
-        model["type"] = TypeValue(expr.get_type())
+        model.props["type"] = TypeValue(expr.get_type())
         for name in self.model_globals.keys():
-            model[name] = self.model_globals.get(name)
+            model.props[name] = self.model_globals.get(name)
         
         if is_call_expr:
             call = expr
@@ -136,11 +140,11 @@ class TemplateFileGeneratorPlugin:
             
             for call_tmpl in call_tmpls:
                 if isinstance(expr, exprs.InstanceMethodCallExpression):
-                    model["this"] = ExpressionValue(expr.object)
+                    model.props["this"] = ExpressionValue(expr.object)
                 i = 0
                 
                 while i < len(call_tmpl.args):
-                    model[call_tmpl.args[i]] = ExpressionValue(call.args[i])
+                    model.props[call_tmpl.args[i]] = ExpressionValue(call.args[i])
                     i = i + 1
                 
                 if call_tmpl.template.if_expr == None or (exprVM.ExprVM(context).evaluate(call_tmpl.template.if_expr)).value:
@@ -153,7 +157,7 @@ class TemplateFileGeneratorPlugin:
                 return None
             
             if isinstance(expr, refs.InstanceFieldReference) or isinstance(expr, refs.InstancePropertyReference):
-                model["this"] = ExpressionValue((expr).object)
+                model.props["this"] = ExpressionValue((expr).object)
             code_tmpl = field.template
         else:
             return None

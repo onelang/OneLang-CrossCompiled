@@ -16,7 +16,8 @@ namespace One.Ast
         IInterface getDecl();
     }
     
-    public class TypeHelper {
+    public class TypeHelper
+    {
         public static string argsRepr(IType[] args)
         {
             return args.length() == 0 ? "" : $"<{args.map(x => x.repr()).join(", ")}>";
@@ -89,7 +90,8 @@ namespace One.Ast
         }
     }
     
-    public class VoidType : IPrimitiveType {
+    public class VoidType : IPrimitiveType
+    {
         public static VoidType instance;
         
         static VoidType()
@@ -103,7 +105,8 @@ namespace One.Ast
         }
     }
     
-    public class AnyType : IPrimitiveType {
+    public class AnyType : IPrimitiveType
+    {
         public static AnyType instance;
         
         static AnyType()
@@ -117,7 +120,8 @@ namespace One.Ast
         }
     }
     
-    public class NullType : IPrimitiveType {
+    public class NullType : IPrimitiveType
+    {
         public static NullType instance;
         
         static NullType()
@@ -131,7 +135,8 @@ namespace One.Ast
         }
     }
     
-    public class GenericsType : IType {
+    public class GenericsType : IType
+    {
         public string typeVarName;
         
         public GenericsType(string typeVarName)
@@ -145,7 +150,8 @@ namespace One.Ast
         }
     }
     
-    public class EnumType : IType {
+    public class EnumType : IType
+    {
         public Enum_ decl;
         
         public EnumType(Enum_ decl)
@@ -159,7 +165,8 @@ namespace One.Ast
         }
     }
     
-    public class InterfaceType : IType, IHasTypeArguments, IInterfaceType {
+    public class InterfaceType : IType, IHasTypeArguments, IInterfaceType
+    {
         public Interface decl;
         public IType[] typeArguments { get; set; }
         
@@ -180,7 +187,8 @@ namespace One.Ast
         }
     }
     
-    public class ClassType : IType, IHasTypeArguments, IInterfaceType {
+    public class ClassType : IType, IHasTypeArguments, IInterfaceType
+    {
         public Class decl;
         public IType[] typeArguments { get; set; }
         
@@ -201,7 +209,8 @@ namespace One.Ast
         }
     }
     
-    public class UnresolvedType : IType, IHasTypeArguments {
+    public class UnresolvedType : IType, IHasTypeArguments
+    {
         public string typeName;
         public IType[] typeArguments { get; set; }
         
@@ -217,7 +226,8 @@ namespace One.Ast
         }
     }
     
-    public class LambdaType : IType {
+    public class LambdaType : IType
+    {
         public MethodParameter[] parameters;
         public IType returnType;
         

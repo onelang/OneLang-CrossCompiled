@@ -151,11 +151,11 @@ class Package {
         
         $this->files[$file->sourcePath->path] = $file;
         $scopeName = $file->exportScope->scopeName;
-        $this->exportedScopes[$scopeName] = Package::collectExportsFromFile($file, $exportAll, @$this->exportedScopes[$scopeName] ?? null);
+        $this->exportedScopes[$scopeName] = Package::collectExportsFromFile($file, $exportAll, (@$this->exportedScopes[$scopeName] ?? null));
     }
     
     function getExportedScope($name) {
-        $scope = @$this->exportedScopes[$name] ?? null;
+        $scope = (@$this->exportedScopes[$name] ?? null);
         if ($scope === null)
             throw new \OneLang\Core\Error("Scope \"" . $name . "\" was not found in package \"" . $this->name . "\"");
         return $scope;
@@ -175,7 +175,7 @@ class Workspace {
     }
     
     function getPackage($name) {
-        $pkg = @$this->packages[$name] ?? null;
+        $pkg = (@$this->packages[$name] ?? null);
         if ($pkg === null)
             throw new \OneLang\Core\Error("Package was not found: \"" . $name . "\"");
         return $pkg;
@@ -281,6 +281,8 @@ class Import implements IHasAttributesAndTrivia, ISourceFileMember {
         $this->imports = $imports;
         $this->importAs = $importAs;
         $this->leadingTrivia = $leadingTrivia;
+        $this->parentFile = null;
+        $this->attributes = null;
         if ($importAs !== null && !$importAll)
             throw new \OneLang\Core\Error("importAs only supported with importAll!");
     }
@@ -301,6 +303,8 @@ class Enum implements IAstNode, IHasAttributesAndTrivia, IResolvedImportable, IS
         $this->values = $values;
         $this->isExported = $isExported;
         $this->leadingTrivia = $leadingTrivia;
+        $this->parentFile = null;
+        $this->attributes = null;
         $this->references = array();
         $this->type = new EnumType($this);
     }
@@ -323,7 +327,7 @@ class EnumMember implements IAstNode {
 
 class UnresolvedImport implements IImportable {
     public $name;
-    public $isExported;
+    public $isExported = true;
     
     function __construct($name) {
         $this->name = $name;
@@ -351,6 +355,8 @@ class Interface_ implements IHasAttributesAndTrivia, IInterface, IResolvedImport
         $this->methods = $methods;
         $this->isExported = $isExported;
         $this->leadingTrivia = $leadingTrivia;
+        $this->parentFile = null;
+        $this->attributes = null;
         $this->type = new InterfaceType($this, array_map(function ($x) { return new GenericsType($x); }, $this->typeArguments));
         $this->_baseInterfaceCache = null;
     }
@@ -393,6 +399,8 @@ class Class_ implements IHasAttributesAndTrivia, IInterface, IResolvedImportable
         $this->methods = $methods;
         $this->isExported = $isExported;
         $this->leadingTrivia = $leadingTrivia;
+        $this->parentFile = null;
+        $this->attributes = null;
         $this->classReferences = array();
         $this->thisReferences = array();
         $this->staticThisReferences = array();
@@ -436,9 +444,11 @@ class Field implements IVariableWithInitializer, IHasAttributesAndTrivia, IClass
         $this->constructorParam = $constructorParam;
         $this->leadingTrivia = $leadingTrivia;
         $this->parentInterface = null;
+        $this->attributes = null;
         $this->staticReferences = array();
         $this->instanceReferences = array();
         $this->interfaceDeclarations = null;
+        $this->mutability = null;
     }
     
     function getParentInterface() {
@@ -469,8 +479,10 @@ class Property implements IVariable, IHasAttributesAndTrivia, IClassMember, IAst
         $this->isStatic = $isStatic;
         $this->leadingTrivia = $leadingTrivia;
         $this->parentClass = null;
+        $this->attributes = null;
         $this->staticReferences = array();
         $this->instanceReferences = array();
+        $this->mutability = null;
     }
     
     function getParentInterface() {
@@ -496,7 +508,9 @@ class MethodParameter implements IVariableWithInitializer, IReferencable, IHasAt
         $this->leadingTrivia = $leadingTrivia;
         $this->fieldDecl = null;
         $this->parentMethod = null;
+        $this->attributes = null;
         $this->references = array();
+        $this->mutability = null;
     }
     
     function createReference() {
@@ -519,6 +533,7 @@ class Constructor implements IMethodBaseWithTrivia {
         $this->superCallArgs = $superCallArgs;
         $this->leadingTrivia = $leadingTrivia;
         $this->parentClass = null;
+        $this->attributes = null;
     }
 }
 
@@ -550,6 +565,7 @@ class Method implements IMethodBaseWithTrivia, IClassMember {
         $this->async = $async;
         $this->leadingTrivia = $leadingTrivia;
         $this->parentInterface = null;
+        $this->attributes = null;
         $this->interfaceDeclarations = null;
         $this->overrides = null;
         $this->overriddenBy = array();
@@ -579,6 +595,8 @@ class GlobalFunction implements IMethodBaseWithTrivia, IResolvedImportable, IRef
         $this->returns = $returns;
         $this->isExported = $isExported;
         $this->leadingTrivia = $leadingTrivia;
+        $this->parentFile = null;
+        $this->attributes = null;
         $this->references = array();
     }
     

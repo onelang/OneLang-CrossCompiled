@@ -92,8 +92,8 @@ class InterfacePackage {
     
     function __construct($content) {
         $this->content = $content;
-        $this->interfaceYaml = InterfaceYaml::fromYaml(OneYaml::load(@$content->files["interface.yaml"] ?? null));
-        $this->definition = @$content->files[$this->interfaceYaml->definitionFile] ?? null;
+        $this->interfaceYaml = InterfaceYaml::fromYaml(OneYaml::load((@$content->files["interface.yaml"] ?? null)));
+        $this->definition = (@$content->files[$this->interfaceYaml->definitionFile] ?? null);
     }
 }
 
@@ -191,7 +191,7 @@ class ImplPackageYaml {
         $langDict = $obj->dict("languages");
         if ($langDict !== null)
             foreach (array_keys($langDict) as $langName)
-                $languages[$langName] = ImplPkgLanguage::fromYaml(@$langDict[$langName] ?? null);
+                $languages[$langName] = ImplPkgLanguage::fromYaml((@$langDict[$langName] ?? null));
         
         return new ImplPackageYaml($obj->dbl("file-version"), $obj->str("vendor"), $obj->str("name"), $obj->str("description"), $obj->str("version"), $obj->strArr("includes"), array_map(function ($impl) { return ImplPkgImplementation::fromYaml($impl); }, $obj->arr("implements")), $languages);
     }
@@ -205,12 +205,12 @@ class ImplementationPackage {
     function __construct($content) {
         $this->content = $content;
         $this->implementations = array();
-        $this->implementationYaml = ImplPackageYaml::fromYaml(OneYaml::load(@$content->files["package.yaml"] ?? null));
+        $this->implementationYaml = ImplPackageYaml::fromYaml(OneYaml::load((@$content->files["package.yaml"] ?? null)));
         $this->implementations = array();
         foreach ($this->implementationYaml->implements_ ?? array() as $impl)
             $this->implementations[] = $impl;
         foreach ($this->implementationYaml->includes ?? array() as $include) {
-            $included = ImplPackageYaml::fromYaml(OneYaml::load(@$content->files[$include] ?? null));
+            $included = ImplPackageYaml::fromYaml(OneYaml::load((@$content->files[$include] ?? null)));
             foreach ($included->implements_ as $impl)
                 $this->implementations[] = $impl;
         }
@@ -260,16 +260,16 @@ class PackageManager {
                 
                 $incDir = $pkgImpl->nativeIncludeDir;
                 if ($incDir !== null) {
-                    if (!substr_compare($incDir, "/", strlen($incDir) - strlen("/"), strlen("/")) === 0)
+                    if (!(substr_compare($incDir, "/", strlen($incDir) - strlen("/"), strlen("/")) === 0))
                         $incDir .= "/";
                     $prefix = "native/" . $incDir;
-                    foreach (array_map(function ($x) use ($prefix) { return substr($x, strlen($prefix)); }, array_values(array_filter(array_keys($pkg->content->files), function ($x) use ($prefix) { return substr_compare($x, $prefix, 0, strlen($prefix)) === 0; }))) as $fn)
+                    foreach (array_map(function ($x) use ($prefix) { return substr($x, strlen($prefix)); }, array_values(array_filter(array_keys($pkg->content->files), function ($x) use ($prefix) { return (substr_compare($x, $prefix, 0, strlen($prefix)) === 0); }))) as $fn)
                         $fileNamePaths[$fn] = $prefix . $fn;
                 }
                 
                 foreach (array_keys($fileNamePaths) as $fileName) {
-                    $path = @$fileNamePaths[$fileName] ?? null;
-                    $code = @$pkg->content->files[$path] ?? null;
+                    $path = (@$fileNamePaths[$fileName] ?? null);
+                    $code = (@$pkg->content->files[$path] ?? null);
                     if ($code === null)
                         throw new \OneLang\Core\Error("File '" . $fileName . "' was not found for package '" . $pkg->implementationYaml->name . "'");
                     $impl = new PackageNativeImpl();

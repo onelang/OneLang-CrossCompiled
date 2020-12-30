@@ -41,7 +41,7 @@ public class Reader {
     }
     
     public String getPreview() {
-        var preview = this.input.substring(this.offset, this.offset + 30).replaceAll("\\n", "\\n");
+        var preview = this.input.substring(this.offset, this.offset + 30).replaceAll("\\n", "\\\\n");
         if (preview.length() == 30)
             preview += "...";
         return preview;
@@ -174,7 +174,7 @@ public class Reader {
     public void expectToken(String token, String errorMsg) {
         if (!this.readToken(token)) {
             var result = errorMsg;
-            this.fail(result != null ? result : "expected token '" + token + "'", -1);
+            this.fail((result != null ? (result) : ("expected token '" + token + "'")), -1);
         }
     }
     
@@ -182,7 +182,7 @@ public class Reader {
         var result = this.readString();
         if (result == null) {
             var result2 = errorMsg;
-            this.fail(result2 != null ? result2 : "expected string", -1);
+            this.fail((result2 != null ? (result2) : ("expected string")), -1);
         }
         return result;
     }
@@ -314,7 +314,7 @@ public class Reader {
         var id = this.readIdentifier();
         if (id == null) {
             var result = errorMsg;
-            this.fail(result != null ? result : "expected identifier", -1);
+            this.fail((result != null ? (result) : ("expected identifier")), -1);
         }
         return id;
     }

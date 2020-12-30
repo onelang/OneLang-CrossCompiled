@@ -4,7 +4,8 @@ using Utils;
 
 namespace Utils
 {
-    public class StatementDebugger : AstTransformer {
+    public class StatementDebugger : AstTransformer
+    {
         public string stmtFilterRegex;
         
         public StatementDebugger(string stmtFilterRegex): base("StatementDebugger")

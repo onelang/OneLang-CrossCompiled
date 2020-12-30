@@ -3,7 +3,8 @@ using One.Transforms.InferTypesPlugins.Helpers;
 
 namespace One.Transforms.InferTypesPlugins
 {
-    public class ResolveNewCalls : InferTypesPlugin {
+    public class ResolveNewCalls : InferTypesPlugin
+    {
         public ResolveNewCalls(): base("ResolveNewCalls")
         {
             

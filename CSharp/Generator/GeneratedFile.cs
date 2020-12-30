@@ -2,7 +2,8 @@
 
 namespace Generator
 {
-    public class GeneratedFile {
+    public class GeneratedFile
+    {
         public string path;
         public string content;
         

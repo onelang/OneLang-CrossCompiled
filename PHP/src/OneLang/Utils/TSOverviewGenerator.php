@@ -109,7 +109,7 @@ class TSOverviewGenerator {
         if ($item->leadingTrivia !== null && strlen($item->leadingTrivia) > 0)
             $result .= $item->leadingTrivia;
         if ($item->attributes !== null)
-            $result .= implode("", array_map(function ($x) use ($item) { return "/// {ATTR} name=\"" . $x . "\", value=" . json_encode(@$item->attributes[$x] ?? null, JSON_UNESCAPED_SLASHES) . "\n"; }, array_keys($item->attributes)));
+            $result .= implode("", array_map(function ($x) use ($item) { return "/// {ATTR} name=\"" . $x . "\", value=" . json_encode((@$item->attributes[$x] ?? null), JSON_UNESCAPED_SLASHES) . "\n"; }, array_keys($item->attributes)));
         return $result;
     }
     

@@ -9,7 +9,8 @@ using VM;
 
 namespace Generator
 {
-    public class CodeTemplate {
+    public class CodeTemplate
+    {
         public string template;
         public string[] includes;
         public Expression ifExpr;
@@ -22,7 +23,8 @@ namespace Generator
         }
     }
     
-    public class CallTemplate {
+    public class CallTemplate
+    {
         public string className;
         public string methodName;
         public string[] args;
@@ -37,7 +39,8 @@ namespace Generator
         }
     }
     
-    public class FieldAccessTemplate {
+    public class FieldAccessTemplate
+    {
         public string className;
         public string fieldName;
         public CodeTemplate template;
@@ -50,7 +53,8 @@ namespace Generator
         }
     }
     
-    public class ExpressionValue : IVMValue {
+    public class ExpressionValue : IVMValue
+    {
         public Expression value;
         
         public ExpressionValue(Expression value)
@@ -64,7 +68,8 @@ namespace Generator
         }
     }
     
-    public class TypeValue : IVMValue {
+    public class TypeValue : IVMValue
+    {
         public IType type;
         
         public TypeValue(IType type)
@@ -78,7 +83,8 @@ namespace Generator
         }
     }
     
-    public class LambdaValue : ICallableValue {
+    public class LambdaValue : ICallableValue
+    {
         public Func<IVMValue[], IVMValue> callback;
         
         public LambdaValue(Func<IVMValue[], IVMValue> callback)
@@ -97,7 +103,8 @@ namespace Generator
         }
     }
     
-    public class TemplateFileGeneratorPlugin : IGeneratorPlugin, IVMHooks {
+    public class TemplateFileGeneratorPlugin : IGeneratorPlugin, IVMHooks
+    {
         public Dictionary<string, List<CallTemplate>> methods;
         public Dictionary<string, FieldAccessTemplate> fields;
         public Dictionary<string, IVMValue> modelGlobals;
@@ -111,12 +118,15 @@ namespace Generator
             this.modelGlobals = new Dictionary<string, IVMValue> {};
             var root = OneYaml.load(templateYaml);
             var exprDict = root.dict("expressions");
+            if (exprDict == null)
+                return;
             
             foreach (var exprStr in Object.keys(exprDict)) {
                 var val = exprDict.get(exprStr);
-                var ifStr = val.str("if");
+                var tmplOnly = val.type() == ValueType.String;
+                var ifStr = tmplOnly ? null : val.str("if");
                 var ifExpr = ifStr == null ? null : new TypeScriptParser2(ifStr, null).parseExpression();
-                var tmpl = val.type() == ValueType.String ? new CodeTemplate(val.asStr(), new string[0], null) : new CodeTemplate(val.str("template"), val.strArr("includes"), ifExpr);
+                var tmpl = tmplOnly ? new CodeTemplate(val.asStr(), new string[0], null) : new CodeTemplate(val.str("template"), val.strArr("includes"), ifExpr);
                 
                 this.addExprTemplate(exprStr, tmpl);
             }
@@ -144,6 +154,7 @@ namespace Generator
         {
             if (!(this.methods.hasKey(name)))
                 this.methods.set(name, new List<CallTemplate>());
+            // @php $this->methods[$name][] = $callTmpl;
             this.methods.get(name).push(callTmpl);
         }
         
@@ -180,12 +191,12 @@ namespace Generator
             // quick return
             
             CodeTemplate codeTmpl = null;
-            var model = new Dictionary<string, IVMValue> {};
-            var context = new VMContext(new ObjectValue(model), this);
+            var model = new ObjectValue(new Dictionary<string, IVMValue> {});
+            var context = new VMContext(model, this);
             
-            model.set("type", new TypeValue(expr.getType()));
+            model.props.set("type", new TypeValue(expr.getType()));
             foreach (var name in Object.keys(this.modelGlobals))
-                model.set(name, this.modelGlobals.get(name));
+                model.props.set(name, this.modelGlobals.get(name));
             
             if (isCallExpr) {
                 var call = ((ICallExpression)expr);
@@ -197,9 +208,9 @@ namespace Generator
                 
                 foreach (var callTmpl in callTmpls) {
                     if (expr is InstanceMethodCallExpression instMethCallExpr)
-                        model.set("this", new ExpressionValue(instMethCallExpr.object_));
+                        model.props.set("this", new ExpressionValue(instMethCallExpr.object_));
                     for (int i = 0; i < callTmpl.args.length(); i++)
-                        model.set(callTmpl.args.get(i), new ExpressionValue(call.args.get(i)));
+                        model.props.set(callTmpl.args.get(i), new ExpressionValue(call.args.get(i)));
                     
                     if (callTmpl.template.ifExpr == null || (((BooleanValue)new ExprVM(context).evaluate(callTmpl.template.ifExpr))).value) {
                         codeTmpl = callTmpl.template;
@@ -214,7 +225,7 @@ namespace Generator
                     return null;
                 
                 if (expr is InstanceFieldReference instFieldRef || expr is InstancePropertyReference)
-                    model.set("this", new ExpressionValue((((IInstanceMemberReference)expr)).object_));
+                    model.props.set("this", new ExpressionValue((((IInstanceMemberReference)expr)).object_));
                 codeTmpl = field.template;
             }
             else

@@ -31,7 +31,7 @@ class NameUtils {
         }
         
         $shortName = implode("", $shortNameParts);
-        if (substr_compare($fullName, "s", strlen($fullName) - strlen("s"), strlen("s")) === 0 && !substr_compare($shortName, "s", strlen($shortName) - strlen("s"), strlen("s")) === 0)
+        if ((substr_compare($fullName, "s", strlen($fullName) - strlen("s"), strlen("s")) === 0) && !(substr_compare($shortName, "s", strlen($shortName) - strlen("s"), strlen("s")) === 0))
             $shortName .= "s";
         return $shortName;
     }

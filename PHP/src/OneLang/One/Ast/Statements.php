@@ -21,7 +21,8 @@ class Statement implements IHasAttributesAndTrivia, IAstNode {
     public $attributes;
     
     function __construct() {
-        
+        $this->leadingTrivia = null;
+        $this->attributes = null;
     }
 }
 
@@ -95,6 +96,7 @@ class VariableDeclaration extends Statement implements IVariableWithInitializer,
         $this->type = $type;
         $this->initializer = $initializer;
         $this->references = array();
+        $this->mutability = null;
     }
     
     function createReference() {
@@ -132,7 +134,9 @@ class ForeachVariable implements IVariable, IReferencable {
     
     function __construct($name) {
         $this->name = $name;
+        $this->type = null;
         $this->references = array();
+        $this->mutability = null;
     }
     
     function createReference() {
@@ -165,6 +169,7 @@ class ForVariable implements IVariableWithInitializer, IReferencable {
         $this->type = $type;
         $this->initializer = $initializer;
         $this->references = array();
+        $this->mutability = null;
     }
     
     function createReference() {
@@ -197,6 +202,7 @@ class CatchVariable implements IVariable, IReferencable {
         $this->name = $name;
         $this->type = $type;
         $this->references = array();
+        $this->mutability = null;
     }
     
     function createReference() {

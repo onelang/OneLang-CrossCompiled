@@ -36,7 +36,7 @@ public class UseDefaultCallArgsExplicitly extends AstTransformer {
         for (Integer i = 0; i < method.getParameters().length; i++) {
             var init = method.getParameters()[i].getInitializer();
             if (i >= args.length && init == null) {
-                this.errorMan.throw_("Missing default value for parameter #" + i + 1 + "!");
+                this.errorMan.throw_("Missing default value for parameter #" + (i + 1) + "!");
                 break;
             }
             newArgs.add(i < args.length ? args[i] : init);

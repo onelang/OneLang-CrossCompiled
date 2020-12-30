@@ -10,7 +10,8 @@ namespace VM
         IVMValue call(IVMValue[] args);
     }
     
-    public class ObjectValue : IVMValue {
+    public class ObjectValue : IVMValue
+    {
         public Dictionary<string, IVMValue> props;
         
         public ObjectValue(Dictionary<string, IVMValue> props)
@@ -24,7 +25,8 @@ namespace VM
         }
     }
     
-    public class StringValue : IVMValue {
+    public class StringValue : IVMValue
+    {
         public string value;
         
         public StringValue(string value)
@@ -38,7 +40,8 @@ namespace VM
         }
     }
     
-    public class NumericValue : IVMValue {
+    public class NumericValue : IVMValue
+    {
         public int value;
         
         public NumericValue(int value)
@@ -52,7 +55,8 @@ namespace VM
         }
     }
     
-    public class BooleanValue : IVMValue {
+    public class BooleanValue : IVMValue
+    {
         public bool value;
         
         public BooleanValue(bool value)
@@ -66,7 +70,8 @@ namespace VM
         }
     }
     
-    public class ArrayValue : IVMValue {
+    public class ArrayValue : IVMValue
+    {
         public IVMValue[] items;
         
         public ArrayValue(IVMValue[] items)

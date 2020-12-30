@@ -12,8 +12,8 @@ import OneLang.Generator.IGeneratorPlugin as iGenPlug
 import OneLang.One.ITransformer as iTrans
 import OneLang.Generator.TemplateFileGeneratorPlugin as templFileGenPlug
 import OneLang.VM.Values as vals
-import re
 import json
+import re
 
 class PhpGenerator:
     def __init__(self):
@@ -41,12 +41,20 @@ class PhpGenerator:
         # TODO: hack?
         if isinstance(plugin, templFileGenPlug.TemplateFileGeneratorPlugin):
             plugin.model_globals["escape"] = templFileGenPlug.LambdaValue(lambda args: vals.StringValue(self.escape(args[0])))
+            plugin.model_globals["escapeBackslash"] = templFileGenPlug.LambdaValue(lambda args: vals.StringValue(self.escape_backslash(args[0])))
     
     def escape(self, value):
         if isinstance(value, templFileGenPlug.ExpressionValue) and isinstance(value.value, exprs.RegexLiteral):
-            return json.dumps("/" + re.sub("/", "\\/", value.value.pattern) + "/")
+            return json.dumps("/" + re.sub("/", "\\\\/", value.value.pattern) + "/", separators=(',', ':'))
+        elif isinstance(value, templFileGenPlug.ExpressionValue) and isinstance(value.value, exprs.StringLiteral):
+            return json.dumps(value.value.string_value, separators=(',', ':'))
         elif isinstance(value, vals.StringValue):
-            return json.dumps(value.value)
+            return json.dumps(value.value, separators=(',', ':'))
+        raise Error(f'''Not supported VMValue for escape()''')
+    
+    def escape_backslash(self, value):
+        if isinstance(value, templFileGenPlug.ExpressionValue) and isinstance(value.value, exprs.StringLiteral):
+            return json.dumps(re.sub("\\\\", "\\\\\\\\", value.value.string_value), separators=(',', ':'))
         raise Error(f'''Not supported VMValue for escape()''')
     
     def name_(self, name):
@@ -238,15 +246,15 @@ class PhpGenerator:
             if expr.method.parent_interface.parent_file.export_scope == None:
                 res = f'''\\OneLang\\Core\\{res}'''
         elif isinstance(expr, exprs.GlobalFunctionCallExpression):
-            res = f'''Global.{self.name_(expr.func.name)}{self.expr_call([], expr.args)}'''
+            res = f'''{self.name_(expr.func.name)}{self.expr_call([], expr.args)}'''
         elif isinstance(expr, exprs.LambdaCallExpression):
-            res = f'''{self.expr(expr.method)}({", ".join(list(map(lambda x: self.expr(x), expr.args)))})'''
+            res = f'''call_user_func({self.expr(expr.method)}, {", ".join(list(map(lambda x: self.expr(x), expr.args)))})'''
         elif isinstance(expr, exprs.BooleanLiteral):
             res = f'''{("true" if expr.bool_value else "false")}'''
         elif isinstance(expr, exprs.StringLiteral):
-            res = f'''{re.sub("\\$", "\\$", json.dumps(expr.string_value))}'''
+            res = re.sub("\\$", "\\\\$", json.dumps(expr.string_value, separators=(',', ':')))
         elif isinstance(expr, exprs.NumericLiteral):
-            res = f'''{expr.value_as_text}'''
+            res = expr.value_as_text
         elif isinstance(expr, exprs.CharacterLiteral):
             res = f'''\'{expr.char_value}\''''
         elif isinstance(expr, exprs.ElementAccessExpression):
@@ -266,6 +274,8 @@ class PhpGenerator:
                             lit += "\\r"
                         elif chr == "\t":
                             lit += "\\t"
+                        elif chr == "$":
+                            lit += "\\$"
                         elif chr == "\\":
                             lit += "\\\\"
                         elif chr == "\"":
@@ -280,7 +290,8 @@ class PhpGenerator:
                     parts.append(f'''"{lit}"''')
                 else:
                     repr = self.expr(part.expression)
-                    parts.append(f'''({repr})''' if isinstance(part.expression, exprs.ConditionalExpression) else repr)
+                    is_complex = isinstance(part.expression, exprs.ConditionalExpression) or isinstance(part.expression, exprs.BinaryExpression) or isinstance(part.expression, exprs.NullCoalesceExpression)
+                    parts.append(f'''({repr})''' if is_complex else repr)
             res = " . ".join(parts)
         elif isinstance(expr, exprs.BinaryExpression):
             op = expr.operator
@@ -313,7 +324,7 @@ class PhpGenerator:
         elif isinstance(expr, exprs.ParenthesizedExpression):
             res = f'''({self.expr(expr.expression)})'''
         elif isinstance(expr, exprs.RegexLiteral):
-            res = f'''new \\OneLang\\Core\\RegExp({json.dumps(expr.pattern)})'''
+            res = f'''new \\OneLang\\Core\\RegExp({json.dumps(expr.pattern, separators=(',', ':'))})'''
         elif isinstance(expr, types.Lambda):
             params = list(map(lambda x: f'''${self.name_(x.name)}''', expr.parameters))
             # TODO: captures should not be null
@@ -324,8 +335,8 @@ class PhpGenerator:
         elif isinstance(expr, exprs.UnaryExpression) and expr.unary_type == exprs.UNARY_TYPE.POSTFIX:
             res = f'''{self.expr(expr.operand)}{expr.operator}'''
         elif isinstance(expr, exprs.MapLiteral):
-            repr = ",\n".join(list(map(lambda item: f'''{json.dumps(item.key)} => {self.expr(item.value)}''', expr.items)))
-            res = "Array(" + ("" if repr == "" else f'''\n{self.pad(repr)}\n''' if "\n" in repr else f'''({repr}''') + ")"
+            repr = ",\n".join(list(map(lambda item: f'''{json.dumps(item.key, separators=(',', ':'))} => {self.expr(item.value)}''', expr.items)))
+            res = "Array(" + ("" if repr == "" else f'''\n{self.pad(repr)}\n''' if "\n" in repr else repr) + ")"
         elif isinstance(expr, exprs.NullLiteral):
             res = f'''null'''
         elif isinstance(expr, exprs.AwaitExpression):
@@ -374,8 +385,8 @@ class PhpGenerator:
     
     def stmt_default(self, stmt):
         res = "UNKNOWN-STATEMENT"
-        if stmt.attributes != None and "csharp" in stmt.attributes:
-            res = stmt.attributes.get("csharp")
+        if stmt.attributes != None and "php" in stmt.attributes:
+            res = stmt.attributes.get("php")
         elif isinstance(stmt, stats.BreakStatement):
             res = "break;"
         elif isinstance(stmt, stats.ReturnStatement):
@@ -452,9 +463,7 @@ class PhpGenerator:
                 is_initializer_complex = field.initializer != None and not (isinstance(field.initializer, exprs.StringLiteral)) and not (isinstance(field.initializer, exprs.BooleanLiteral)) and not (isinstance(field.initializer, exprs.NumericLiteral))
                 
                 prefix = f'''{self.vis(field.visibility, True)}{self.pre_if("static ", field.is_static)}'''
-                if len(field.interface_declarations) > 0:
-                    field_reprs.append(f'''{prefix}{self.var_wo_init(field, field)};''')
-                elif is_initializer_complex:
+                if is_initializer_complex:
                     if field.is_static:
                         static_constructor_stmts.append(stats.ExpressionStatement(exprs.BinaryExpression(refs.StaticFieldReference(field), "=", field.initializer)))
                     else:
@@ -485,7 +494,12 @@ class PhpGenerator:
                 
                 parent_call = f'''parent::__construct({", ".join(list(map(lambda x: self.expr(x), cls_.constructor_.super_call_args)))});\n''' if cls_.constructor_.super_call_args != None else ""
                 
-                res_list.append(self.pre_if("/* throws */ ", cls_.constructor_.throws) + "function __construct" + f'''({", ".join(list(map(lambda p: self.var(p, p), cls_.constructor_.parameters)))})''' + f''' {{\n{self.pad(parent_call + self.stmts(constr_field_inits + complex_field_inits + cls_.constructor_.body.statements))}\n}}''')
+                # @java var stmts = Stream.of(constrFieldInits, complexFieldInits, ((Class)cls).constructor_.getBody().statements).flatMap(Collection::stream).toArray(Statement[]::new);
+                # @java-import java.util.Collection
+                # @java-import java.util.stream.Stream
+                stmts = constr_field_inits + complex_field_inits + cls_.constructor_.body.statements
+                
+                res_list.append(self.pre_if("/* throws */ ", cls_.constructor_.throws) + "function __construct" + f'''({", ".join(list(map(lambda p: self.var(p, p), cls_.constructor_.parameters)))})''' + f''' {{\n{self.pad(parent_call + self.stmts(stmts))}\n}}''')
             elif len(complex_field_inits) > 0:
                 res_list.append(f'''function __construct()\n{{\n{self.pad(self.stmts(complex_field_inits))}\n}}''')
         elif isinstance(cls_, types.Interface):
@@ -498,7 +512,9 @@ class PhpGenerator:
             # declaration only
             methods.append(("" if isinstance(method.parent_interface, types.Interface) else self.vis(method.visibility, False)) + self.pre_if("static ", method.is_static) + self.pre_if("/* throws */ ", method.throws) + f'''function ''' + self.name_(method.name) + self.type_args(method.type_arguments) + f'''({", ".join(list(map(lambda p: self.var(p, None), method.parameters)))})''' + (f''' {{\n{self.pad(self.stmts(method.body.statements))}\n}}''' if method.body != None else ";"))
         res_list.append("\n\n".join(methods))
-        return f''' {{\n{self.pad("\n\n".join(list(filter(lambda x: x != "", res_list))))}\n}}''' + (f'''\n{self.name_(cls_.name)}::StaticInit();''' if len(static_constructor_stmts) > 0 else "")
+        
+        res_list_joined = self.pad("\n\n".join(list(filter(lambda x: x != "", res_list))))
+        return f''' {{\n{res_list_joined}\n}}''' + (f'''\n{self.name_(cls_.name)}::StaticInit();''' if len(static_constructor_stmts) > 0 else "")
     
     def pad(self, str):
         return "\n".join(list(map(lambda x: f'''    {x}''', re.split("\\n", str))))
@@ -539,7 +555,8 @@ class PhpGenerator:
         usings_set = dict()
         for imp in source_file.imports:
             if "php-use" in imp.attributes:
-                usings_set[imp.attributes.get("php-use")] = None
+                for item in re.split("\\n", imp.attributes.get("php-use")):
+                    usings_set[item] = None
             else:
                 file_ns = self.path_to_ns(imp.export_scope.scope_name)
                 if file_ns == "index":
@@ -547,11 +564,11 @@ class PhpGenerator:
                 for imp_item in imp.imports:
                     usings_set[f'''{imp.export_scope.package_name}\\{file_ns}\\{self.name_(imp_item.name)}'''] = None
         
-        for using in self.usings:
+        for using in self.usings.keys():
             usings_set[using] = None
         
         usings = []
-        for using in usings_set:
+        for using in usings_set.keys():
             usings.append(f'''use {using};''')
         
         result = "\n\n".join(list(filter(lambda x: x != "", ["\n".join(usings), "\n".join(enums), "\n\n".join(intfs), "\n\n".join(classes), main])))

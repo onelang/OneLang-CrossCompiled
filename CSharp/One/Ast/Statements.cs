@@ -4,9 +4,10 @@ using System.Linq;
 
 namespace One.Ast
 {
-    public class Statement : IHasAttributesAndTrivia, IAstNode {
-        public string leadingTrivia { get; set; }
-        public Dictionary<string, string> attributes { get; set; }
+    public class Statement : IHasAttributesAndTrivia, IAstNode
+    {
+        public string leadingTrivia { get; set; } = null;
+        public Dictionary<string, string> attributes { get; set; } = null;
         
         public Statement()
         {
@@ -14,7 +15,8 @@ namespace One.Ast
         }
     }
     
-    public class IfStatement : Statement {
+    public class IfStatement : Statement
+    {
         public Expression condition;
         public Block then;
         public Block else_;
@@ -27,7 +29,8 @@ namespace One.Ast
         }
     }
     
-    public class ReturnStatement : Statement {
+    public class ReturnStatement : Statement
+    {
         public Expression expression;
         
         public ReturnStatement(Expression expression): base()
@@ -36,7 +39,8 @@ namespace One.Ast
         }
     }
     
-    public class ThrowStatement : Statement {
+    public class ThrowStatement : Statement
+    {
         public Expression expression;
         
         public ThrowStatement(Expression expression): base()
@@ -45,7 +49,8 @@ namespace One.Ast
         }
     }
     
-    public class ExpressionStatement : Statement {
+    public class ExpressionStatement : Statement
+    {
         public Expression expression;
         
         public ExpressionStatement(Expression expression): base()
@@ -54,15 +59,18 @@ namespace One.Ast
         }
     }
     
-    public class BreakStatement : Statement {
+    public class BreakStatement : Statement
+    {
         
     }
     
-    public class ContinueStatement : Statement {
+    public class ContinueStatement : Statement
+    {
         
     }
     
-    public class UnsetStatement : Statement {
+    public class UnsetStatement : Statement
+    {
         public Expression expression;
         
         public UnsetStatement(Expression expression): base()
@@ -71,12 +79,13 @@ namespace One.Ast
         }
     }
     
-    public class VariableDeclaration : Statement, IVariableWithInitializer, IReferencable {
+    public class VariableDeclaration : Statement, IVariableWithInitializer, IReferencable
+    {
         public string name { get; set; }
         public IType type { get; set; }
         public Expression initializer { get; set; }
         public List<VariableDeclarationReference> references;
-        public MutabilityInfo mutability { get; set; }
+        public MutabilityInfo mutability { get; set; } = null;
         
         public VariableDeclaration(string name, IType type, Expression initializer): base()
         {
@@ -92,7 +101,8 @@ namespace One.Ast
         }
     }
     
-    public class WhileStatement : Statement {
+    public class WhileStatement : Statement
+    {
         public Expression condition;
         public Block body;
         
@@ -103,7 +113,8 @@ namespace One.Ast
         }
     }
     
-    public class DoStatement : Statement {
+    public class DoStatement : Statement
+    {
         public Expression condition;
         public Block body;
         
@@ -114,11 +125,12 @@ namespace One.Ast
         }
     }
     
-    public class ForeachVariable : IVariable, IReferencable {
+    public class ForeachVariable : IVariable, IReferencable
+    {
         public string name { get; set; }
-        public IType type { get; set; }
+        public IType type { get; set; } = null;
         public List<ForeachVariableReference> references;
-        public MutabilityInfo mutability { get; set; }
+        public MutabilityInfo mutability { get; set; } = null;
         
         public ForeachVariable(string name)
         {
@@ -132,7 +144,8 @@ namespace One.Ast
         }
     }
     
-    public class ForeachStatement : Statement {
+    public class ForeachStatement : Statement
+    {
         public ForeachVariable itemVar;
         public Expression items;
         public Block body;
@@ -145,12 +158,13 @@ namespace One.Ast
         }
     }
     
-    public class ForVariable : IVariableWithInitializer, IReferencable {
+    public class ForVariable : IVariableWithInitializer, IReferencable
+    {
         public string name { get; set; }
         public IType type { get; set; }
         public Expression initializer { get; set; }
         public List<ForVariableReference> references;
-        public MutabilityInfo mutability { get; set; }
+        public MutabilityInfo mutability { get; set; } = null;
         
         public ForVariable(string name, IType type, Expression initializer)
         {
@@ -166,7 +180,8 @@ namespace One.Ast
         }
     }
     
-    public class ForStatement : Statement {
+    public class ForStatement : Statement
+    {
         public ForVariable itemVar;
         public Expression condition;
         public Expression incrementor;
@@ -181,11 +196,12 @@ namespace One.Ast
         }
     }
     
-    public class CatchVariable : IVariable, IReferencable {
+    public class CatchVariable : IVariable, IReferencable
+    {
         public string name { get; set; }
         public IType type { get; set; }
         public List<CatchVariableReference> references;
-        public MutabilityInfo mutability { get; set; }
+        public MutabilityInfo mutability { get; set; } = null;
         
         public CatchVariable(string name, IType type)
         {
@@ -200,7 +216,8 @@ namespace One.Ast
         }
     }
     
-    public class TryStatement : Statement {
+    public class TryStatement : Statement
+    {
         public Block tryBody;
         public CatchVariable catchVar;
         public Block catchBody;
@@ -217,7 +234,8 @@ namespace One.Ast
         }
     }
     
-    public class Block {
+    public class Block
+    {
         public List<Statement> statements;
         
         public Block(Statement[] statements)

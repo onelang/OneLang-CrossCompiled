@@ -3,7 +3,8 @@ using System;
 
 namespace Utils
 {
-    public class ArrayHelper {
+    public class ArrayHelper
+    {
         public static T[] sortBy<T>(T[] items, Func<T, int> keySelector)
         {
             // @java-import java.util.Arrays

@@ -9,7 +9,7 @@ use OneLang\One\Ast\Types\SourceFile;
 use OneLang\One\ITransformer\ITransformer;
 
 class CollectInheritanceInfo implements ITransformer {
-    public $name;
+    public $name = "CollectInheritanceInfo";
     
     function __construct() {
         // C# fix

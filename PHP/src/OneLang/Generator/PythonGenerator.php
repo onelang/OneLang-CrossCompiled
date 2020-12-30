@@ -107,6 +107,11 @@ use OneLang\One\Ast\Interfaces\IExpression;
 use OneLang\One\Ast\Interfaces\IType;
 use OneLang\Generator\IGenerator\IGenerator;
 use OneLang\One\ITransformer\ITransformer;
+use OneLang\VM\Values\IVMValue;
+use OneLang\Generator\TemplateFileGeneratorPlugin\ExpressionValue;
+use OneLang\Generator\TemplateFileGeneratorPlugin\LambdaValue;
+use OneLang\Generator\TemplateFileGeneratorPlugin\TemplateFileGeneratorPlugin;
+use OneLang\VM\Values\StringValue;
 
 class PythonGenerator implements IGenerator {
     public $tmplStrLevel = 0;
@@ -120,7 +125,7 @@ class PythonGenerator implements IGenerator {
     public $plugins;
     
     function __construct() {
-        $this->reservedWords = array("from", "async", "global", "lambda", "cls", "import", "pass");
+        $this->reservedWords = array("from", "async", "global", "lambda", "cls", "import", "pass", "class");
         $this->fieldToMethodHack = array();
         $this->plugins = array();
     }
@@ -137,12 +142,31 @@ class PythonGenerator implements IGenerator {
         return array();
     }
     
-    function addPlugin($plugin) {
-        $this->plugins[] = $plugin;
+    function addInclude($include) {
+        $this->imports->add("import " . $include);
     }
     
-    function addInclude($include) {
-        $this->imports->add($include);
+    function addPlugin($plugin) {
+        $this->plugins[] = $plugin;
+        
+        if ($plugin instanceof TemplateFileGeneratorPlugin) {
+            $plugin->modelGlobals["escape"] = new LambdaValue(function ($args) { return new StringValue($this->escape($args[0])); });
+            $plugin->modelGlobals["escapeBackslash"] = new LambdaValue(function ($args) { return new StringValue($this->escapeBackslash($args[0])); });
+        }
+    }
+    
+    function escape($value) {
+        if ($value instanceof ExpressionValue && $value->value instanceof RegexLiteral)
+            return json_encode($value->value->pattern, JSON_UNESCAPED_SLASHES);
+        else if ($value instanceof StringValue)
+            return json_encode($value->value, JSON_UNESCAPED_SLASHES);
+        throw new \OneLang\Core\Error("Not supported VMValue for escape()");
+    }
+    
+    function escapeBackslash($value) {
+        if ($value instanceof ExpressionValue && $value->value instanceof StringLiteral)
+            return json_encode(preg_replace("/\\\\/", "\\\\\\\\", $value->value->stringValue), JSON_UNESCAPED_SLASHES);
+        throw new \OneLang\Core\Error("Not supported VMValue for escape()");
     }
     
     function type($type) {
@@ -452,8 +476,12 @@ class PythonGenerator implements IGenerator {
             return "break";
         else if ($stmt instanceof ReturnStatement)
             return $stmt->expression === null ? "return" : "return " . $this->expr($stmt->expression);
-        else if ($stmt instanceof UnsetStatement)
-            return "/* unset " . $this->expr($stmt->expression) . "; */";
+        else if ($stmt instanceof UnsetStatement) {
+            $obj = ($stmt->expression)->object;
+            $key = ($stmt->expression)->args[0];
+            // TODO: hack: transform unsets before this
+            return "del " . $this->expr($obj) . "[" . $this->expr($key) . "]";
+        }
         else if ($stmt instanceof ThrowStatement)
             return "raise " . $this->expr($stmt->expression);
         else if ($stmt instanceof ExpressionStatement)
@@ -484,7 +512,7 @@ class PythonGenerator implements IGenerator {
         $res = null;
         
         if ($stmt->attributes !== null && array_key_exists("python", $stmt->attributes))
-            $res = @$stmt->attributes["python"] ?? null;
+            $res = (@$stmt->attributes["python"] ?? null);
         else {
             foreach ($this->plugins as $plugin) {
                 $res = $plugin->stmt($stmt);
@@ -512,7 +540,7 @@ class PythonGenerator implements IGenerator {
     }
     
     function cls($cls) {
-        if (@$cls->attributes["external"] ?? null === "true")
+        if ((@$cls->attributes["external"] ?? null) === "true")
             return "";
         $this->currentClass = $cls;
         $resList = array();
@@ -605,11 +633,11 @@ class PythonGenerator implements IGenerator {
             $this->imports->add("from enum import Enum");
         
         foreach (array_values(array_filter($sourceFile->imports, function ($x) { return !$x->importAll; })) as $import_) {
-            if (@$import_->attributes["python-ignore"] ?? null === "true")
+            if ((@$import_->attributes["python-ignore"] ?? null) === "true")
                 continue;
             
             if (array_key_exists("python-import-all", $import_->attributes)) {
-                $this->imports->add("from " . @$import_->attributes["python-import-all"] ?? null . " import *");
+                $this->imports->add("from " . (@$import_->attributes["python-import-all"] ?? null) . " import *");
                 $this->importAllScopes->add($import_->exportScope->getId());
             }
             else {
@@ -622,7 +650,7 @@ class PythonGenerator implements IGenerator {
         foreach ($sourceFile->enums as $enum_) {
             $values = array();
             for ($i = 0; $i < count($enum_->values); $i++)
-                $values[] = $this->enumMemberName($enum_->values[$i]->name) . " = " . $i + 1;
+                $values[] = $this->enumMemberName($enum_->values[$i]->name) . " = " . ($i + 1);
             $enums[] = "class " . $this->enumName($enum_, true) . "(Enum):\n" . $this->pad(implode("\n", $values));
         }
         
@@ -633,7 +661,7 @@ class PythonGenerator implements IGenerator {
         $main = count($sourceFile->mainBlock->statements) > 0 ? $this->block($sourceFile->mainBlock) : "";
         
         $imports = array();
-        foreach ($this->imports as $imp)
+        foreach ($this->imports->values() as $imp)
             $imports[] = $imp;
         
         return implode("\n\n", array_values(array_filter(array(implode("\n", $imports), implode("\n\n", $enums), implode("\n\n", $classes), $main), function ($x) { return $x !== ""; })));
@@ -643,7 +671,7 @@ class PythonGenerator implements IGenerator {
         $this->package = $pkg;
         $result = array();
         foreach (array_keys($pkg->files) as $path)
-            $result[] = new GeneratedFile($pkg->name . "/" . $path . ".py", $this->genFile(@$pkg->files[$path] ?? null));
+            $result[] = new GeneratedFile($pkg->name . "/" . $path . ".py", $this->genFile((@$pkg->files[$path] ?? null)));
         return $result;
     }
 }

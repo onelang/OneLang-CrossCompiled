@@ -8,7 +8,8 @@ namespace Template
         string format(VMContext context);
     }
     
-    public class TemplateBlock : ITemplateNode {
+    public class TemplateBlock : ITemplateNode
+    {
         public ITemplateNode[] items;
         
         public TemplateBlock(ITemplateNode[] items)
@@ -22,7 +23,8 @@ namespace Template
         }
     }
     
-    public class LiteralNode : ITemplateNode {
+    public class LiteralNode : ITemplateNode
+    {
         public string value;
         
         public LiteralNode(string value)
@@ -36,7 +38,8 @@ namespace Template
         }
     }
     
-    public class ExpressionNode : ITemplateNode {
+    public class ExpressionNode : ITemplateNode
+    {
         public Expression expr;
         
         public ExpressionNode(Expression expr)
@@ -60,7 +63,8 @@ namespace Template
         }
     }
     
-    public class ForNode : ITemplateNode {
+    public class ForNode : ITemplateNode
+    {
         public string variableName;
         public Expression itemsExpr;
         public TemplateBlock body;

@@ -31,7 +31,7 @@ class FillMutabilityInfo extends AstTransformer {
     
     protected function visitVariableDeclaration($stmt) {
         parent::visitVariableDeclaration($stmt);
-        if ($stmt->attributes !== null && @$stmt->attributes["mutated"] ?? null === "true")
+        if ($stmt->attributes !== null && (@$stmt->attributes["mutated"] ?? null) === "true")
             $stmt->mutability->mutated = true;
         return $stmt;
     }

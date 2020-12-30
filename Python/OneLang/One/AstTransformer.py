@@ -251,6 +251,13 @@ class AstTransformer:
         for item in method.parameters:
             self.visit_method_parameter(item)
         
+        if isinstance(method, types.Constructor) and method.super_call_args != None:
+            i = 0
+            
+            while i < len(method.super_call_args):
+                method.super_call_args[i] = self.visit_expression(method.super_call_args[i])
+                i = i + 1
+        
         if method.body != None:
             method.body = self.visit_block(method.body)
     

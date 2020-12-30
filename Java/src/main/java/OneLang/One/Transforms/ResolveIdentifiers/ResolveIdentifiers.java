@@ -10,6 +10,7 @@ import OneLang.One.Ast.Types.GlobalFunction;
 import OneLang.One.Ast.Types.IMethodBase;
 import OneLang.One.Ast.Types.Constructor;
 import OneLang.One.Ast.Types.Interface;
+import OneLang.One.Ast.Types.MethodParameter;
 import OneLang.One.ErrorManager.ErrorManager;
 import OneLang.One.Ast.Expressions.Identifier;
 import OneLang.One.Ast.Expressions.Expression;
@@ -26,9 +27,11 @@ import OneLang.One.Ast.Statements.IfStatement;
 import OneLang.One.Ast.Statements.TryStatement;
 import OneLang.One.Ast.Statements.Block;
 import OneLang.One.Ast.AstTypes.ClassType;
+import OneLang.One.Ast.Interfaces.IType;
 
 import OneLang.One.AstTransformer.AstTransformer;
 import OneLang.One.Transforms.ResolveIdentifiers.SymbolLookup;
+import OneLang.One.Ast.Interfaces.IType;
 import OneLang.One.Ast.Expressions.Expression;
 import OneLang.One.Ast.References.Reference;
 import OneLang.One.Ast.Types.Class;
@@ -45,6 +48,7 @@ import OneLang.One.Ast.Statements.TryStatement;
 import OneLang.One.Ast.Types.Lambda;
 import OneLang.One.Ast.Statements.Block;
 import OneLang.One.Ast.Statements.VariableDeclaration;
+import OneLang.One.Ast.Types.MethodParameter;
 import OneLang.One.Ast.Types.Constructor;
 import OneLang.One.Ast.Types.IMethodBase;
 import OneLang.One.Ast.AstTypes.ClassType;
@@ -61,6 +65,10 @@ public class ResolveIdentifiers extends AstTransformer {
     {
         super("ResolveIdentifiers");
         this.symbolLookup = new SymbolLookup();
+    }
+    
+    protected IType visitType(IType type) {
+        return type;
     }
     
     protected Expression visitIdentifier(Identifier id) {
@@ -139,19 +147,14 @@ public class ResolveIdentifiers extends AstTransformer {
         return super.visitVariableDeclaration(stmt);
     }
     
+    protected void visitMethodParameter(MethodParameter param) {
+        this.symbolLookup.addSymbol(param.getName(), param);
+        super.visitMethodParameter(param);
+    }
+    
     protected void visitMethodBase(IMethodBase method) {
         this.symbolLookup.pushContext(method instanceof Method ? "Method: " + ((Method)method).getName() : method instanceof Constructor ? "constructor" : "???");
-        
-        for (var param : method.getParameters()) {
-            this.symbolLookup.addSymbol(param.getName(), param);
-            if (param.getInitializer() != null)
-                this.visitExpression(param.getInitializer());
-        }
-        
-        if (method.getBody() != null)
-            super.visitBlock(method.getBody());
-        // directly process method's body without opening a new scope again
-        
+        super.visitMethodBase(method);
         this.symbolLookup.popContext();
     }
     

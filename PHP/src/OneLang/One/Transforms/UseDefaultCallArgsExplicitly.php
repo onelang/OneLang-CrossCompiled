@@ -19,7 +19,7 @@ class UseDefaultCallArgsExplicitly extends AstTransformer {
     }
     
     protected function getNewArgs($args, $method) {
-        if (array_key_exists("UseDefaultCallArgsExplicitly", $method->attributes) && @$method->attributes["UseDefaultCallArgsExplicitly"] ?? null === "disable")
+        if (array_key_exists("UseDefaultCallArgsExplicitly", $method->attributes) && (@$method->attributes["UseDefaultCallArgsExplicitly"] ?? null) === "disable")
             return $args;
         if (count($args) >= count($method->parameters))
             return $args;
@@ -28,7 +28,7 @@ class UseDefaultCallArgsExplicitly extends AstTransformer {
         for ($i = 0; $i < count($method->parameters); $i++) {
             $init = $method->parameters[$i]->initializer;
             if ($i >= count($args) && $init === null) {
-                $this->errorMan->throw("Missing default value for parameter #" . $i + 1 . "!");
+                $this->errorMan->throw("Missing default value for parameter #" . ($i + 1) . "!");
                 break;
             }
             $newArgs[] = $i < count($args) ? $args[$i] : $init;

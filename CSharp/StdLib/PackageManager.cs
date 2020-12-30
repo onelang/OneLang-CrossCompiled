@@ -11,7 +11,8 @@ namespace StdLib
         Task<PackageBundle> getAllCached();
     }
     
-    public class PackageId {
+    public class PackageId
+    {
         public PackageType type;
         public string name;
         public string version;
@@ -24,7 +25,8 @@ namespace StdLib
         }
     }
     
-    public class PackageContent {
+    public class PackageContent
+    {
         public PackageId id;
         public Dictionary<string, string> files;
         
@@ -35,7 +37,8 @@ namespace StdLib
         }
     }
     
-    public class PackageBundle {
+    public class PackageBundle
+    {
         public PackageContent[] packages;
         
         public PackageBundle(PackageContent[] packages)
@@ -44,7 +47,8 @@ namespace StdLib
         }
     }
     
-    public class PackageNativeImpl {
+    public class PackageNativeImpl
+    {
         public string pkgName;
         public string pkgVendor;
         public string pkgVersion;
@@ -52,7 +56,8 @@ namespace StdLib
         public string code;
     }
     
-    public class InterfaceDependency {
+    public class InterfaceDependency
+    {
         public string name;
         public double minver;
         
@@ -63,7 +68,8 @@ namespace StdLib
         }
     }
     
-    public class InterfaceYaml {
+    public class InterfaceYaml
+    {
         public double fileVersion;
         public string vendor;
         public string name;
@@ -87,7 +93,8 @@ namespace StdLib
         }
     }
     
-    public class InterfacePackage {
+    public class InterfacePackage
+    {
         public InterfaceYaml interfaceYaml;
         public string definition;
         public PackageContent content;
@@ -100,7 +107,8 @@ namespace StdLib
         }
     }
     
-    public class ImplPkgImplIntf {
+    public class ImplPkgImplIntf
+    {
         public string name;
         public double minver;
         public double maxver;
@@ -118,7 +126,8 @@ namespace StdLib
         }
     }
     
-    public class ImplPkgImplementation {
+    public class ImplPkgImplementation
+    {
         public ImplPkgImplIntf interface_;
         public string language;
         public string[] nativeIncludes;
@@ -138,7 +147,8 @@ namespace StdLib
         }
     }
     
-    public class ImplPkgNativeDependency {
+    public class ImplPkgNativeDependency
+    {
         public string name;
         public string version;
         
@@ -154,7 +164,8 @@ namespace StdLib
         }
     }
     
-    public class ImplPkgLanguage {
+    public class ImplPkgLanguage
+    {
         public string id;
         public string packageDir;
         public string[] generatorPlugins;
@@ -176,7 +187,8 @@ namespace StdLib
         }
     }
     
-    public class ImplPackageYaml {
+    public class ImplPackageYaml
+    {
         public double fileVersion;
         public string vendor;
         public string name;
@@ -210,7 +222,8 @@ namespace StdLib
         }
     }
     
-    public class ImplementationPackage {
+    public class ImplementationPackage
+    {
         public ImplPackageYaml implementationYaml;
         public List<ImplPkgImplementation> implementations;
         public PackageContent content;
@@ -231,7 +244,8 @@ namespace StdLib
         }
     }
     
-    public class PackageManager {
+    public class PackageManager
+    {
         public List<InterfacePackage> interfacesPkgs;
         public List<ImplementationPackage> implementationPkgs;
         public PackageSource source;

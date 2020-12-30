@@ -1,7 +1,6 @@
 using One.Ast;
 using One;
 using System.Collections.Generic;
-using System.Linq;
 using Utils;
 
 namespace One.Transforms
@@ -10,7 +9,8 @@ namespace One.Transforms
         string getNameFor(Expression expr);
     }
     
-    public class DefaultExpressionNamingStrategy : IExpressionNamingStrategy {
+    public class DefaultExpressionNamingStrategy : IExpressionNamingStrategy
+    {
         public string getNameFor(Expression expr)
         {
             if (expr is InstanceMethodCallExpression instMethCallExpr || expr is StaticMethodCallExpression)
@@ -19,7 +19,8 @@ namespace One.Transforms
         }
     }
     
-    public class VariableNameHandler {
+    public class VariableNameHandler
+    {
         public Map<string, int> usageCount;
         
         public VariableNameHandler()
@@ -46,7 +47,8 @@ namespace One.Transforms
         }
     }
     
-    public class ConvertNullCoalesce : AstTransformer {
+    public class ConvertNullCoalesce : AstTransformer
+    {
         public DefaultExpressionNamingStrategy exprNaming;
         public VariableNameHandler varNames;
         public List<Statement> statements;
@@ -73,12 +75,16 @@ namespace One.Transforms
         
         protected override Block visitBlock(Block block)
         {
-            var prevStatements = this.statements.ToArray();
+            // @csharp var prevStatements = this.statements;
+            // @java var prevStatements = this.statements;
+            var prevStatements = this.statements;
             this.statements = new List<Statement>();
             foreach (var stmt in block.statements)
                 this.statements.push(this.visitStatement(stmt));
             block.statements = this.statements;
-            this.statements = prevStatements.ToList();
+            // @csharp this.statements = prevStatements;
+            // @java this.statements = prevStatements;
+            this.statements = prevStatements;
             return block;
         }
         

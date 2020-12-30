@@ -3,7 +3,8 @@ using One;
 
 namespace One.Transforms
 {
-    public class DetectMethodCalls : AstTransformer {
+    public class DetectMethodCalls : AstTransformer
+    {
         public DetectMethodCalls(): base("DetectMethodCalls")
         {
             

@@ -576,7 +576,7 @@ public class TypeScriptParser2 implements IParser, IExpressionParserHooks, IRead
         var block = this.parseBlock();
         if (block == null) {
             var result = errorMsg;
-            this.reader.fail(result != null ? result : "expected block here", -1);
+            this.reader.fail((result != null ? (result) : ("expected block here")), -1);
         }
         return block;
     }
@@ -665,7 +665,7 @@ public class TypeScriptParser2 implements IParser, IExpressionParserHooks, IRead
     
     public String parseIdentifierOrString() {
         var readStringResult = this.reader.readString();
-        return readStringResult != null ? readStringResult : this.reader.expectIdentifier(null);
+        return (readStringResult != null ? (readStringResult) : (this.reader.expectIdentifier(null)));
     }
     
     public Interface parseInterface(String leadingTrivia, Boolean isExported) {

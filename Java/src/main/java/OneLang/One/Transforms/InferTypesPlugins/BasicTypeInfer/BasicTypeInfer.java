@@ -104,7 +104,7 @@ public class BasicTypeInfer extends InferTypesPlugin {
         else if (expr instanceof ForVariableReference)
             ((ForVariableReference)expr).setActualType(((ForVariableReference)expr).decl.getType(), false, false);
         else if (expr instanceof CatchVariableReference)
-            ((CatchVariableReference)expr).setActualType(((CatchVariableReference)expr).decl.getType() != null ? ((CatchVariableReference)expr).decl.getType() : this.main.currentFile.literalTypes.error, false, false);
+            ((CatchVariableReference)expr).setActualType((((CatchVariableReference)expr).decl.getType() != null ? (((CatchVariableReference)expr).decl.getType()) : (this.main.currentFile.literalTypes.error)), false, false);
         else if (expr instanceof UnaryExpression) {
             var operandType = ((UnaryExpression)expr).operand.getType();
             if (operandType instanceof ClassType) {

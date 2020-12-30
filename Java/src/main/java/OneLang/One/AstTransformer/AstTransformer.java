@@ -167,9 +167,9 @@ import OneLang.One.Ast.Expressions.GlobalFunctionCallExpression;
 import OneLang.One.Ast.Expressions.InstanceMethodCallExpression;
 import OneLang.One.Ast.Expressions.LambdaCallExpression;
 import OneLang.One.Ast.Types.MethodParameter;
+import OneLang.One.Ast.Types.Constructor;
 import OneLang.One.Ast.Types.Method;
 import OneLang.One.Ast.Types.GlobalFunction;
-import OneLang.One.Ast.Types.Constructor;
 import OneLang.One.Ast.Types.Field;
 import OneLang.One.Ast.Types.Property;
 import OneLang.One.Ast.Types.Interface;
@@ -457,6 +457,10 @@ public class AstTransformer implements ITransformer {
     protected void visitMethodBase(IMethodBase method) {
         for (var item : method.getParameters())
             this.visitMethodParameter(item);
+        
+        if (method instanceof Constructor && ((Constructor)method).superCallArgs != null)
+            for (Integer i = 0; i < ((Constructor)method).superCallArgs.length; i++)
+                ((Constructor)method).superCallArgs[i] = this.visitExpression(((Constructor)method).superCallArgs[i]);
         
         if (method.getBody() != null)
             method.setBody(this.visitBlock(method.getBody()));

@@ -20,9 +20,9 @@ public class ImplementationPackage {
         this.implementations = new ArrayList<ImplPkgImplementation>();
         this.implementationYaml = ImplPackageYaml.fromYaml(OneYaml.load(content.files.get("package.yaml")));
         this.implementations = new ArrayList<ImplPkgImplementation>();
-        for (var impl : this.implementationYaml.implements_ != null ? this.implementationYaml.implements_ : new ImplPkgImplementation[0])
+        for (var impl : (this.implementationYaml.implements_ != null ? (this.implementationYaml.implements_) : (new ImplPkgImplementation[0])))
             this.implementations.add(impl);
-        for (var include : this.implementationYaml.includes != null ? this.implementationYaml.includes : new String[0]) {
+        for (var include : (this.implementationYaml.includes != null ? (this.implementationYaml.includes) : (new String[0]))) {
             var included = ImplPackageYaml.fromYaml(OneYaml.load(content.files.get(include)));
             for (var impl : included.implements_)
                 this.implementations.add(impl);

@@ -53,7 +53,7 @@ class ExprVM {
             throw new \OneLang\Core\Error("You can only access a property of an object!");
         if (!(array_key_exists($propName, ($obj)->props)))
             throw new \OneLang\Core\Error("Property '" . $propName . "' does not exists on this object!");
-        return @($obj)->props[$propName] ?? null;
+        return (@($obj)->props[$propName] ?? null);
     }
     
     function evaluate($expr) {
@@ -72,7 +72,7 @@ class ExprVM {
         else if ($expr instanceof StringLiteral)
             return new StringValue($expr->stringValue);
         else if ($expr instanceof NumericLiteral)
-            return new NumericValue(Global.parseInt($expr->valueAsText));
+            return new NumericValue(intval($expr->valueAsText));
         else if ($expr instanceof ConditionalExpression) {
             $condResult = $this->evaluate($expr->condition);
             $result = $this->evaluate(($condResult)->value ? $expr->whenTrue : $expr->whenFalse);

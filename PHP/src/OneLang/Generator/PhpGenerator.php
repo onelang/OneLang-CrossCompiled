@@ -132,15 +132,25 @@ class PhpGenerator implements IGenerator {
         $this->plugins[] = $plugin;
         
         // TODO: hack?
-        if ($plugin instanceof TemplateFileGeneratorPlugin)
+        if ($plugin instanceof TemplateFileGeneratorPlugin) {
             $plugin->modelGlobals["escape"] = new LambdaValue(function ($args) { return new StringValue($this->escape($args[0])); });
+            $plugin->modelGlobals["escapeBackslash"] = new LambdaValue(function ($args) { return new StringValue($this->escapeBackslash($args[0])); });
+        }
     }
     
     function escape($value) {
         if ($value instanceof ExpressionValue && $value->value instanceof RegexLiteral)
-            return json_encode("/" . preg_replace("/\\//", "\\/", $value->value->pattern) . "/", JSON_UNESCAPED_SLASHES);
+            return json_encode("/" . preg_replace("/\\//", "\\\\/", $value->value->pattern) . "/", JSON_UNESCAPED_SLASHES);
+        else if ($value instanceof ExpressionValue && $value->value instanceof StringLiteral)
+            return json_encode($value->value->stringValue, JSON_UNESCAPED_SLASHES);
         else if ($value instanceof StringValue)
             return json_encode($value->value, JSON_UNESCAPED_SLASHES);
+        throw new \OneLang\Core\Error("Not supported VMValue for escape()");
+    }
+    
+    function escapeBackslash($value) {
+        if ($value instanceof ExpressionValue && $value->value instanceof StringLiteral)
+            return json_encode(preg_replace("/\\\\/", "\\\\\\\\", $value->value->stringValue), JSON_UNESCAPED_SLASHES);
         throw new \OneLang\Core\Error("Not supported VMValue for escape()");
     }
     
@@ -259,7 +269,7 @@ class PhpGenerator implements IGenerator {
         // } else {
         //     type = this.type(v.type);
         // }
-        return "$" . $this->name_($v->name);
+        return "\$" . $this->name_($v->name);
     }
     
     function var($v, $attrs) {
@@ -353,13 +363,13 @@ class PhpGenerator implements IGenerator {
                 $res = "\\OneLang\\Core\\" . $res;
         }
         else if ($expr instanceof GlobalFunctionCallExpression)
-            $res = "Global." . $this->name_($expr->func->name) . $this->exprCall(array(), $expr->args);
+            $res = $this->name_($expr->func->name) . $this->exprCall(array(), $expr->args);
         else if ($expr instanceof LambdaCallExpression)
-            $res = $this->expr($expr->method) . "(" . implode(", ", array_map(function ($x) { return $this->expr($x); }, $expr->args)) . ")";
+            $res = "call_user_func(" . $this->expr($expr->method) . ", " . implode(", ", array_map(function ($x) { return $this->expr($x); }, $expr->args)) . ")";
         else if ($expr instanceof BooleanLiteral)
             $res = ($expr->boolValue ? "true" : "false");
         else if ($expr instanceof StringLiteral)
-            $res = preg_replace("/\\$/", "\\\$", json_encode($expr->stringValue, JSON_UNESCAPED_SLASHES));
+            $res = preg_replace("/\\$/", "\\\\$", json_encode($expr->stringValue, JSON_UNESCAPED_SLASHES));
         else if ($expr instanceof NumericLiteral)
             $res = $expr->valueAsText;
         else if ($expr instanceof CharacterLiteral)
@@ -379,6 +389,8 @@ class PhpGenerator implements IGenerator {
                             $lit .= "\\r";
                         else if ($chr === "\t")
                             $lit .= "\\t";
+                        else if ($chr === "\$")
+                            $lit .= "\\\$";
                         else if ($chr === "\\")
                             $lit .= "\\\\";
                         else if ($chr === "\"")
@@ -395,7 +407,8 @@ class PhpGenerator implements IGenerator {
                 }
                 else {
                     $repr = $this->expr($part->expression);
-                    $parts[] = $part->expression instanceof ConditionalExpression ? "(" . $repr . ")" : $repr;
+                    $isComplex = $part->expression instanceof ConditionalExpression || $part->expression instanceof BinaryExpression || $part->expression instanceof NullCoalesceExpression;
+                    $parts[] = $isComplex ? "(" . $repr . ")" : $repr;
                 }
             }
             $res = implode(" . ", $parts);
@@ -436,9 +449,9 @@ class PhpGenerator implements IGenerator {
         else if ($expr instanceof RegexLiteral)
             $res = "new \\OneLang\\Core\\RegExp(" . json_encode($expr->pattern, JSON_UNESCAPED_SLASHES) . ")";
         else if ($expr instanceof Lambda) {
-            $params = array_map(function ($x) { return "$" . $this->name_($x->name); }, $expr->parameters);
+            $params = array_map(function ($x) { return "\$" . $this->name_($x->name); }, $expr->parameters);
             // TODO: captures should not be null
-            $uses = $expr->captures !== null && count($expr->captures) > 0 ? " use (" . implode(", ", array_map(function ($x) { return "$" . $x->name; }, $expr->captures)) . ")" : "";
+            $uses = $expr->captures !== null && count($expr->captures) > 0 ? " use (" . implode(", ", array_map(function ($x) { return "\$" . $x->name; }, $expr->captures)) . ")" : "";
             $res = "function (" . implode(", ", $params) . ")" . $uses . " { " . $this->rawBlock($expr->body) . " }";
         }
         else if ($expr instanceof UnaryExpression && $expr->unaryType === UnaryType::PREFIX)
@@ -447,14 +460,14 @@ class PhpGenerator implements IGenerator {
             $res = $this->expr($expr->operand) . $expr->operator;
         else if ($expr instanceof MapLiteral) {
             $repr = implode(",\n", array_map(function ($item) { return json_encode($item->key, JSON_UNESCAPED_SLASHES) . " => " . $this->expr($item->value); }, $expr->items));
-            $res = "Array(" . ($repr === "" ? "" : (strpos($repr, "\n") !== false ? "\n" . $this->pad($repr) . "\n" : "(" . $repr)) . ")";
+            $res = "Array(" . ($repr === "" ? "" : (strpos($repr, "\n") !== false ? "\n" . $this->pad($repr) . "\n" : $repr)) . ")";
         }
         else if ($expr instanceof NullLiteral)
             $res = "null";
         else if ($expr instanceof AwaitExpression)
             $res = $this->expr($expr->expr);
         else if ($expr instanceof ThisReference)
-            $res = "$this";
+            $res = "\$this";
         else if ($expr instanceof StaticThisReference)
             $res = $this->currentClass->name;
         else if ($expr instanceof EnumReference)
@@ -462,21 +475,21 @@ class PhpGenerator implements IGenerator {
         else if ($expr instanceof ClassReference)
             $res = $this->name_($expr->decl->name);
         else if ($expr instanceof MethodParameterReference)
-            $res = "$" . $this->name_($expr->decl->name);
+            $res = "\$" . $this->name_($expr->decl->name);
         else if ($expr instanceof VariableDeclarationReference)
-            $res = "$" . $this->name_($expr->decl->name);
+            $res = "\$" . $this->name_($expr->decl->name);
         else if ($expr instanceof ForVariableReference)
-            $res = "$" . $this->name_($expr->decl->name);
+            $res = "\$" . $this->name_($expr->decl->name);
         else if ($expr instanceof ForeachVariableReference)
-            $res = "$" . $this->name_($expr->decl->name);
+            $res = "\$" . $this->name_($expr->decl->name);
         else if ($expr instanceof CatchVariableReference)
-            $res = "$" . $this->name_($expr->decl->name);
+            $res = "\$" . $this->name_($expr->decl->name);
         else if ($expr instanceof GlobalFunctionReference)
             $res = $this->name_($expr->decl->name);
         else if ($expr instanceof SuperReference)
             $res = "parent";
         else if ($expr instanceof StaticFieldReference)
-            $res = $this->name_($expr->decl->parentInterface->name) . "::$" . $this->name_($expr->decl->name);
+            $res = $this->name_($expr->decl->parentInterface->name) . "::\$" . $this->name_($expr->decl->name);
         else if ($expr instanceof StaticPropertyReference)
             $res = $this->name_($expr->decl->parentClass->name) . "::get_" . $this->name_($expr->decl->name) . "()";
         else if ($expr instanceof InstanceFieldReference)
@@ -498,8 +511,8 @@ class PhpGenerator implements IGenerator {
     
     function stmtDefault($stmt) {
         $res = "UNKNOWN-STATEMENT";
-        if ($stmt->attributes !== null && array_key_exists("csharp", $stmt->attributes))
-            $res = @$stmt->attributes["csharp"] ?? null;
+        if ($stmt->attributes !== null && array_key_exists("php", $stmt->attributes))
+            $res = (@$stmt->attributes["php"] ?? null);
         else if ($stmt instanceof BreakStatement)
             $res = "break;";
         else if ($stmt instanceof ReturnStatement)
@@ -512,14 +525,14 @@ class PhpGenerator implements IGenerator {
             $res = $this->expr($stmt->expression) . ";";
         else if ($stmt instanceof VariableDeclaration) {
             if ($stmt->initializer instanceof NullLiteral)
-                $res = "$" . $this->name_($stmt->name) . " = null;";
+                $res = "\$" . $this->name_($stmt->name) . " = null;";
             else if ($stmt->initializer !== null)
-                $res = "$" . $this->name_($stmt->name) . " = " . $this->mutateArg($stmt->initializer, $stmt->mutability->mutated) . ";";
+                $res = "\$" . $this->name_($stmt->name) . " = " . $this->mutateArg($stmt->initializer, $stmt->mutability->mutated) . ";";
             else
-                $res = "/* @var $" . $this->name_($stmt->name) . " */";
+                $res = "/* @var \$" . $this->name_($stmt->name) . " */";
         }
         else if ($stmt instanceof ForeachStatement)
-            $res = "foreach (" . $this->expr($stmt->items) . " as $" . $this->name_($stmt->itemVar->name) . ")" . $this->block($stmt->body);
+            $res = "foreach (" . $this->expr($stmt->items) . " as \$" . $this->name_($stmt->itemVar->name) . ")" . $this->block($stmt->body);
         else if ($stmt instanceof IfStatement) {
             $elseIf = $stmt->else_ !== null && count($stmt->else_->statements) === 1 && $stmt->else_->statements[0] instanceof IfStatement;
             $res = "if (" . $this->expr($stmt->condition) . ")" . $this->block($stmt->then);
@@ -535,7 +548,7 @@ class PhpGenerator implements IGenerator {
             $res = "try" . $this->block($stmt->tryBody, false);
             if ($stmt->catchBody !== null)
                 //                this.usings.add("System");
-                $res .= " catch (Exception $" . $this->name_($stmt->catchVar->name) . ")" . $this->block($stmt->catchBody, false);
+                $res .= " catch (Exception \$" . $this->name_($stmt->catchVar->name) . ")" . $this->block($stmt->catchBody, false);
             if ($stmt->finallyBody !== null)
                 $res .= "finally" . $this->block($stmt->finallyBody);
         }
@@ -549,7 +562,7 @@ class PhpGenerator implements IGenerator {
         $res = null;
         
         if ($stmt->attributes !== null && array_key_exists("php", $stmt->attributes))
-            $res = @$stmt->attributes["php"] ?? null;
+            $res = (@$stmt->attributes["php"] ?? null);
         else {
             foreach ($this->plugins as $plugin) {
                 $res = $plugin->stmt($stmt);
@@ -584,9 +597,7 @@ class PhpGenerator implements IGenerator {
                 $isInitializerComplex = $field->initializer !== null && !($field->initializer instanceof StringLiteral) && !($field->initializer instanceof BooleanLiteral) && !($field->initializer instanceof NumericLiteral);
                 
                 $prefix = $this->vis($field->visibility, true) . $this->preIf("static ", $field->isStatic);
-                if (count($field->interfaceDeclarations) > 0)
-                    $fieldReprs[] = $prefix . $this->varWoInit($field, $field) . ";";
-                else if ($isInitializerComplex) {
+                if ($isInitializerComplex) {
                     if ($field->isStatic)
                         $staticConstructorStmts[] = new ExpressionStatement(new BinaryExpression(new StaticFieldReference($field), "=", $field->initializer));
                     else
@@ -603,7 +614,7 @@ class PhpGenerator implements IGenerator {
                 if ($prop->getter !== null)
                     $resList[] = $this->vis($prop->visibility, false) . $this->preIf("static ", $prop->isStatic) . "function get_" . $this->name_($prop->name) . "()" . $this->block($prop->getter, false);
                 if ($prop->setter !== null)
-                    $resList[] = $this->vis($prop->visibility, false) . $this->preIf("static ", $prop->isStatic) . "function set_" . $this->name_($prop->name) . "($value)" . $this->block($prop->setter, false);
+                    $resList[] = $this->vis($prop->visibility, false) . $this->preIf("static ", $prop->isStatic) . "function set_" . $this->name_($prop->name) . "(\$value)" . $this->block($prop->setter, false);
             }
             
             if (count($staticConstructorStmts) > 0)
@@ -621,7 +632,12 @@ class PhpGenerator implements IGenerator {
                 
                 $parentCall = $cls->constructor_->superCallArgs !== null ? "parent::__construct(" . implode(", ", array_map(function ($x) { return $this->expr($x); }, $cls->constructor_->superCallArgs)) . ");\n" : "";
                 
-                $resList[] = $this->preIf("/* throws */ ", $cls->constructor_->throws) . "function __construct" . "(" . implode(", ", array_map(function ($p) { return $this->var($p, $p); }, $cls->constructor_->parameters)) . ")" . " {\n" . $this->pad($parentCall . $this->stmts(array_merge(array_merge($constrFieldInits, $complexFieldInits), $cls->constructor_->body->statements))) . "\n}";
+                // @java var stmts = Stream.of(constrFieldInits, complexFieldInits, ((Class)cls).constructor_.getBody().statements).flatMap(Collection::stream).toArray(Statement[]::new);
+                // @java-import java.util.Collection
+                // @java-import java.util.stream.Stream
+                $stmts = array_merge(array_merge($constrFieldInits, $complexFieldInits), $cls->constructor_->body->statements);
+                
+                $resList[] = $this->preIf("/* throws */ ", $cls->constructor_->throws) . "function __construct" . "(" . implode(", ", array_map(function ($p) { return $this->var($p, $p); }, $cls->constructor_->parameters)) . ")" . " {\n" . $this->pad($parentCall . $this->stmts($stmts)) . "\n}";
             }
             else if (count($complexFieldInits) > 0)
                 $resList[] = "function __construct()\n{\n" . $this->pad($this->stmts($complexFieldInits)) . "\n}";
@@ -636,7 +652,9 @@ class PhpGenerator implements IGenerator {
             $methods[] = ($method->parentInterface instanceof Interface_ ? "" : $this->vis($method->visibility, false)) . $this->preIf("static ", $method->isStatic) . $this->preIf("/* throws */ ", $method->throws) . "function " . $this->name_($method->name) . $this->typeArgs($method->typeArguments) . "(" . implode(", ", array_map(function ($p) { return $this->var($p, null); }, $method->parameters)) . ")" . ($method->body !== null ? " {\n" . $this->pad($this->stmts($method->body->statements)) . "\n}" : ";");
         }
         $resList[] = implode("\n\n", $methods);
-        return " {\n" . $this->pad(implode("\n\n", array_values(array_filter($resList, function ($x) { return $x !== ""; })))) . "\n}" . (count($staticConstructorStmts) > 0 ? "\n" . $this->name_($cls->name) . "::StaticInit();" : "");
+        
+        $resListJoined = $this->pad(implode("\n\n", array_values(array_filter($resList, function ($x) { return $x !== ""; }))));
+        return " {\n" . $resListJoined . "\n}" . (count($staticConstructorStmts) > 0 ? "\n" . $this->name_($cls->name) . "::StaticInit();" : "");
     }
     
     function pad($str) {
@@ -665,7 +683,7 @@ class PhpGenerator implements IGenerator {
         foreach ($sourceFile->enums as $enum_) {
             $values = array();
             for ($i = 0; $i < count($enum_->values); $i++)
-                $values[] = "const " . $this->enumMemberName($enum_->values[$i]->name) . " = " . $i + 1 . ";";
+                $values[] = "const " . $this->enumMemberName($enum_->values[$i]->name) . " = " . ($i + 1) . ";";
             $enums[] = "class " . $this->enumName($enum_, true) . " {\n" . $this->pad(implode("\n", $values)) . "\n}";
         }
         
@@ -680,7 +698,8 @@ class PhpGenerator implements IGenerator {
         $usingsSet = new \OneLang\Core\Set();
         foreach ($sourceFile->imports as $imp) {
             if (array_key_exists("php-use", $imp->attributes))
-                $usingsSet->add(@$imp->attributes["php-use"] ?? null);
+                foreach (preg_split("/\\n/", (@$imp->attributes["php-use"] ?? null)) as $item)
+                    $usingsSet->add($item);
             else {
                 $fileNs = $this->pathToNs($imp->exportScope->scopeName);
                 if ($fileNs === "index")
@@ -690,11 +709,11 @@ class PhpGenerator implements IGenerator {
             }
         }
         
-        foreach ($this->usings as $using)
+        foreach ($this->usings->values() as $using)
             $usingsSet->add($using);
         
         $usings = array();
-        foreach ($usingsSet as $using)
+        foreach ($usingsSet->values() as $using)
             $usings[] = "use " . $using . ";";
         
         $result = implode("\n\n", array_values(array_filter(array(implode("\n", $usings), implode("\n", $enums), implode("\n\n", $intfs), implode("\n\n", $classes), $main), function ($x) { return $x !== ""; })));
@@ -705,7 +724,7 @@ class PhpGenerator implements IGenerator {
     function generate($pkg) {
         $result = array();
         foreach (array_keys($pkg->files) as $path)
-            $result[] = new GeneratedFile($pkg->name . "/" . $path . ".php", $this->genFile($pkg->name, @$pkg->files[$path] ?? null));
+            $result[] = new GeneratedFile($pkg->name . "/" . $path . ".php", $this->genFile($pkg->name, (@$pkg->files[$path] ?? null)));
         return $result;
     }
 }

@@ -5,13 +5,11 @@ namespace OneLang;
 require __DIR__ . '/vendor/autoload.php';
 require_once("OneLoader.php");
 
-use OneLang\Test\SelfTestRunner\SelfTestRunner;
-use OneLang\Generator\CsharpGenerator\CsharpGenerator;
+use OneLang\Test\TestRunner\TestRunner;
 
-$testRunner = new SelfTestRunner("../../");
-$csharpGen = new CsharpGenerator();
+$testRunner = new TestRunner("../../", $argv);
 try {
-    $testRunner->runTest($csharpGen);
+    $testRunner->runTests();
 } catch(Error $e) {
     print($e->getMessage() . "\n");
 }

@@ -3,7 +3,8 @@ using One.Transforms.InferTypesPlugins.Helpers;
 
 namespace One.Transforms.InferTypesPlugins
 {
-    public class ResolveFieldAndPropertyAccess : InferTypesPlugin {
+    public class ResolveFieldAndPropertyAccess : InferTypesPlugin
+    {
         public ResolveFieldAndPropertyAccess(): base("ResolveFieldAndPropertyAccess")
         {
             

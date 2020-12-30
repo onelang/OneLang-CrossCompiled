@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 
 namespace StdLib
 {
-    public class PackagesFolderSource : PackageSource {
+    public class PackagesFolderSource : PackageSource
+    {
         public string packagesDir;
         
         public PackagesFolderSource(string packagesDir = "packages")

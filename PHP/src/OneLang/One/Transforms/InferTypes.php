@@ -248,7 +248,7 @@ class InferTypes extends AstTransformer {
     }
     
     protected function visitClass($cls) {
-        if (@$cls->attributes["external"] ?? null === "true")
+        if ((@$cls->attributes["external"] ?? null) === "true")
             return;
         parent::visitClass($cls);
     }

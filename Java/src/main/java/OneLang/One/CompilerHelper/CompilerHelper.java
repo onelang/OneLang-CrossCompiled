@@ -16,7 +16,7 @@ public class CompilerHelper {
         
         var compiler = new Compiler();
         var result = packagesDir;
-        compiler.init(result != null ? result : CompilerHelper.baseDir + "packages/");
+        compiler.init((result != null ? (result) : (CompilerHelper.baseDir + "packages/")));
         compiler.setupNativeResolver(OneFile.readText(CompilerHelper.baseDir + "langs/NativeResolvers/typescript.ts"));
         compiler.newWorkspace(projectName);
         

@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 namespace One.Transforms
 {
-    public class FillAttributesFromTrivia : AstTransformer {
+    public class FillAttributesFromTrivia : AstTransformer
+    {
         public FillAttributesFromTrivia(): base("FillAttributesFromTrivia")
         {
             

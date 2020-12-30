@@ -3,7 +3,8 @@ using System.Threading.Tasks;
 
 namespace StdLib
 {
-    public class PackageBundleSource : PackageSource {
+    public class PackageBundleSource : PackageSource
+    {
         public PackageBundle bundle;
         
         public PackageBundleSource(PackageBundle bundle)

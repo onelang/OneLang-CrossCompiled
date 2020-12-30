@@ -7,7 +7,8 @@ namespace One
 {
     public enum LogType { Info, Warning, Error }
     
-    public class CompilationError {
+    public class CompilationError
+    {
         public string msg;
         public bool isWarning;
         public string transformerName;
@@ -22,7 +23,8 @@ namespace One
         }
     }
     
-    public class ErrorManager {
+    public class ErrorManager
+    {
         public AstTransformer transformer;
         public IAstNode currentNode;
         public List<CompilationError> errors;

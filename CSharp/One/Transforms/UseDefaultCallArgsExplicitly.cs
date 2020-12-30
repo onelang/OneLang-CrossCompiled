@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 namespace One.Transforms
 {
-    public class UseDefaultCallArgsExplicitly : AstTransformer {
+    public class UseDefaultCallArgsExplicitly : AstTransformer
+    {
         public UseDefaultCallArgsExplicitly(): base("UseDefaultCallArgsExplicitly")
         {
             

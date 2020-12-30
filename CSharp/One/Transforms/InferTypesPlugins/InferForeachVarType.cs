@@ -3,7 +3,8 @@ using One.Transforms.InferTypesPlugins.Helpers;
 
 namespace One.Transforms.InferTypesPlugins
 {
-    public class InferForeachVarType : InferTypesPlugin {
+    public class InferForeachVarType : InferTypesPlugin
+    {
         public InferForeachVarType(): base("InferForeachVarType")
         {
             

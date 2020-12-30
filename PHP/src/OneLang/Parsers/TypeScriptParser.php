@@ -840,7 +840,7 @@ class TypeScriptParser2 implements IParser, IExpressionParserHooks, IReaderHooks
     }
     
     static function calculateRelativePath($currFile, $relPath) {
-        if (!substr_compare($relPath, ".", 0, strlen(".")) === 0)
+        if (!(substr_compare($relPath, ".", 0, strlen(".")) === 0))
             throw new \OneLang\Core\Error("relPath must start with '.', but got '" . $relPath . "'");
         
         $curr = preg_split("/\\//", $currFile);
@@ -865,7 +865,7 @@ class TypeScriptParser2 implements IParser, IExpressionParserHooks, IReaderHooks
     }
     
     static function calculateImportScope($currScope, $importFile) {
-        if (substr_compare($importFile, ".", 0, strlen(".")) === 0)
+        if ((substr_compare($importFile, ".", 0, strlen(".")) === 0))
             // relative
             return new ExportScopeRef($currScope->packageName, TypeScriptParser2::calculateRelativePath($currScope->scopeName, $importFile));
         else {

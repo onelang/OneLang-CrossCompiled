@@ -2,6 +2,8 @@
 
 namespace OneLang\Generator\TemplateFileGeneratorPlugin;
 
+use OneLang\Yaml\OneYaml;
+use OneLang\Yaml\ValueType;
 use OneLang\Parsers\Common\ExpressionParser\ExpressionParser;
 use OneLang\One\Ast\Expressions\Expression;
 use OneLang\One\Ast\Expressions\GlobalFunctionCallExpression;
@@ -115,7 +117,7 @@ class LambdaValue implements ICallableValue {
     }
     
     function call($args) {
-        return $this->callback($args);
+        return call_user_func($this->callback, $args);
     }
 }
 
@@ -132,12 +134,15 @@ class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
         $this->modelGlobals = Array();
         $root = OneYaml::load($templateYaml);
         $exprDict = $root->dict("expressions");
+        if ($exprDict === null)
+            return;
         
         foreach (array_keys($exprDict) as $exprStr) {
-            $val = @$exprDict[$exprStr] ?? null;
-            $ifStr = $val->str("if");
+            $val = (@$exprDict[$exprStr] ?? null);
+            $tmplOnly = $val->type() === ValueType::STRING;
+            $ifStr = $tmplOnly ? null : $val->str("if");
             $ifExpr = $ifStr === null ? null : (new TypeScriptParser2($ifStr, null))->parseExpression();
-            $tmpl = $val->type() === ValueType::STRING ? new CodeTemplate($val->asStr(), array(), null) : new CodeTemplate($val->str("template"), $val->strArr("includes"), $ifExpr);
+            $tmpl = $tmplOnly ? new CodeTemplate($val->asStr(), array(), null) : new CodeTemplate($val->str("template"), $val->strArr("includes"), $ifExpr);
             
             $this->addExprTemplate($exprStr, $tmpl);
         }
@@ -162,7 +167,8 @@ class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
     function addMethod($name, $callTmpl) {
         if (!(array_key_exists($name, $this->methods)))
             $this->methods[$name] = array();
-        @$this->methods[$name] ?? null[] = $callTmpl;
+        // @php $this->methods[$name][] = $callTmpl;
+        $this->methods[$name][] = $callTmpl;
     }
     
     function addExprTemplate($exprStr, $tmpl) {
@@ -196,26 +202,26 @@ class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
         // quick return
         
         $codeTmpl = null;
-        $model = Array();
-        $context = new VMContext(new ObjectValue($model), $this);
+        $model = new ObjectValue(Array());
+        $context = new VMContext($model, $this);
         
-        $model["type"] = new TypeValue($expr->getType());
+        $model->props["type"] = new TypeValue($expr->getType());
         foreach (array_keys($this->modelGlobals) as $name)
-            $model[$name] = @$this->modelGlobals[$name] ?? null;
+            $model->props[$name] = (@$this->modelGlobals[$name] ?? null);
         
         if ($isCallExpr) {
             $call = $expr;
             $parentIntf = $call->getParentInterface();
             $methodName = ($parentIntf === null ? "" : $parentIntf->name . ".") . $call->getMethodName() . "@" . count($call->args);
-            $callTmpls = @$this->methods[$methodName] ?? null;
+            $callTmpls = (@$this->methods[$methodName] ?? null);
             if ($callTmpls === null)
                 return null;
             
             foreach ($callTmpls as $callTmpl) {
                 if ($expr instanceof InstanceMethodCallExpression)
-                    $model["this"] = new ExpressionValue($expr->object);
+                    $model->props["this"] = new ExpressionValue($expr->object);
                 for ($i = 0; $i < count($callTmpl->args); $i++)
-                    $model[$callTmpl->args[$i]] = new ExpressionValue($call->args[$i]);
+                    $model->props[$callTmpl->args[$i]] = new ExpressionValue($call->args[$i]);
                 
                 if ($callTmpl->template->ifExpr === null || ((new ExprVM($context))->evaluate($callTmpl->template->ifExpr))->value) {
                     $codeTmpl = $callTmpl->template;
@@ -225,12 +231,12 @@ class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
         }
         else if ($isFieldRef) {
             $cm = ($expr)->getVariable();
-            $field = @$this->fields[$cm->getParentInterface()->name . "." . $cm->name] ?? null;
+            $field = (@$this->fields[$cm->getParentInterface()->name . "." . $cm->name] ?? null);
             if ($field === null)
                 return null;
             
             if ($expr instanceof InstanceFieldReference || $expr instanceof InstancePropertyReference)
-                $model["this"] = new ExpressionValue(($expr)->object);
+                $model->props["this"] = new ExpressionValue(($expr)->object);
             $codeTmpl = $field->template;
         }
         else

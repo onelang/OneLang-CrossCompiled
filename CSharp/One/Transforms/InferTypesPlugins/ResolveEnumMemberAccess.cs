@@ -3,7 +3,8 @@ using One.Transforms.InferTypesPlugins.Helpers;
 
 namespace One.Transforms.InferTypesPlugins
 {
-    public class ResolveEnumMemberAccess : InferTypesPlugin {
+    public class ResolveEnumMemberAccess : InferTypesPlugin
+    {
         public ResolveEnumMemberAccess(): base("ResolveEnumMemberAccess")
         {
             

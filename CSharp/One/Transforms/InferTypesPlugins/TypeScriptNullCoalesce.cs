@@ -3,7 +3,8 @@ using One.Transforms.InferTypesPlugins.Helpers;
 
 namespace One.Transforms.InferTypesPlugins
 {
-    public class TypeScriptNullCoalesce : InferTypesPlugin {
+    public class TypeScriptNullCoalesce : InferTypesPlugin
+    {
         public TypeScriptNullCoalesce(): base("TypeScriptNullCoalesce")
         {
             

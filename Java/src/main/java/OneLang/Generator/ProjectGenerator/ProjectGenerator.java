@@ -88,14 +88,14 @@ public class ProjectGenerator {
                 if (langData == null)
                     continue;
                 
-                for (var natDep : langData.nativeDependencies != null ? langData.nativeDependencies : new ImplPkgNativeDependency[0])
+                for (var natDep : (langData.nativeDependencies != null ? (langData.nativeDependencies) : (new ImplPkgNativeDependency[0])))
                     nativeDeps.put(natDep.name, natDep.version);
                 
                 if (langData.nativeSrcDir != null) {
                     if (projTemplate.meta.packageDir == null)
                         throw new Error("Package directory is empty in project template!");
                     var srcDir = langData.nativeSrcDir + (langData.nativeSrcDir.endsWith("/") ? "" : "/");
-                    var dstDir = outDir + "/" + projTemplate.meta.packageDir + "/" + langData.packageDir != null ? langData.packageDir : impl.content.id.name;
+                    var dstDir = outDir + "/" + projTemplate.meta.packageDir + "/" + (langData.packageDir != null ? (langData.packageDir) : (impl.content.id.name));
                     var depFiles = Arrays.stream(Arrays.stream(impl.content.files.keySet().toArray(String[]::new)).filter(x -> x.startsWith(srcDir)).toArray(String[]::new)).map(x -> x.substring(srcDir.length())).toArray(String[]::new);
                     for (var fn : depFiles)
                         OneFile.writeText(dstDir + "/" + fn, impl.content.files.get(srcDir + fn));
@@ -110,10 +110,10 @@ public class ProjectGenerator {
             System.out.println("Generating " + langName + " code...");
             var files = generator.generate(compiler.projectPkg);
             for (var file : files)
-                OneFile.writeText(outDir + "/" + projTemplate.meta.destinationDir != null ? projTemplate.meta.destinationDir : "" + "/" + file.path, file.content);
+                OneFile.writeText(outDir + "/" + (projTemplate.meta.destinationDir != null ? (projTemplate.meta.destinationDir) : ("")) + "/" + file.path, file.content);
             
             // generate files from project template
-            var model = new ObjectValue(Map.of("dependencies", ((IVMValue)new ArrayValue(Arrays.stream(nativeDeps.keySet().toArray(String[]::new)).map(name -> new ObjectValue(Map.of("name", ((IVMValue)new StringValue(name)), "version", ((IVMValue)new StringValue(nativeDeps.get(name)))))).toArray(ObjectValue[]::new))), "onepackages", ((IVMValue)new ArrayValue(oneDeps.stream().map(dep -> new ObjectValue(Map.of("vendor", ((IVMValue)new StringValue(dep.implementationYaml.vendor)), "id", ((IVMValue)new StringValue(dep.implementationYaml.name))))).toArray(ObjectValue[]::new)))));
+            var model = new ObjectValue(new LinkedHashMap<>(Map.of("dependencies", ((IVMValue)new ArrayValue(Arrays.stream(nativeDeps.keySet().toArray(String[]::new)).map(name -> new ObjectValue(new LinkedHashMap<>(Map.of("name", ((IVMValue)new StringValue(name)), "version", ((IVMValue)new StringValue(nativeDeps.get(name))))))).toArray(ObjectValue[]::new))), "onepackages", ((IVMValue)new ArrayValue(oneDeps.stream().map(dep -> new ObjectValue(new LinkedHashMap<>(Map.of("vendor", ((IVMValue)new StringValue(dep.implementationYaml.vendor)), "id", ((IVMValue)new StringValue(dep.implementationYaml.name)))))).toArray(ObjectValue[]::new))))));
             projTemplate.generate(outDir, model);
         }
     }

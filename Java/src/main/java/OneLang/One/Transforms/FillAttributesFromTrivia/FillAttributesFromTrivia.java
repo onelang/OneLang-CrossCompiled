@@ -54,7 +54,7 @@ public class FillAttributesFromTrivia extends AstTransformer {
                 else {
                     var getResult = match[2];
                     var getResult2 = match[2];
-                    result.put(match[1], Objects.equals((getResult != null ? getResult : ""), "") ? "true" : getResult2 != null ? getResult2 : "");
+                    result.put(match[1], Objects.equals(((getResult != null ? (getResult) : (""))), "") ? "true" : (getResult2 != null ? (getResult2) : ("")));
                 }
             }
         }

@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 namespace One.Transforms
 {
-    public class LambdaCaptureCollector : AstTransformer {
+    public class LambdaCaptureCollector : AstTransformer
+    {
         public List<Set<IVariable>> scopeVarStack;
         public Set<IVariable> scopeVars;
         public Set<IVariable> capturedVars;

@@ -3,7 +3,8 @@ using One;
 
 namespace One.Transforms
 {
-    public class FillMutabilityInfo : AstTransformer {
+    public class FillMutabilityInfo : AstTransformer
+    {
         public FillMutabilityInfo(): base("FillMutabilityInfo")
         {
             

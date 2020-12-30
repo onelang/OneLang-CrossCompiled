@@ -14,18 +14,21 @@ namespace One.Ast
         Expression object_ { get; set; }
     }
     
-    public class Reference : Expression {
+    public class Reference : Expression
+    {
         
     }
     
-    public class VariableReference : Reference {
+    public class VariableReference : Reference
+    {
         public virtual IVariable getVariable()
         {
             throw new Error("Abstract method");
         }
     }
     
-    public class ClassReference : Reference {
+    public class ClassReference : Reference
+    {
         public Class decl;
         
         public ClassReference(Class decl): base()
@@ -40,7 +43,8 @@ namespace One.Ast
         }
     }
     
-    public class GlobalFunctionReference : Reference, IGetMethodBase {
+    public class GlobalFunctionReference : Reference, IGetMethodBase
+    {
         public GlobalFunction decl;
         
         public GlobalFunctionReference(GlobalFunction decl): base()
@@ -60,7 +64,8 @@ namespace One.Ast
         }
     }
     
-    public class MethodParameterReference : VariableReference {
+    public class MethodParameterReference : VariableReference
+    {
         public MethodParameter decl;
         
         public MethodParameterReference(MethodParameter decl): base()
@@ -80,7 +85,8 @@ namespace One.Ast
         }
     }
     
-    public class EnumReference : Reference {
+    public class EnumReference : Reference
+    {
         public Enum_ decl;
         
         public EnumReference(Enum_ decl): base()
@@ -95,7 +101,8 @@ namespace One.Ast
         }
     }
     
-    public class EnumMemberReference : Reference {
+    public class EnumMemberReference : Reference
+    {
         public EnumMember decl;
         
         public EnumMemberReference(EnumMember decl): base()
@@ -112,7 +119,8 @@ namespace One.Ast
         }
     }
     
-    public class StaticThisReference : Reference {
+    public class StaticThisReference : Reference
+    {
         public Class cls;
         
         public StaticThisReference(Class cls): base()
@@ -127,7 +135,8 @@ namespace One.Ast
         }
     }
     
-    public class ThisReference : Reference {
+    public class ThisReference : Reference
+    {
         public Class cls;
         
         public ThisReference(Class cls): base()
@@ -144,7 +153,8 @@ namespace One.Ast
         }
     }
     
-    public class SuperReference : Reference {
+    public class SuperReference : Reference
+    {
         public Class cls;
         
         public SuperReference(Class cls): base()
@@ -161,7 +171,8 @@ namespace One.Ast
         }
     }
     
-    public class VariableDeclarationReference : VariableReference {
+    public class VariableDeclarationReference : VariableReference
+    {
         public VariableDeclaration decl;
         
         public VariableDeclarationReference(VariableDeclaration decl): base()
@@ -176,7 +187,8 @@ namespace One.Ast
         }
     }
     
-    public class ForVariableReference : VariableReference {
+    public class ForVariableReference : VariableReference
+    {
         public ForVariable decl;
         
         public ForVariableReference(ForVariable decl): base()
@@ -191,7 +203,8 @@ namespace One.Ast
         }
     }
     
-    public class CatchVariableReference : VariableReference {
+    public class CatchVariableReference : VariableReference
+    {
         public CatchVariable decl;
         
         public CatchVariableReference(CatchVariable decl): base()
@@ -206,7 +219,8 @@ namespace One.Ast
         }
     }
     
-    public class ForeachVariableReference : VariableReference {
+    public class ForeachVariableReference : VariableReference
+    {
         public ForeachVariable decl;
         
         public ForeachVariableReference(ForeachVariable decl): base()
@@ -221,7 +235,8 @@ namespace One.Ast
         }
     }
     
-    public class StaticFieldReference : VariableReference {
+    public class StaticFieldReference : VariableReference
+    {
         public Field decl;
         
         public StaticFieldReference(Field decl): base()
@@ -243,7 +258,8 @@ namespace One.Ast
         }
     }
     
-    public class StaticPropertyReference : VariableReference {
+    public class StaticPropertyReference : VariableReference
+    {
         public Property decl;
         
         public StaticPropertyReference(Property decl): base()
@@ -265,7 +281,8 @@ namespace One.Ast
         }
     }
     
-    public class InstanceFieldReference : VariableReference, IInstanceMemberReference {
+    public class InstanceFieldReference : VariableReference, IInstanceMemberReference
+    {
         public Expression object_ { get; set; }
         public Field field;
         
@@ -282,7 +299,8 @@ namespace One.Ast
         }
     }
     
-    public class InstancePropertyReference : VariableReference, IInstanceMemberReference {
+    public class InstancePropertyReference : VariableReference, IInstanceMemberReference
+    {
         public Expression object_ { get; set; }
         public Property property;
         

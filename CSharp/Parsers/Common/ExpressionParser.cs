@@ -11,7 +11,8 @@ namespace Parsers.Common
         Expression infixPrehook(Expression left);
     }
     
-    public class Operator {
+    public class Operator
+    {
         public string text;
         public int precedence;
         public bool isBinary;
@@ -28,7 +29,8 @@ namespace Parsers.Common
         }
     }
     
-    public class PrecedenceLevel {
+    public class PrecedenceLevel
+    {
         public string name;
         public string[] operators;
         public bool binary;
@@ -41,7 +43,8 @@ namespace Parsers.Common
         }
     }
     
-    public class ExpressionParserConfig {
+    public class ExpressionParserConfig
+    {
         public string[] unary;
         public PrecedenceLevel[] precedenceLevels;
         public string[] rightAssoc;
@@ -49,7 +52,8 @@ namespace Parsers.Common
         public string[] propertyAccessOps;
     }
     
-    public class ExpressionParser {
+    public class ExpressionParser
+    {
         public Dictionary<string, Operator> operatorMap;
         public string[] operators;
         public int prefixPrecedence;

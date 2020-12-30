@@ -9,7 +9,8 @@ namespace VM
         string stringifyValue(IVMValue value);
     }
     
-    public class VMContext {
+    public class VMContext
+    {
         public ObjectValue model;
         public IVMHooks hooks;
         
@@ -20,7 +21,8 @@ namespace VM
         }
     }
     
-    public class ExprVM {
+    public class ExprVM
+    {
         public VMContext context;
         
         public ExprVM(VMContext context)

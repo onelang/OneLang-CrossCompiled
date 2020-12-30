@@ -4,7 +4,8 @@ using Utils;
 
 namespace Test
 {
-    public class PackageStateCapture {
+    public class PackageStateCapture
+    {
         public Dictionary<string, string> overviews;
         public Package pkg;
         

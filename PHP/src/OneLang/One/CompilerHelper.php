@@ -17,7 +17,7 @@ class CompilerHelper {
         $compiler->setupNativeResolver(OneFile::readText(CompilerHelper::$baseDir . "langs/NativeResolvers/typescript.ts"));
         $compiler->newWorkspace($projectName);
         
-        foreach (array_values(array_filter(OneFile::listFiles($sourceDir, true), function ($x) { return substr_compare($x, ".ts", strlen($x) - strlen(".ts"), strlen(".ts")) === 0; })) as $file)
+        foreach (array_values(array_filter(OneFile::listFiles($sourceDir, true), function ($x) { return (substr_compare($x, ".ts", strlen($x) - strlen(".ts"), strlen(".ts")) === 0); })) as $file)
             $compiler->addProjectFile($file, OneFile::readText($sourceDir . "/" . $file));
         
         return $compiler;

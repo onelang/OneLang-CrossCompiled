@@ -140,7 +140,7 @@ class ProjectGenerator {
             foreach ($this->projectFile->dependencies as $dep) {
                 $impl = \OneLang\Core\ArrayHelper::find($compiler->pacMan->implementationPkgs, function ($x) use ($dep) { return $x->content->id->name === $dep->name; });
                 $oneDeps[] = $impl;
-                $langData = @$impl->implementationYaml->languages[$langId] ?? null;
+                $langData = (@$impl->implementationYaml->languages[$langId] ?? null);
                 if ($langData === null)
                     continue;
                 
@@ -150,29 +150,29 @@ class ProjectGenerator {
                 if ($langData->nativeSrcDir !== null) {
                     if ($projTemplate->meta->packageDir === null)
                         throw new \OneLang\Core\Error("Package directory is empty in project template!");
-                    $srcDir = $langData->nativeSrcDir . (substr_compare($langData->nativeSrcDir, "/", strlen($langData->nativeSrcDir) - strlen("/"), strlen("/")) === 0 ? "" : "/");
-                    $dstDir = $outDir . "/" . $projTemplate->meta->packageDir . "/" . $langData->packageDir ?? $impl->content->id->name;
-                    $depFiles = array_map(function ($x) use ($srcDir) { return substr($x, strlen($srcDir)); }, array_values(array_filter(array_keys($impl->content->files), function ($x) use ($srcDir) { return substr_compare($x, $srcDir, 0, strlen($srcDir)) === 0; })));
+                    $srcDir = $langData->nativeSrcDir . ((substr_compare($langData->nativeSrcDir, "/", strlen($langData->nativeSrcDir) - strlen("/"), strlen("/")) === 0) ? "" : "/");
+                    $dstDir = $outDir . "/" . $projTemplate->meta->packageDir . "/" . ($langData->packageDir ?? $impl->content->id->name);
+                    $depFiles = array_map(function ($x) use ($srcDir) { return substr($x, strlen($srcDir)); }, array_values(array_filter(array_keys($impl->content->files), function ($x) use ($srcDir) { return (substr_compare($x, $srcDir, 0, strlen($srcDir)) === 0); })));
                     foreach ($depFiles as $fn)
-                        OneFile::writeText($dstDir . "/" . $fn, @$impl->content->files[$srcDir . $fn] ?? null);
+                        OneFile::writeText($dstDir . "/" . $fn, (@$impl->content->files[$srcDir . $fn] ?? null));
                 }
                 
                 if ($langData->generatorPlugins !== null)
                     foreach ($langData->generatorPlugins as $genPlugFn)
-                        $generator->addPlugin(new TemplateFileGeneratorPlugin($generator, @$impl->content->files[$genPlugFn] ?? null));
+                        $generator->addPlugin(new TemplateFileGeneratorPlugin($generator, (@$impl->content->files[$genPlugFn] ?? null)));
             }
             
             // generate cross compiled source code
             \OneLang\Core\console::log("Generating " . $langName . " code...");
             $files = $generator->generate($compiler->projectPkg);
             foreach ($files as $file)
-                OneFile::writeText($outDir . "/" . $projTemplate->meta->destinationDir ?? "" . "/" . $file->path, $file->content);
+                OneFile::writeText($outDir . "/" . ($projTemplate->meta->destinationDir ?? "") . "/" . $file->path, $file->content);
             
             // generate files from project template
             $model = new ObjectValue(Array(
                 "dependencies" => new ArrayValue(array_map(function ($name) use ($nativeDeps) { return new ObjectValue(Array(
                     "name" => new StringValue($name),
-                    "version" => new StringValue(@$nativeDeps[$name] ?? null)
+                    "version" => new StringValue((@$nativeDeps[$name] ?? null))
                 )); }, array_keys($nativeDeps))),
                 "onepackages" => new ArrayValue(array_map(function ($dep) { return new ObjectValue(Array(
                     "vendor" => new StringValue($dep->implementationYaml->vendor),

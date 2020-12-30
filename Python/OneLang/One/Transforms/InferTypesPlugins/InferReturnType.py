@@ -51,6 +51,9 @@ class ReturnTypeInferer:
         if check_type != None and async_type != None and isinstance(check_type, astTypes.ClassType) and check_type.decl == async_type.decl:
             check_type = check_type.type_arguments[0]
         
+        if inferred_type != None and async_type != None and isinstance(inferred_type, astTypes.ClassType) and inferred_type.decl == async_type.decl:
+            inferred_type = inferred_type.type_arguments[0]
+        
         if check_type != None and not astTypes.TypeHelper.is_assignable_to(inferred_type, check_type):
             self.error_man.throw(f'''{error_context} returns different type ({inferred_type.repr()}) than expected {check_type.repr()}''')
         

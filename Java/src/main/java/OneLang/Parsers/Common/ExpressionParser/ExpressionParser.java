@@ -30,9 +30,9 @@ import OneLang.Parsers.Common.ExpressionParser.IExpressionParserHooks;
 import OneLang.Parsers.Common.NodeManager.NodeManager;
 import OneLang.Parsers.Common.ExpressionParser.ExpressionParserConfig;
 import OneLang.Parsers.Common.ExpressionParser.PrecedenceLevel;
+import java.util.LinkedHashMap;
 import java.util.Arrays;
 import io.onelang.std.core.Objects;
-import java.util.LinkedHashMap;
 import OneLang.One.Ast.Expressions.MapLiteral;
 import OneLang.One.Ast.Expressions.MapLiteralItem;
 import java.util.ArrayList;
@@ -80,7 +80,7 @@ public class ExpressionParser {
         config.unary = new String[] { "++", "--", "!", "not", "+", "-", "~" };
         config.precedenceLevels = new PrecedenceLevel[] { new PrecedenceLevel("assignment", new String[] { "=", "+=", "-=", "*=", "/=", "<<=", ">>=" }, true), new PrecedenceLevel("conditional", new String[] { "?" }, false), new PrecedenceLevel("or", new String[] { "||", "or" }, true), new PrecedenceLevel("and", new String[] { "&&", "and" }, true), new PrecedenceLevel("comparison", new String[] { ">=", "!=", "===", "!==", "==", "<=", ">", "<" }, true), new PrecedenceLevel("sum", new String[] { "+", "-" }, true), new PrecedenceLevel("product", new String[] { "*", "/", "%" }, true), new PrecedenceLevel("bitwise", new String[] { "|", "&", "^" }, true), new PrecedenceLevel("exponent", new String[] { "**" }, true), new PrecedenceLevel("shift", new String[] { "<<", ">>" }, true), new PrecedenceLevel("range", new String[] { "..." }, true), new PrecedenceLevel("in", new String[] { "in" }, true), new PrecedenceLevel("prefix", new String[0], false), new PrecedenceLevel("postfix", new String[] { "++", "--" }, false), new PrecedenceLevel("call", new String[] { "(" }, false), new PrecedenceLevel("propertyAccess", new String[0], false), new PrecedenceLevel("elementAccess", new String[] { "[" }, false) };
         config.rightAssoc = new String[] { "**" };
-        config.aliases = Map.of("===", "==", "!==", "!=", "not", "!", "and", "&&", "or", "||");
+        config.aliases = new LinkedHashMap<>(Map.of("===", "==", "!==", "!=", "not", "!", "and", "&&", "or", "||"));
         config.propertyAccessOps = new String[] { ".", "::" };
         return config;
     }

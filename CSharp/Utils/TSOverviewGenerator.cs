@@ -3,7 +3,8 @@ using System.Collections.Generic;
 
 namespace Utils
 {
-    public class TSOverviewGenerator {
+    public class TSOverviewGenerator
+    {
         public static TSOverviewGenerator preview;
         public bool previewOnly;
         public bool showTypes;

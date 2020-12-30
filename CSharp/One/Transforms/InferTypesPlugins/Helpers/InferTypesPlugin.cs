@@ -4,7 +4,8 @@ using One;
 
 namespace One.Transforms.InferTypesPlugins.Helpers
 {
-    public class InferTypesPlugin {
+    public class InferTypesPlugin
+    {
         public InferTypes main;
         public ErrorManager errorMan;
         public string name;

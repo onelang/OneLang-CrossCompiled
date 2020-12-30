@@ -68,7 +68,7 @@ class ResolveMethodCalls(inferTypesPlug.InferTypesPlugin):
                 lambda_field = next(filter(lambda x: x.name == expr.method_name and isinstance(x.type, astTypes.LambdaType) and len(x.type.parameters) == len(expr.args), intf_type.fields), None)
                 if lambda_field != None:
                     lambda_call = exprs.LambdaCallExpression(refs.InstanceFieldReference(expr.object, lambda_field), expr.args)
-                    lambda_call.set_actual_type((lambda_field.type).return_type)
+                    lambda_call.set_actual_type((lambda_field.type).return_type, True)
                     return lambda_call
                 
                 method = self.find_method(intf_type, expr.method_name, False, expr.args)

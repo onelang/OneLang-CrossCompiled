@@ -63,7 +63,7 @@ class Reader {
     }
     
     function get_preview() {
-        $preview = preg_replace("/\\n/", "\\n", substr($this->input, $this->offset, 30));
+        $preview = preg_replace("/\\n/", "\\\\n", substr($this->input, $this->offset, 30));
         if (strlen($preview) === 30)
             $preview .= "...";
         return $preview;
@@ -145,7 +145,7 @@ class Reader {
     }
     
     function readExactly($what) {
-        if (substr_compare($this->input, $what, $this->offset, strlen($what)) === 0) {
+        if ((substr_compare($this->input, $what, $this->offset, strlen($what)) === 0)) {
             $this->wsOffset = $this->offset = $this->offset + strlen($what);
             return true;
         }
@@ -153,7 +153,7 @@ class Reader {
     }
     
     function peekExactly($what) {
-        return substr_compare($this->input, $what, $this->offset, strlen($what)) === 0;
+        return (substr_compare($this->input, $what, $this->offset, strlen($what)) === 0);
     }
     
     function readChar() {
@@ -165,7 +165,7 @@ class Reader {
     function peekToken($token) {
         $this->skipWhitespaceAndComment();
         
-        if (substr_compare($this->input, $token, $this->offset, strlen($token)) === 0) {
+        if ((substr_compare($this->input, $token, $this->offset, strlen($token)) === 0)) {
             // TODO: hackish way to make sure space comes after word tokens
             if ($this->isAlphaNum($token[strlen($token) - 1]) && $this->isAlphaNum($this->input[$this->offset + strlen($token)]))
                 return false;
@@ -246,9 +246,9 @@ class Reader {
         $this->moveWsOffset = false;
         while (true) {
             $this->skipWhitespace(true);
-            if (substr_compare($this->input, $this->lineComment, $this->offset, strlen($this->lineComment)) === 0)
+            if ((substr_compare($this->input, $this->lineComment, $this->offset, strlen($this->lineComment)) === 0))
                 $this->skipLine();
-            else if ($this->supportsBlockComment && substr_compare($this->input, $this->blockCommentStart, $this->offset, strlen($this->blockCommentStart)) === 0) {
+            else if ($this->supportsBlockComment && (substr_compare($this->input, $this->blockCommentStart, $this->offset, strlen($this->blockCommentStart)) === 0)) {
                 if (!$this->skipUntil($this->blockCommentEnd))
                     $this->fail("block comment end (\"" . $this->blockCommentEnd . "\") was not found");
             }

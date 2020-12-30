@@ -3,8 +3,9 @@ using One;
 
 namespace One.Transforms
 {
-    public class CollectInheritanceInfo : ITransformer {
-        public string name { get; set; }
+    public class CollectInheritanceInfo : ITransformer
+    {
+        public string name { get; set; } = "CollectInheritanceInfo";
         
         public CollectInheritanceInfo()
         {

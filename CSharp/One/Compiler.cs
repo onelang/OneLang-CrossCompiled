@@ -12,7 +12,8 @@ namespace One
         void afterStage(string stageName);
     }
     
-    public class Compiler {
+    public class Compiler
+    {
         public PackageManager pacMan;
         public Workspace workspace;
         public SourceFile nativeFile;

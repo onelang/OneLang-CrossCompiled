@@ -90,7 +90,7 @@ class ResolveMethodCalls extends InferTypesPlugin {
                 $lambdaField = \OneLang\Core\ArrayHelper::find($intfType->fields, function ($x) use ($expr) { return $x->name === $expr->methodName && $x->type instanceof LambdaType && count($x->type->parameters) === count($expr->args); });
                 if ($lambdaField !== null) {
                     $lambdaCall = new LambdaCallExpression(new InstanceFieldReference($expr->object, $lambdaField), $expr->args);
-                    $lambdaCall->setActualType(($lambdaField->type)->returnType);
+                    $lambdaCall->setActualType(($lambdaField->type)->returnType, true);
                     return $lambdaCall;
                 }
                 

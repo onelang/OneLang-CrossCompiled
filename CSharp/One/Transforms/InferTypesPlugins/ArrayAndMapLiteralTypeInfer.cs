@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 namespace One.Transforms.InferTypesPlugins
 {
-    public class ArrayAndMapLiteralTypeInfer : InferTypesPlugin {
+    public class ArrayAndMapLiteralTypeInfer : InferTypesPlugin
+    {
         public ArrayAndMapLiteralTypeInfer(): base("ArrayAndMapLiteralTypeInfer")
         {
             

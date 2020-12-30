@@ -57,7 +57,7 @@ class TemplateParser {
                     $this->reader->expectToken("}}");
                     $body = $this->parseBlock();
                     $this->reader->expectToken("{{/for}}");
-                    $items[] = new ForNode($varName, $itemsExpr, $body, @$attrs["joiner"] ?? null);
+                    $items[] = new ForNode($varName, $itemsExpr, $body, (@$attrs["joiner"] ?? null));
                 }
                 else {
                     $expr = $this->parser->parseExpression();
@@ -66,7 +66,7 @@ class TemplateParser {
                 }
             }
             else {
-                $literal = $this->reader->readRegex("([^\\\\]\\\\(\\{\\{|\\\$)|\r|\n|(?!\\{\\{|\\$\\{|\\$).)*")[0];
+                $literal = $this->reader->readRegex("([^\\\\]\\\\(\\{\\{|\\\$)|\r|\n|(?!\\{\\{|\\\$\\{|\\\$).)*")[0];
                 if ($literal === "")
                     throw new \OneLang\Core\Error("This should not happen!");
                 $items[] = new LiteralNode($literal);

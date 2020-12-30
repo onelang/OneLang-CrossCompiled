@@ -50,7 +50,7 @@ class JsonSerializer {
         else if ($declType instanceof ClassType || $declType instanceof InterfaceType) {
             $rawValue = $obj->getUniqueIdentifier();
             if ($this->circleDetector->has($rawValue))
-                return "{\"$ref\":\"" . $this->circleDetector->get($rawValue) . "\"}";
+                return "{\"\$ref\":\"" . $this->circleDetector->get($rawValue) . "\"}";
             $id = "id_" . $this->circleDetector->size;
             $this->circleDetector->set($rawValue, $id);
             
@@ -59,10 +59,10 @@ class JsonSerializer {
             
             $members = array();
             
-            $members[] = "\"$id\": \"" . $id . "\"";
+            $members[] = "\"\$id\": \"" . $id . "\"";
             
             if ($valueType !== null && !TypeHelper::equals($valueType, $declType))
-                $members[] = "\"$type\": \"" . $valueType->repr() . "\"";
+                $members[] = "\"\$type\": \"" . $valueType->repr() . "\"";
             
             foreach (array_values(array_filter($decl->fields, function ($x) { return !$x->isStatic; })) as $field) {
                 if (array_key_exists("json-ignore", $field->attributes))

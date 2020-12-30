@@ -9,7 +9,8 @@ namespace One.Transforms
 {
     public enum InferTypesStage { Invalid, Fields, Properties, Methods }
     
-    public class InferTypes : AstTransformer {
+    public class InferTypes : AstTransformer
+    {
         protected InferTypesStage stage;
         public List<InferTypesPlugin> plugins;
         public int contextInfoIdx = 0;

@@ -5,7 +5,8 @@ using System.Collections.Generic;
 
 namespace One.Transforms.InferTypesPlugins
 {
-    public class ReturnTypeInferer {
+    public class ReturnTypeInferer
+    {
         public bool returnsNull = false;
         public bool throws = false;
         public List<IType> returnTypes;
@@ -61,6 +62,9 @@ namespace One.Transforms.InferTypesPlugins
             if (checkType != null && asyncType != null && checkType is ClassType classType && classType.decl == asyncType.decl)
                 checkType = classType.typeArguments.get(0);
             
+            if (inferredType != null && asyncType != null && inferredType is ClassType classType2 && classType2.decl == asyncType.decl)
+                inferredType = classType2.typeArguments.get(0);
+            
             if (checkType != null && !TypeHelper.isAssignableTo(inferredType, checkType))
                 this.errorMan.throw_($"{errorContext} returns different type ({inferredType.repr()}) than expected {checkType.repr()}");
             
@@ -69,7 +73,8 @@ namespace One.Transforms.InferTypesPlugins
         }
     }
     
-    public class InferReturnType : InferTypesPlugin {
+    public class InferReturnType : InferTypesPlugin
+    {
         public List<ReturnTypeInferer> returnTypeInfer;
         
         public ReturnTypeInferer current {

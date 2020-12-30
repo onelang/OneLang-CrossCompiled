@@ -24,7 +24,7 @@ class TSOverviewGenerator:
         if item.leading_trivia != None and len(item.leading_trivia) > 0:
             result += item.leading_trivia
         if item.attributes != None:
-            result += "".join(list(map(lambda x: f'''/// {{ATTR}} name="{x}", value={json.dumps(item.attributes.get(x))}\n''', item.attributes.keys())))
+            result += "".join(list(map(lambda x: f'''/// {{ATTR}} name="{x}", value={json.dumps(item.attributes.get(x), separators=(',', ':'))}\n''', item.attributes.keys())))
         return result
     
     def pre_arr(self, prefix, value):
@@ -93,7 +93,7 @@ class TSOverviewGenerator:
         elif isinstance(expr, exprs.BooleanLiteral):
             res = f'''{("true" if expr.bool_value else "false")}'''
         elif isinstance(expr, exprs.StringLiteral):
-            res = f'''{json.dumps(expr.string_value)}'''
+            res = f'''{json.dumps(expr.string_value, separators=(',', ':'))}'''
         elif isinstance(expr, exprs.NumericLiteral):
             res = f'''{expr.value_as_text}'''
         elif isinstance(expr, exprs.CharacterLiteral):

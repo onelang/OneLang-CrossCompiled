@@ -7,7 +7,8 @@ using VM;
 
 namespace Generator
 {
-    public class PhpGenerator : IGenerator {
+    public class PhpGenerator : IGenerator
+    {
         public Set<string> usings;
         public IInterface currentClass;
         public string[] reservedWords;
@@ -46,16 +47,27 @@ namespace Generator
             this.plugins.push(plugin);
             
             // TODO: hack?
-            if (plugin is TemplateFileGeneratorPlugin templFileGenPlug)
+            if (plugin is TemplateFileGeneratorPlugin templFileGenPlug) {
                 templFileGenPlug.modelGlobals.set("escape", new LambdaValue(args => new StringValue(this.escape(args.get(0)))));
+                templFileGenPlug.modelGlobals.set("escapeBackslash", new LambdaValue(args => new StringValue(this.escapeBackslash(args.get(0)))));
+            }
         }
         
         public string escape(IVMValue value)
         {
             if (value is ExpressionValue exprValue && exprValue.value is RegexLiteral regexLit)
                 return JSON.stringify("/" + regexLit.pattern.replace(new RegExp("/"), "\\/") + "/");
+            else if (value is ExpressionValue exprValue2 && exprValue2.value is StringLiteral strLit)
+                return JSON.stringify(strLit.stringValue);
             else if (value is StringValue strValue)
                 return JSON.stringify(strValue.value);
+            throw new Error($"Not supported VMValue for escape()");
+        }
+        
+        public string escapeBackslash(IVMValue value)
+        {
+            if (value is ExpressionValue exprValue3 && exprValue3.value is StringLiteral strLit2)
+                return JSON.stringify(strLit2.stringValue.replace(new RegExp("\\\\"), "\\\\"));
             throw new Error($"Not supported VMValue for escape()");
         }
         
@@ -287,15 +299,15 @@ namespace Generator
                     res = $"\\OneLang\\Core\\{res}";
             }
             else if (expr is GlobalFunctionCallExpression globFunctCallExpr)
-                res = $"Global.{this.name_(globFunctCallExpr.func.name)}{this.exprCall(new IType[0], globFunctCallExpr.args)}";
+                res = $"{this.name_(globFunctCallExpr.func.name)}{this.exprCall(new IType[0], globFunctCallExpr.args)}";
             else if (expr is LambdaCallExpression lambdCallExpr)
-                res = $"{this.expr(lambdCallExpr.method)}({lambdCallExpr.args.map(x => this.expr(x)).join(", ")})";
+                res = $"call_user_func({this.expr(lambdCallExpr.method)}, {lambdCallExpr.args.map(x => this.expr(x)).join(", ")})";
             else if (expr is BooleanLiteral boolLit)
                 res = $"{(boolLit.boolValue ? "true" : "false")}";
-            else if (expr is StringLiteral strLit)
-                res = $"{JSON.stringify(strLit.stringValue).replace(new RegExp("\\$"), "\\$")}";
+            else if (expr is StringLiteral strLit3)
+                res = JSON.stringify(strLit3.stringValue).replace(new RegExp("\\$"), "\\$");
             else if (expr is NumericLiteral numLit)
-                res = $"{numLit.valueAsText}";
+                res = numLit.valueAsText;
             else if (expr is CharacterLiteral charLit)
                 res = $"'{charLit.charValue}'";
             else if (expr is ElementAccessExpression elemAccExpr)
@@ -313,6 +325,8 @@ namespace Generator
                                 lit += "\\r";
                             else if (chr == "\t")
                                 lit += "\\t";
+                            else if (chr == "$")
+                                lit += "\\$";
                             else if (chr == "\\")
                                 lit += "\\\\";
                             else if (chr == "\"")
@@ -329,7 +343,8 @@ namespace Generator
                     }
                     else {
                         var repr = this.expr(part.expression);
-                        parts.push(part.expression is ConditionalExpression ? $"({repr})" : repr);
+                        var isComplex = part.expression is ConditionalExpression condExpr || part.expression is BinaryExpression || part.expression is NullCoalesceExpression;
+                        parts.push(isComplex ? $"({repr})" : repr);
                     }
                 }
                 res = parts.join(" . ");
@@ -357,11 +372,11 @@ namespace Generator
                 res = $"array({arrayLit.items.map(x => this.expr(x)).join(", ")})";
             else if (expr is CastExpression castExpr)
                 res = $"{this.expr(castExpr.expression)}";
-            else if (expr is ConditionalExpression condExpr) {
-                var whenFalseExpr = this.expr(condExpr.whenFalse);
-                if (condExpr.whenFalse is ConditionalExpression)
+            else if (expr is ConditionalExpression condExpr2) {
+                var whenFalseExpr = this.expr(condExpr2.whenFalse);
+                if (condExpr2.whenFalse is ConditionalExpression)
                     whenFalseExpr = $"({whenFalseExpr})";
-                res = $"{this.expr(condExpr.condition)} ? {this.expr(condExpr.whenTrue)} : {whenFalseExpr}";
+                res = $"{this.expr(condExpr2.condition)} ? {this.expr(condExpr2.whenTrue)} : {whenFalseExpr}";
             }
             else if (expr is InstanceOfExpression instOfExpr)
                 res = $"{this.expr(instOfExpr.expr)} instanceof {this.type(instOfExpr.checkType)}";
@@ -381,7 +396,7 @@ namespace Generator
                 res = $"{this.expr(unaryExpr2.operand)}{unaryExpr2.operator_}";
             else if (expr is MapLiteral mapLit) {
                 var repr = mapLit.items.map(item => $"{JSON.stringify(item.key)} => {this.expr(item.value)}").join(",\n");
-                res = "Array(" + (repr == "" ? "" : repr.includes("\n") ? $"\n{this.pad(repr)}\n" : $"({repr}") + ")";
+                res = "Array(" + (repr == "" ? "" : repr.includes("\n") ? $"\n{this.pad(repr)}\n" : repr) + ")";
             }
             else if (expr is NullLiteral)
                 res = $"null";
@@ -434,8 +449,8 @@ namespace Generator
         public string stmtDefault(Statement stmt)
         {
             var res = "UNKNOWN-STATEMENT";
-            if (stmt.attributes != null && stmt.attributes.hasKey("csharp"))
-                res = stmt.attributes.get("csharp");
+            if (stmt.attributes != null && stmt.attributes.hasKey("php"))
+                res = stmt.attributes.get("php");
             else if (stmt is BreakStatement)
                 res = "break;";
             else if (stmt is ReturnStatement retStat)
@@ -524,9 +539,7 @@ namespace Generator
                     var isInitializerComplex = field.initializer != null && !(field.initializer is StringLiteral) && !(field.initializer is BooleanLiteral) && !(field.initializer is NumericLiteral);
                     
                     var prefix = $"{this.vis(field.visibility, true)}{this.preIf("static ", field.isStatic)}";
-                    if (field.interfaceDeclarations.length() > 0)
-                        fieldReprs.push($"{prefix}{this.varWoInit(field, field)};");
-                    else if (isInitializerComplex) {
+                    if (isInitializerComplex) {
                         if (field.isStatic)
                             staticConstructorStmts.push(new ExpressionStatement(new BinaryExpression(new StaticFieldReference(field), "=", field.initializer)));
                         else
@@ -561,7 +574,12 @@ namespace Generator
                     
                     var parentCall = class_.constructor_.superCallArgs != null ? $"parent::__construct({class_.constructor_.superCallArgs.map(x => this.expr(x)).join(", ")});\n" : "";
                     
-                    resList.push(this.preIf("/* throws */ ", class_.constructor_.throws) + "function __construct" + $"({class_.constructor_.parameters.map(p => this.var(p, p)).join(", ")})" + $" {{\n{this.pad(parentCall + this.stmts(constrFieldInits.concat(complexFieldInits.ToArray()).concat(class_.constructor_.body.statements.ToArray())))}\n}}");
+                    // @java var stmts = Stream.of(constrFieldInits, complexFieldInits, ((Class)cls).constructor_.getBody().statements).flatMap(Collection::stream).toArray(Statement[]::new);
+                    // @java-import java.util.Collection
+                    // @java-import java.util.stream.Stream
+                    var stmts = constrFieldInits.concat(complexFieldInits.ToArray()).concat(class_.constructor_.body.statements.ToArray());
+                    
+                    resList.push(this.preIf("/* throws */ ", class_.constructor_.throws) + "function __construct" + $"({class_.constructor_.parameters.map(p => this.var(p, p)).join(", ")})" + $" {{\n{this.pad(parentCall + this.stmts(stmts))}\n}}");
                 }
                 else if (complexFieldInits.length() > 0)
                     resList.push($"function __construct()\n{{\n{this.pad(this.stmts(complexFieldInits.ToArray()))}\n}}");
@@ -576,7 +594,9 @@ namespace Generator
                 methods.push((method.parentInterface is Interface ? "" : this.vis(method.visibility, false)) + this.preIf("static ", method.isStatic) + this.preIf("/* throws */ ", method.throws) + $"function " + this.name_(method.name) + this.typeArgs(method.typeArguments) + $"({method.parameters.map(p => this.var(p, null)).join(", ")})" + (method.body != null ? $" {{\n{this.pad(this.stmts(method.body.statements.ToArray()))}\n}}" : ";"));
             }
             resList.push(methods.join("\n\n"));
-            return $" {{\n{this.pad(resList.filter(x => x != "").join("\n\n"))}\n}}" + (staticConstructorStmts.length() > 0 ? $"\n{this.name_(cls.name)}::StaticInit();" : "");
+            
+            var resListJoined = this.pad(resList.filter(x => x != "").join("\n\n"));
+            return $" {{\n{resListJoined}\n}}" + (staticConstructorStmts.length() > 0 ? $"\n{this.name_(cls.name)}::StaticInit();" : "");
         }
         
         public string pad(string str)
@@ -625,7 +645,8 @@ namespace Generator
             var usingsSet = new Set<string>();
             foreach (var imp in sourceFile.imports) {
                 if (imp.attributes.hasKey("php-use"))
-                    usingsSet.add(imp.attributes.get("php-use"));
+                    foreach (var item in imp.attributes.get("php-use").split(new RegExp("\\n")))
+                        usingsSet.add(item);
                 else {
                     var fileNs = this.pathToNs(imp.exportScope.scopeName);
                     if (fileNs == "index")
@@ -635,11 +656,11 @@ namespace Generator
                 }
             }
             
-            foreach (var using_ in this.usings)
+            foreach (var using_ in this.usings.values())
                 usingsSet.add(using_);
             
             var usings = new List<string>();
-            foreach (var using_ in usingsSet)
+            foreach (var using_ in usingsSet.values())
                 usings.push($"use {using_};");
             
             var result = new List<string> { usings.join("\n"), enums.join("\n"), intfs.join("\n\n"), classes.join("\n\n"), main }.filter(x => x != "").join("\n\n");

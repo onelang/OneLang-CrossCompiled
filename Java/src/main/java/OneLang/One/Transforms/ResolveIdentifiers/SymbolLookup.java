@@ -10,6 +10,7 @@ import OneLang.One.Ast.Types.GlobalFunction;
 import OneLang.One.Ast.Types.IMethodBase;
 import OneLang.One.Ast.Types.Constructor;
 import OneLang.One.Ast.Types.Interface;
+import OneLang.One.Ast.Types.MethodParameter;
 import OneLang.One.ErrorManager.ErrorManager;
 import OneLang.One.Ast.Expressions.Identifier;
 import OneLang.One.Ast.Expressions.Expression;
@@ -26,6 +27,7 @@ import OneLang.One.Ast.Statements.IfStatement;
 import OneLang.One.Ast.Statements.TryStatement;
 import OneLang.One.Ast.Statements.Block;
 import OneLang.One.Ast.AstTypes.ClassType;
+import OneLang.One.Ast.Interfaces.IType;
 
 import OneLang.One.ErrorManager.ErrorManager;
 import java.util.List;

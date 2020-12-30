@@ -73,8 +73,8 @@ import OneLang.One.Ast.References.StaticFieldReference;
 import OneLang.One.Ast.References.StaticPropertyReference;
 import OneLang.One.Ast.References.InstanceFieldReference;
 import OneLang.One.Ast.References.InstancePropertyReference;
-import OneLang.VM.ExprVM.VMContext;
 import OneLang.VM.Values.ObjectValue;
+import OneLang.VM.ExprVM.VMContext;
 import OneLang.One.Ast.Expressions.ICallExpression;
 import OneLang.VM.Values.BooleanValue;
 import OneLang.VM.ExprVM.ExprVM;
@@ -99,12 +99,15 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
         this.modelGlobals = new LinkedHashMap<String, IVMValue>();
         var root = OneYaml.load(templateYaml);
         var exprDict = root.dict("expressions");
+        if (exprDict == null)
+            return;
         
         for (var exprStr : exprDict.keySet().toArray(String[]::new)) {
             var val = exprDict.get(exprStr);
-            var ifStr = val.str("if");
+            var tmplOnly = val.type() == ValueType.String;
+            var ifStr = tmplOnly ? null : val.str("if");
             var ifExpr = ifStr == null ? null : new TypeScriptParser2(ifStr, null).parseExpression();
-            var tmpl = val.type() == ValueType.String ? new CodeTemplate(val.asStr(), new String[0], null) : new CodeTemplate(val.str("template"), val.strArr("includes"), ifExpr);
+            var tmpl = tmplOnly ? new CodeTemplate(val.asStr(), new String[0], null) : new CodeTemplate(val.str("template"), val.strArr("includes"), ifExpr);
             
             this.addExprTemplate(exprStr, tmpl);
         }
@@ -129,6 +132,7 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
     public void addMethod(String name, CallTemplate callTmpl) {
         if (!(this.methods.containsKey(name)))
             this.methods.put(name, new ArrayList<CallTemplate>());
+        // @php $this->methods[$name][] = $callTmpl;
         this.methods.get(name).add(callTmpl);
     }
     
@@ -163,12 +167,12 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
         // quick return
         
         CodeTemplate codeTmpl = null;
-        var model = new LinkedHashMap<String, IVMValue>();
-        var context = new VMContext(new ObjectValue(model), this);
+        var model = new ObjectValue(new LinkedHashMap<String, IVMValue>());
+        var context = new VMContext(model, this);
         
-        model.put("type", new TypeValue(expr.getType()));
+        model.props.put("type", new TypeValue(expr.getType()));
         for (var name : this.modelGlobals.keySet().toArray(String[]::new))
-            model.put(name, this.modelGlobals.get(name));
+            model.props.put(name, this.modelGlobals.get(name));
         
         if (isCallExpr) {
             var call = ((ICallExpression)expr);
@@ -180,9 +184,9 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
             
             for (var callTmpl : callTmpls) {
                 if (expr instanceof InstanceMethodCallExpression)
-                    model.put("this", new ExpressionValue(((InstanceMethodCallExpression)expr).object));
+                    model.props.put("this", new ExpressionValue(((InstanceMethodCallExpression)expr).object));
                 for (Integer i = 0; i < callTmpl.args.length; i++)
-                    model.put(callTmpl.args[i], new ExpressionValue(call.getArgs()[i]));
+                    model.props.put(callTmpl.args[i], new ExpressionValue(call.getArgs()[i]));
                 
                 if (callTmpl.template.ifExpr == null || (((BooleanValue)new ExprVM(context).evaluate(callTmpl.template.ifExpr))).value) {
                     codeTmpl = callTmpl.template;
@@ -197,7 +201,7 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
                 return null;
             
             if (expr instanceof InstanceFieldReference || expr instanceof InstancePropertyReference)
-                model.put("this", new ExpressionValue((((IInstanceMemberReference)expr)).getObject()));
+                model.props.put("this", new ExpressionValue((((IInstanceMemberReference)expr)).getObject()));
             codeTmpl = field.template;
         }
         else
@@ -206,7 +210,7 @@ public class TemplateFileGeneratorPlugin implements IGeneratorPlugin, IVMHooks {
         if (codeTmpl == null)
             return null;
         
-        for (var inc : codeTmpl.includes != null ? codeTmpl.includes : new String[0])
+        for (var inc : (codeTmpl.includes != null ? (codeTmpl.includes) : (new String[0])))
             this.generator.addInclude(inc);
         
         var tmpl = new TemplateParser(codeTmpl.template).parse();

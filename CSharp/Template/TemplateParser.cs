@@ -6,7 +6,8 @@ using Template;
 
 namespace Template
 {
-    public class TemplateParser {
+    public class TemplateParser
+    {
         public Reader reader;
         public TypeScriptParser2 parser;
         public string template;

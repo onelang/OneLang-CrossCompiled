@@ -11,8 +11,10 @@ import OneLang.Generator.NameUtils as nameUtils
 import OneLang.One.Ast.Interfaces as ints
 import OneLang.Generator.IGenerator as iGen
 import OneLang.One.ITransformer as iTrans
-import re
+import OneLang.VM.Values as vals
+import OneLang.Generator.TemplateFileGeneratorPlugin as templFileGenPlug
 import json
+import re
 
 class PythonGenerator:
     def __init__(self):
@@ -22,7 +24,7 @@ class PythonGenerator:
         self.imports = None
         self.import_all_scopes = None
         self.current_class = None
-        self.reserved_words = ["from", "async", "global", "lambda", "cls", "import", "pass"]
+        self.reserved_words = ["from", "async", "global", "lambda", "cls", "import", "pass", "class"]
         self.field_to_method_hack = []
         self.plugins = []
     
@@ -35,11 +37,27 @@ class PythonGenerator:
     def get_transforms(self):
         return []
     
+    def add_include(self, include):
+        self.imports[f'''import {include}'''] = None
+    
     def add_plugin(self, plugin):
         self.plugins.append(plugin)
+        
+        if isinstance(plugin, templFileGenPlug.TemplateFileGeneratorPlugin):
+            plugin.model_globals["escape"] = templFileGenPlug.LambdaValue(lambda args: vals.StringValue(self.escape(args[0])))
+            plugin.model_globals["escapeBackslash"] = templFileGenPlug.LambdaValue(lambda args: vals.StringValue(self.escape_backslash(args[0])))
     
-    def add_include(self, include):
-        self.imports[include] = None
+    def escape(self, value):
+        if isinstance(value, templFileGenPlug.ExpressionValue) and isinstance(value.value, exprs.RegexLiteral):
+            return json.dumps(value.value.pattern, separators=(',', ':'))
+        elif isinstance(value, vals.StringValue):
+            return json.dumps(value.value, separators=(',', ':'))
+        raise Error(f'''Not supported VMValue for escape()''')
+    
+    def escape_backslash(self, value):
+        if isinstance(value, templFileGenPlug.ExpressionValue) and isinstance(value.value, exprs.StringLiteral):
+            return json.dumps(re.sub("\\\\", "\\\\\\\\", value.value.string_value), separators=(',', ':'))
+        raise Error(f'''Not supported VMValue for escape()''')
     
     def type(self, type):
         if isinstance(type, astTypes.ClassType):
@@ -185,7 +203,7 @@ class PythonGenerator:
         elif isinstance(expr, exprs.BooleanLiteral):
             res = f'''{("True" if expr.bool_value else "False")}'''
         elif isinstance(expr, exprs.StringLiteral):
-            res = f'''{json.dumps(expr.string_value)}'''
+            res = f'''{json.dumps(expr.string_value, separators=(',', ':'))}'''
         elif isinstance(expr, exprs.NumericLiteral):
             res = f'''{expr.value_as_text}'''
         elif isinstance(expr, exprs.CharacterLiteral):
@@ -243,7 +261,7 @@ class PythonGenerator:
         elif isinstance(expr, exprs.ParenthesizedExpression):
             res = f'''({self.expr(expr.expression)})'''
         elif isinstance(expr, exprs.RegexLiteral):
-            res = f'''RegExp({json.dumps(expr.pattern)})'''
+            res = f'''RegExp({json.dumps(expr.pattern, separators=(',', ':'))})'''
         elif isinstance(expr, types.Lambda):
             body = "INVALID-BODY"
             if len(expr.body.statements) == 1 and isinstance(expr.body.statements[0], stats.ReturnStatement):
@@ -270,7 +288,7 @@ class PythonGenerator:
             else:
                 res = f'''{self.expr(expr.operand)}{expr.operator}'''
         elif isinstance(expr, exprs.MapLiteral):
-            repr = ",\n".join(list(map(lambda item: f'''{json.dumps(item.key)}: {self.expr(item.value)}''', expr.items)))
+            repr = ",\n".join(list(map(lambda item: f'''{json.dumps(item.key, separators=(',', ':'))}: {self.expr(item.value)}''', expr.items)))
             res = "{}" if len(expr.items) == 0 else f'''{{\n{self.pad(repr)}\n}}'''
         elif isinstance(expr, exprs.NullLiteral):
             res = f'''None'''
@@ -321,7 +339,10 @@ class PythonGenerator:
         elif isinstance(stmt, stats.ReturnStatement):
             return "return" if stmt.expression == None else f'''return {self.expr(stmt.expression)}'''
         elif isinstance(stmt, stats.UnsetStatement):
-            return f'''/* unset {self.expr(stmt.expression)}; */'''
+            obj = (stmt.expression).object
+            key = (stmt.expression).args[0]
+            # TODO: hack: transform unsets before this
+            return f'''del {self.expr(obj)}[{self.expr(key)}]'''
         elif isinstance(stmt, stats.ThrowStatement):
             return f'''raise {self.expr(stmt.expression)}'''
         elif isinstance(stmt, stats.ExpressionStatement):
@@ -383,7 +404,7 @@ class PythonGenerator:
         if len(static_fields) > 0:
             self.imports["import onelang_core as one"] = None
             class_attributes.append("@one.static_init")
-            field_inits = list(map(lambda f: f'''cls.{self.vis(f.visibility)}{cls_.name.replace(self.var(f, f), "cls")}''', static_fields))
+            field_inits = list(map(lambda f: f'''cls.{self.vis(f.visibility)}{self.var(f, f).replace(cls_.name, "cls")}''', static_fields))
             res_list.append(f'''@classmethod\ndef static_init(cls):\n''' + self.pad("\n".join(field_inits)))
         
         constr_stmts = []
@@ -489,7 +510,7 @@ class PythonGenerator:
         main = self.block(source_file.main_block) if len(source_file.main_block.statements) > 0 else ""
         
         imports = []
-        for imp in self.imports:
+        for imp in self.imports.keys():
             imports.append(imp)
         
         return "\n\n".join(list(filter(lambda x: x != "", ["\n".join(imports), "\n\n".join(enums), "\n\n".join(classes), main])))

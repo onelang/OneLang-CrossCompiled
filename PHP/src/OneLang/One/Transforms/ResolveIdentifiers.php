@@ -12,6 +12,7 @@ use OneLang\One\Ast\Types\GlobalFunction;
 use OneLang\One\Ast\Types\IMethodBase;
 use OneLang\One\Ast\Types\Constructor;
 use OneLang\One\Ast\Types\Interface_;
+use OneLang\One\Ast\Types\MethodParameter;
 use OneLang\One\ErrorManager\ErrorManager;
 use OneLang\One\Ast\Expressions\Identifier;
 use OneLang\One\Ast\Expressions\Expression;
@@ -28,6 +29,7 @@ use OneLang\One\Ast\Statements\IfStatement;
 use OneLang\One\Ast\Statements\TryStatement;
 use OneLang\One\Ast\Statements\Block;
 use OneLang\One\Ast\AstTypes\ClassType;
+use OneLang\One\Ast\Interfaces\IType;
 
 class SymbolLookup {
     public $errorMan;
@@ -79,6 +81,10 @@ class ResolveIdentifiers extends AstTransformer {
     function __construct() {
         parent::__construct("ResolveIdentifiers");
         $this->symbolLookup = new SymbolLookup();
+    }
+    
+    protected function visitType($type) {
+        return $type;
     }
     
     protected function visitIdentifier($id) {
@@ -157,19 +163,14 @@ class ResolveIdentifiers extends AstTransformer {
         return parent::visitVariableDeclaration($stmt);
     }
     
+    protected function visitMethodParameter($param) {
+        $this->symbolLookup->addSymbol($param->name, $param);
+        parent::visitMethodParameter($param);
+    }
+    
     protected function visitMethodBase($method) {
         $this->symbolLookup->pushContext($method instanceof Method ? "Method: " . $method->name : ($method instanceof Constructor ? "constructor" : "???"));
-        
-        foreach ($method->parameters as $param) {
-            $this->symbolLookup->addSymbol($param->name, $param);
-            if ($param->initializer !== null)
-                $this->visitExpression($param->initializer);
-        }
-        
-        if ($method->body !== null)
-            parent::visitBlock($method->body);
-        // directly process method's body without opening a new scope again
-        
+        parent::visitMethodBase($method);
         $this->symbolLookup->popContext();
     }
     

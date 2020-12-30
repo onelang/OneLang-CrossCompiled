@@ -2,7 +2,8 @@ using One.Ast;
 
 namespace One.Transforms.InferTypesPlugins.Helpers
 {
-    public class GenericsResolver {
+    public class GenericsResolver
+    {
         public Map<string, IType> resolutionMap;
         
         public GenericsResolver()

@@ -5,7 +5,8 @@ using Utils;
 
 namespace One.Transforms
 {
-    public class InstanceOfImplicitCast : AstTransformer {
+    public class InstanceOfImplicitCast : AstTransformer
+    {
         public List<InstanceOfExpression> casts;
         public List<int> castCounts;
         

@@ -2,12 +2,14 @@ using Generator;
 using One;
 using StdLib;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Template;
 using VM;
 
 namespace Generator
 {
-    public class ProjectTemplateMeta {
+    public class ProjectTemplateMeta
+    {
         public string language;
         public string destinationDir;
         public string packageDir;
@@ -27,7 +29,8 @@ namespace Generator
         }
     }
     
-    public class ProjectTemplate {
+    public class ProjectTemplate
+    {
         public ProjectTemplateMeta meta;
         public string[] srcFiles;
         public string templateDir;
@@ -55,7 +58,8 @@ namespace Generator
         }
     }
     
-    public class ProjectDependency {
+    public class ProjectDependency
+    {
         public string name;
         public string version;
         
@@ -66,7 +70,8 @@ namespace Generator
         }
     }
     
-    public class OneProjectFile {
+    public class OneProjectFile
+    {
         public string name;
         public ProjectDependency[] dependencies;
         public string sourceDir;
@@ -92,7 +97,8 @@ namespace Generator
         }
     }
     
-    public class ProjectGenerator {
+    public class ProjectGenerator
+    {
         public OneProjectFile projectFile;
         public string srcDir;
         public string outDir;
@@ -109,7 +115,7 @@ namespace Generator
             this.outDir = $"{this.projDir}/{this.projectFile.outputDir}";
         }
         
-        public async void generate()
+        public async Task generate()
         {
             // copy native source codes from one project
             var nativeSrcDir = $"{this.projDir}/{this.projectFile.nativeSourceDir}";

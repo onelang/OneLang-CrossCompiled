@@ -2,7 +2,8 @@ using System.Collections.Generic;
 
 namespace Generator
 {
-    public class NameUtils {
+    public class NameUtils
+    {
         public static string shortName(string fullName)
         {
             var nameParts = new List<string>();

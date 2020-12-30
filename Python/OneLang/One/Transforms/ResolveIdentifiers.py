@@ -6,6 +6,7 @@ import OneLang.One.Ast.Expressions as exprs
 import OneLang.One.Ast.References as refs
 import OneLang.One.Ast.Statements as stats
 import OneLang.One.Ast.AstTypes as astTypes
+import OneLang.One.Ast.Interfaces as ints
 
 class SymbolLookup:
     def __init__(self):
@@ -43,6 +44,9 @@ class ResolveIdentifiers(astTrans.AstTransformer):
         self.symbol_lookup = None
         super().__init__("ResolveIdentifiers")
         self.symbol_lookup = SymbolLookup()
+    
+    def visit_type(self, type):
+        return type
     
     def visit_identifier(self, id):
         super().visit_identifier(id)
@@ -108,18 +112,13 @@ class ResolveIdentifiers(astTrans.AstTransformer):
         self.symbol_lookup.add_symbol(stmt.name, stmt)
         return super().visit_variable_declaration(stmt)
     
+    def visit_method_parameter(self, param):
+        self.symbol_lookup.add_symbol(param.name, param)
+        super().visit_method_parameter(param)
+    
     def visit_method_base(self, method):
         self.symbol_lookup.push_context(f'''Method: {method.name}''' if isinstance(method, types.Method) else "constructor" if isinstance(method, types.Constructor) else "???")
-        
-        for param in method.parameters:
-            self.symbol_lookup.add_symbol(param.name, param)
-            if param.initializer != None:
-                self.visit_expression(param.initializer)
-        
-        if method.body != None:
-            super().visit_block(method.body)
-        # directly process method's body without opening a new scope again
-        
+        super().visit_method_base(method)
         self.symbol_lookup.pop_context()
     
     def visit_class(self, cls_):

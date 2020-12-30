@@ -67,7 +67,8 @@ namespace One.Ast
         
     }
     
-    public class MutabilityInfo {
+    public class MutabilityInfo
+    {
         public bool unused;
         public bool reassigned;
         public bool mutated;
@@ -80,7 +81,8 @@ namespace One.Ast
         }
     }
     
-    public class ExportedScope {
+    public class ExportedScope
+    {
         public Map<string, IImportable> exports;
         
         public ExportedScope()
@@ -107,7 +109,8 @@ namespace One.Ast
         }
     }
     
-    public class Package {
+    public class Package
+    {
         public string name;
         public bool definitionOnly;
         public static string INDEX = "index";
@@ -161,7 +164,8 @@ namespace One.Ast
         }
     }
     
-    public class Workspace {
+    public class Workspace
+    {
         public Dictionary<string, Package> packages;
         
         public Workspace()
@@ -183,7 +187,8 @@ namespace One.Ast
         }
     }
     
-    public class SourcePath {
+    public class SourcePath
+    {
         public Package pkg;
         public string path;
         
@@ -199,7 +204,8 @@ namespace One.Ast
         }
     }
     
-    public class LiteralTypes {
+    public class LiteralTypes
+    {
         public ClassType boolean;
         public ClassType numeric;
         public ClassType string_;
@@ -222,7 +228,8 @@ namespace One.Ast
         }
     }
     
-    public class SourceFile {
+    public class SourceFile
+    {
         public Import[] imports;
         public Interface[] interfaces;
         public Class[] classes;
@@ -258,7 +265,8 @@ namespace One.Ast
         }
     }
     
-    public class ExportScopeRef {
+    public class ExportScopeRef
+    {
         public string packageName;
         public string scopeName;
         
@@ -274,14 +282,15 @@ namespace One.Ast
         }
     }
     
-    public class Import : IHasAttributesAndTrivia, ISourceFileMember {
+    public class Import : IHasAttributesAndTrivia, ISourceFileMember
+    {
         public ExportScopeRef exportScope;
         public bool importAll;
         public IImportable[] imports;
         public string importAs;
         public string leadingTrivia { get; set; }
-        public SourceFile parentFile { get; set; }
-        public Dictionary<string, string> attributes { get; set; }
+        public SourceFile parentFile { get; set; } = null;
+        public Dictionary<string, string> attributes { get; set; } = null;
         
         public Import(ExportScopeRef exportScope, bool importAll, IImportable[] imports, string importAs, string leadingTrivia)
         {
@@ -295,13 +304,14 @@ namespace One.Ast
         }
     }
     
-    public class Enum_ : IAstNode, IHasAttributesAndTrivia, IResolvedImportable, ISourceFileMember, IReferencable {
+    public class Enum_ : IAstNode, IHasAttributesAndTrivia, IResolvedImportable, ISourceFileMember, IReferencable
+    {
         public string name { get; set; }
         public EnumMember[] values;
         public bool isExported { get; set; }
         public string leadingTrivia { get; set; }
-        public SourceFile parentFile { get; set; }
-        public Dictionary<string, string> attributes { get; set; }
+        public SourceFile parentFile { get; set; } = null;
+        public Dictionary<string, string> attributes { get; set; } = null;
         public List<EnumReference> references;
         public EnumType type;
         
@@ -321,7 +331,8 @@ namespace One.Ast
         }
     }
     
-    public class EnumMember : IAstNode {
+    public class EnumMember : IAstNode
+    {
         public string name;
         public Enum_ parentEnum;
         public List<EnumMemberReference> references;
@@ -333,9 +344,10 @@ namespace One.Ast
         }
     }
     
-    public class UnresolvedImport : IImportable {
+    public class UnresolvedImport : IImportable
+    {
         public string name { get; set; }
-        public bool isExported { get; set; }
+        public bool isExported { get; set; } = true;
         
         public UnresolvedImport(string name)
         {
@@ -343,7 +355,8 @@ namespace One.Ast
         }
     }
     
-    public class Interface : IHasAttributesAndTrivia, IInterface, IResolvedImportable, ISourceFileMember {
+    public class Interface : IHasAttributesAndTrivia, IInterface, IResolvedImportable, ISourceFileMember
+    {
         public string name { get; set; }
         public string[] typeArguments { get; set; }
         public IType[] baseInterfaces { get; set; }
@@ -351,8 +364,8 @@ namespace One.Ast
         public Method[] methods { get; set; }
         public bool isExported { get; set; }
         public string leadingTrivia { get; set; }
-        public SourceFile parentFile { get; set; }
-        public Dictionary<string, string> attributes { get; set; }
+        public SourceFile parentFile { get; set; } = null;
+        public Dictionary<string, string> attributes { get; set; } = null;
         public InterfaceType type;
         public IInterface[] _baseInterfaceCache;
         
@@ -377,7 +390,8 @@ namespace One.Ast
         }
     }
     
-    public class Class : IHasAttributesAndTrivia, IInterface, IResolvedImportable, ISourceFileMember, IReferencable {
+    public class Class : IHasAttributesAndTrivia, IInterface, IResolvedImportable, ISourceFileMember, IReferencable
+    {
         public string name { get; set; }
         public string[] typeArguments { get; set; }
         public IType baseClass;
@@ -388,8 +402,8 @@ namespace One.Ast
         public Method[] methods { get; set; }
         public bool isExported { get; set; }
         public string leadingTrivia { get; set; }
-        public SourceFile parentFile { get; set; }
-        public Dictionary<string, string> attributes { get; set; }
+        public SourceFile parentFile { get; set; } = null;
+        public Dictionary<string, string> attributes { get; set; } = null;
         public List<ClassReference> classReferences;
         public List<ThisReference> thisReferences;
         public List<StaticThisReference> staticThisReferences;
@@ -430,7 +444,8 @@ namespace One.Ast
         }
     }
     
-    public class Field : IVariableWithInitializer, IHasAttributesAndTrivia, IClassMember, IAstNode {
+    public class Field : IVariableWithInitializer, IHasAttributesAndTrivia, IClassMember, IAstNode
+    {
         public string name { get; set; }
         public IType type { get; set; }
         public Expression initializer { get; set; }
@@ -439,11 +454,11 @@ namespace One.Ast
         public MethodParameter constructorParam;
         public string leadingTrivia { get; set; }
         public IInterface parentInterface;
-        public Dictionary<string, string> attributes { get; set; }
+        public Dictionary<string, string> attributes { get; set; } = null;
         public List<StaticFieldReference> staticReferences;
         public List<InstanceFieldReference> instanceReferences;
         public Field[] interfaceDeclarations;
-        public MutabilityInfo mutability { get; set; }
+        public MutabilityInfo mutability { get; set; } = null;
         
         public Field(string name, IType type, Expression initializer, Visibility visibility, bool isStatic, MethodParameter constructorParam, string leadingTrivia)
         {
@@ -466,7 +481,8 @@ namespace One.Ast
         }
     }
     
-    public class Property : IVariable, IHasAttributesAndTrivia, IClassMember, IAstNode {
+    public class Property : IVariable, IHasAttributesAndTrivia, IClassMember, IAstNode
+    {
         public string name { get; set; }
         public IType type { get; set; }
         public Block getter;
@@ -475,10 +491,10 @@ namespace One.Ast
         public bool isStatic { get; set; }
         public string leadingTrivia { get; set; }
         public Class parentClass;
-        public Dictionary<string, string> attributes { get; set; }
+        public Dictionary<string, string> attributes { get; set; } = null;
         public List<StaticPropertyReference> staticReferences;
         public List<InstancePropertyReference> instanceReferences;
-        public MutabilityInfo mutability { get; set; }
+        public MutabilityInfo mutability { get; set; } = null;
         
         public Property(string name, IType type, Block getter, Block setter, Visibility visibility, bool isStatic, string leadingTrivia)
         {
@@ -500,16 +516,17 @@ namespace One.Ast
         }
     }
     
-    public class MethodParameter : IVariableWithInitializer, IReferencable, IHasAttributesAndTrivia {
+    public class MethodParameter : IVariableWithInitializer, IReferencable, IHasAttributesAndTrivia
+    {
         public string name { get; set; }
         public IType type { get; set; }
         public Expression initializer { get; set; }
         public string leadingTrivia { get; set; }
         public Field fieldDecl;
         public IMethodBase parentMethod;
-        public Dictionary<string, string> attributes { get; set; }
+        public Dictionary<string, string> attributes { get; set; } = null;
         public List<MethodParameterReference> references;
-        public MutabilityInfo mutability { get; set; }
+        public MutabilityInfo mutability { get; set; } = null;
         
         public MethodParameter(string name, IType type, Expression initializer, string leadingTrivia)
         {
@@ -528,13 +545,14 @@ namespace One.Ast
         }
     }
     
-    public class Constructor : IMethodBaseWithTrivia {
+    public class Constructor : IMethodBaseWithTrivia
+    {
         public MethodParameter[] parameters { get; set; }
         public Block body { get; set; }
         public Expression[] superCallArgs;
         public string leadingTrivia { get; set; }
         public Class parentClass;
-        public Dictionary<string, string> attributes { get; set; }
+        public Dictionary<string, string> attributes { get; set; } = null;
         public bool throws { get; set; }
         
         public Constructor(MethodParameter[] parameters, Block body, Expression[] superCallArgs, string leadingTrivia)
@@ -547,7 +565,8 @@ namespace One.Ast
         }
     }
     
-    public class Method : IMethodBaseWithTrivia, IClassMember {
+    public class Method : IMethodBaseWithTrivia, IClassMember
+    {
         public string name { get; set; }
         public string[] typeArguments;
         public MethodParameter[] parameters { get; set; }
@@ -558,7 +577,7 @@ namespace One.Ast
         public bool async;
         public string leadingTrivia { get; set; }
         public IInterface parentInterface;
-        public Dictionary<string, string> attributes { get; set; }
+        public Dictionary<string, string> attributes { get; set; } = null;
         public Method[] interfaceDeclarations;
         public Method overrides;
         public List<Method> overriddenBy;
@@ -587,15 +606,16 @@ namespace One.Ast
         }
     }
     
-    public class GlobalFunction : IMethodBaseWithTrivia, IResolvedImportable, IReferencable {
+    public class GlobalFunction : IMethodBaseWithTrivia, IResolvedImportable, IReferencable
+    {
         public string name { get; set; }
         public MethodParameter[] parameters { get; set; }
         public Block body { get; set; }
         public IType returns;
         public bool isExported { get; set; }
         public string leadingTrivia { get; set; }
-        public SourceFile parentFile { get; set; }
-        public Dictionary<string, string> attributes { get; set; }
+        public SourceFile parentFile { get; set; } = null;
+        public Dictionary<string, string> attributes { get; set; } = null;
         public bool throws { get; set; }
         public List<GlobalFunctionReference> references;
         
@@ -616,7 +636,8 @@ namespace One.Ast
         }
     }
     
-    public class Lambda : Expression, IMethodBase {
+    public class Lambda : Expression, IMethodBase
+    {
         public MethodParameter[] parameters { get; set; }
         public Block body { get; set; }
         public IType returns;

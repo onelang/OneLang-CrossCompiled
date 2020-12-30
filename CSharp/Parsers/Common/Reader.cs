@@ -7,7 +7,8 @@ namespace Parsers.Common
         void errorCallback(ParseError error);
     }
     
-    public class Cursor {
+    public class Cursor
+    {
         public int offset;
         public int line;
         public int column;
@@ -24,7 +25,8 @@ namespace Parsers.Common
         }
     }
     
-    public class ParseError {
+    public class ParseError
+    {
         public string message;
         public Cursor cursor;
         public Reader reader;
@@ -37,7 +39,8 @@ namespace Parsers.Common
         }
     }
     
-    public class Reader {
+    public class Reader
+    {
         public int wsOffset = 0;
         public int offset = 0;
         public CursorPositionSearch cursorSearch;
@@ -387,7 +390,8 @@ namespace Parsers.Common
         }
     }
     
-    public class CursorPositionSearch {
+    public class CursorPositionSearch
+    {
         public List<int> lineOffsets;
         public string input;
         

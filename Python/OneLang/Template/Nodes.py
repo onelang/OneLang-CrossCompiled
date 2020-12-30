@@ -53,5 +53,5 @@ class ForNode:
             
             context.model.props[self.variable_name] = item
             result += self.body.format(context)
-        /* unset context.model.props.get(self.variable_name); */
+        del context.model.props[self.variable_name]
         return result

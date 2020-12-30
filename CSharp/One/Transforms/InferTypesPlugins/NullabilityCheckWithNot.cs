@@ -3,7 +3,8 @@ using One.Transforms.InferTypesPlugins.Helpers;
 
 namespace One.Transforms.InferTypesPlugins
 {
-    public class NullabilityCheckWithNot : InferTypesPlugin {
+    public class NullabilityCheckWithNot : InferTypesPlugin
+    {
         public NullabilityCheckWithNot(): base("NullabilityCheckWithNot")
         {
             

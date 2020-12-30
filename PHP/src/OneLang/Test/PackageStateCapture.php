@@ -17,6 +17,6 @@ class PackageStateCapture {
     }
     
     function getSummary() {
-        return implode("\n\n", array_map(function ($file) { return "=== " . $file . " ===\n\n" . @$this->overviews[$file] ?? null; }, array_keys($this->overviews)));
+        return implode("\n\n", array_map(function ($file) { return "=== " . $file . " ===\n\n" . (@$this->overviews[$file] ?? null); }, array_keys($this->overviews)));
     }
 }

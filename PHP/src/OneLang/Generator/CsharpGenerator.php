@@ -91,6 +91,7 @@ use OneLang\One\Ast\Interfaces\IExpression;
 use OneLang\One\Ast\Interfaces\IType;
 use OneLang\One\ITransformer\ITransformer;
 use OneLang\Generator\IGeneratorPlugin\IGeneratorPlugin;
+use OneLang\Generator\TemplateFileGeneratorPlugin\TemplateFileGeneratorPlugin;
 
 class CsharpGenerator implements IGenerator {
     public $usings;
@@ -98,12 +99,14 @@ class CsharpGenerator implements IGenerator {
     public $reservedWords;
     public $fieldToMethodHack;
     public $instanceOfIds;
+    public $plugins;
     
     function __construct()
     {
         $this->reservedWords = array("object", "else", "operator", "class", "enum", "void", "string", "implicit", "Type", "Enum", "params", "using", "throw", "ref", "base", "virtual", "interface", "int", "const");
         $this->fieldToMethodHack = array("length", "size");
         $this->instanceOfIds = Array();
+        $this->plugins = array();
     }
     
     function getLangName() {
@@ -118,12 +121,15 @@ class CsharpGenerator implements IGenerator {
         return array();
     }
     
-    function addPlugin($plugin) {
-        
-    }
-    
     function addInclude($include) {
         $this->usings->add($include);
+    }
+    
+    function addPlugin($plugin) {
+        $this->plugins[] = $plugin;
+        
+        // TODO: hack?
+        if ($plugin instanceof TemplateFileGeneratorPlugin) { }
     }
     
     function name_($name) {
@@ -235,7 +241,7 @@ class CsharpGenerator implements IGenerator {
     function varWoInit($v, $attr) {
         /* @var $type */
         if ($attr !== null && $attr->attributes !== null && array_key_exists("csharp-type", $attr->attributes))
-            $type = @$attr->attributes["csharp-type"] ?? null;
+            $type = (@$attr->attributes["csharp-type"] ?? null);
         else if ($v->type instanceof ClassType && $v->type->decl->name === "TsArray") {
             if ($v->mutability->mutated) {
                 $this->usings->add("System.Collections.Generic");
@@ -309,6 +315,12 @@ class CsharpGenerator implements IGenerator {
     }
     
     function expr($expr) {
+        foreach ($this->plugins as $plugin) {
+            $result = $plugin->expr($expr);
+            if ($result !== null)
+                return $result;
+        }
+        
         $res = "UNKNOWN-EXPR";
         if ($expr instanceof NewExpression)
             $res = "new " . $this->type($expr->cls) . $this->callParams($expr->args, $expr->cls->decl->constructor_ !== null ? $expr->cls->decl->constructor_->parameters : array());
@@ -377,7 +389,7 @@ class CsharpGenerator implements IGenerator {
                     $parts[] = $part->expression instanceof ConditionalExpression ? "{(" . $repr . ")}" : "{" . $repr . "}";
                 }
             }
-            $res = "$\"" . implode("", $parts) . "\"";
+            $res = "\$\"" . implode("", $parts) . "\"";
         }
         else if ($expr instanceof BinaryExpression)
             $res = $this->expr($expr->left) . " " . $expr->operator . " " . $this->mutatedExpr($expr->right, $expr->operator === "=" ? $expr->left : null);
@@ -400,7 +412,7 @@ class CsharpGenerator implements IGenerator {
                 $aliasPrefix = $this->inferExprNameForType($expr->checkType);
                 if ($aliasPrefix === null)
                     $aliasPrefix = $expr->expr instanceof VariableReference ? $expr->expr->getVariable()->name : "obj";
-                $id = array_key_exists($aliasPrefix, $this->instanceOfIds) ? @$this->instanceOfIds[$aliasPrefix] ?? null : 1;
+                $id = array_key_exists($aliasPrefix, $this->instanceOfIds) ? (@$this->instanceOfIds[$aliasPrefix] ?? null) : 1;
                 $this->instanceOfIds[$aliasPrefix] = $id + 1;
                 $expr->alias = $aliasPrefix . ($id === 1 ? "" : $id);
             }
@@ -479,7 +491,7 @@ class CsharpGenerator implements IGenerator {
     function stmt($stmt) {
         $res = "UNKNOWN-STATEMENT";
         if ($stmt->attributes !== null && array_key_exists("csharp", $stmt->attributes))
-            $res = @$stmt->attributes["csharp"] ?? null;
+            $res = (@$stmt->attributes["csharp"] ?? null);
         else if ($stmt instanceof BreakStatement)
             $res = "break;";
         else if ($stmt instanceof ReturnStatement)
@@ -546,8 +558,10 @@ class CsharpGenerator implements IGenerator {
                 $isInitializerComplex = $field->initializer !== null && !($field->initializer instanceof StringLiteral) && !($field->initializer instanceof BooleanLiteral) && !($field->initializer instanceof NumericLiteral);
                 
                 $prefix = $this->vis($field->visibility) . " " . $this->preIf("static ", $field->isStatic);
-                if (count($field->interfaceDeclarations) > 0)
-                    $fieldReprs[] = $prefix . $this->varWoInit($field, $field) . " { get; set; }";
+                if (count($field->interfaceDeclarations) > 0) {
+                    $init = $field->initializer !== null ? " = " . $this->expr($field->initializer) . ";" : "";
+                    $fieldReprs[] = $prefix . $this->varWoInit($field, $field) . " { get; set; }" . $init;
+                }
                 else if ($isInitializerComplex) {
                     if ($field->isStatic)
                         $staticConstructorStmts[] = new ExpressionStatement(new BinaryExpression(new StaticFieldReference($field), "=", $field->initializer));
@@ -623,7 +637,7 @@ class CsharpGenerator implements IGenerator {
                 $baseClasses[] = $cls->baseClass;
             foreach ($cls->baseInterfaces as $intf)
                 $baseClasses[] = $intf;
-            $classes[] = "public class " . $this->name_($cls->name) . $this->typeArgs($cls->typeArguments) . $this->preArr(" : ", array_map(function ($x) { return $this->type($x); }, $baseClasses)) . " {\n" . $this->classLike($cls) . "\n}";
+            $classes[] = "public class " . $this->name_($cls->name) . $this->typeArgs($cls->typeArguments) . $this->preArr(" : ", array_map(function ($x) { return $this->type($x); }, $baseClasses)) . "\n{\n" . $this->classLike($cls) . "\n}";
         }
         
         $main = count($sourceFile->mainBlock->statements) > 0 ? "public class Program\n{\n    static void Main(string[] args)\n    {\n" . $this->pad($this->rawBlock($sourceFile->mainBlock)) . "\n    }\n}" : "";
@@ -649,7 +663,7 @@ class CsharpGenerator implements IGenerator {
     function generate($pkg) {
         $result = array();
         foreach (array_keys($pkg->files) as $path)
-            $result[] = new GeneratedFile($path . ".cs", $this->genFile(@$pkg->files[$path] ?? null));
+            $result[] = new GeneratedFile($path . ".cs", $this->genFile((@$pkg->files[$path] ?? null)));
         return $result;
     }
 }

@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 namespace One.Transforms.InferTypesPlugins
 {
-    public class ResolveMethodCalls : InferTypesPlugin {
+    public class ResolveMethodCalls : InferTypesPlugin
+    {
         public ResolveMethodCalls(): base("ResolveMethodCalls")
         {
             
@@ -75,7 +76,7 @@ namespace One.Transforms.InferTypesPlugins
                     var lambdaField = intfType.fields.find(x => x.name == expr.methodName && x.type is LambdaType lambdType && lambdType.parameters.length() == expr.args.length());
                     if (lambdaField != null) {
                         var lambdaCall = new LambdaCallExpression(new InstanceFieldReference(expr.object_, lambdaField), expr.args);
-                        lambdaCall.setActualType((((LambdaType)lambdaField.type)).returnType);
+                        lambdaCall.setActualType((((LambdaType)lambdaField.type)).returnType, true);
                         return lambdaCall;
                     }
                     

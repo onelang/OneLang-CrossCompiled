@@ -205,7 +205,7 @@ class ExpressionParser {
     function parseOperator() {
         foreach ($this->operators as $opText) {
             if ($this->reader->peekToken($opText))
-                return @$this->operatorMap[$opText] ?? null;
+                return (@$this->operatorMap[$opText] ?? null);
         }
         
         return null;
@@ -253,7 +253,7 @@ class ExpressionParser {
             if ($op === null || $op->precedence <= $precedence)
                 break;
             $this->reader->expectToken($op->text);
-            $opText = array_key_exists($op->text, $this->config->aliases) ? @$this->config->aliases[$op->text] ?? null : $op->text;
+            $opText = array_key_exists($op->text, $this->config->aliases) ? (@$this->config->aliases[$op->text] ?? null) : $op->text;
             
             if ($op->isBinary) {
                 $right = $this->parse($op->isRightAssoc ? $op->precedence - 1 : $op->precedence);

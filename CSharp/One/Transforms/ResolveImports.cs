@@ -3,7 +3,8 @@ using One;
 
 namespace One.Transforms
 {
-    public class ResolveImports : AstTransformer {
+    public class ResolveImports : AstTransformer
+    {
         public Workspace workspace;
         
         public ResolveImports(Workspace workspace): base("ResolveImports")

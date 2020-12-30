@@ -34,7 +34,7 @@ class PackagesFolderSource implements PackageSource {
                 continue;
             // skip e.g. bundle.json
             $pkgIdStr = $type . "/" . $pkgDir;
-            $pkg = @$packages[$pkgIdStr] ?? null;
+            $pkg = (@$packages[$pkgIdStr] ?? null);
             if ($pkg === null) {
                 $pkgDirParts = preg_split("/-/", $pkgDir);
                 $version = preg_replace("/^v/", "", array_pop($pkgDirParts));

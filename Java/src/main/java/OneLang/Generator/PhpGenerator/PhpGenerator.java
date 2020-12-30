@@ -110,6 +110,7 @@ import OneLang.Generator.TemplateFileGeneratorPlugin.ExpressionValue;
 import OneLang.One.Ast.Expressions.RegexLiteral;
 import io.onelang.std.json.JSON;
 import java.util.regex.Pattern;
+import OneLang.One.Ast.Expressions.StringLiteral;
 import OneLang.VM.Values.IVMValue;
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -144,13 +145,13 @@ import OneLang.One.Ast.Expressions.StaticMethodCallExpression;
 import OneLang.One.Ast.Expressions.GlobalFunctionCallExpression;
 import OneLang.One.Ast.Expressions.LambdaCallExpression;
 import OneLang.One.Ast.Expressions.BooleanLiteral;
-import OneLang.One.Ast.Expressions.StringLiteral;
 import OneLang.One.Ast.Expressions.NumericLiteral;
 import OneLang.One.Ast.Expressions.CharacterLiteral;
 import OneLang.One.Ast.Expressions.ElementAccessExpression;
 import OneLang.One.Ast.Expressions.TemplateString;
 import OneLang.One.Ast.Expressions.ConditionalExpression;
 import OneLang.One.Ast.Expressions.BinaryExpression;
+import OneLang.One.Ast.Expressions.NullCoalesceExpression;
 import OneLang.One.Ast.Expressions.ArrayLiteral;
 import OneLang.One.Ast.Expressions.CastExpression;
 import OneLang.One.Ast.Expressions.InstanceOfExpression;
@@ -175,7 +176,6 @@ import OneLang.One.Ast.References.StaticPropertyReference;
 import OneLang.One.Ast.References.InstanceFieldReference;
 import OneLang.One.Ast.References.InstancePropertyReference;
 import OneLang.One.Ast.References.EnumMemberReference;
-import OneLang.One.Ast.Expressions.NullCoalesceExpression;
 import OneLang.One.Ast.Interfaces.IExpression;
 import OneLang.One.Ast.Statements.IfStatement;
 import OneLang.One.Ast.Statements.Block;
@@ -193,6 +193,7 @@ import OneLang.One.Ast.Statements.TryStatement;
 import OneLang.One.Ast.Statements.ContinueStatement;
 import OneLang.One.Ast.Types.Class;
 import OneLang.One.Ast.Types.Field;
+import java.util.Collection;
 import java.util.stream.Stream;
 import OneLang.One.Ast.Types.Interface;
 import OneLang.One.Ast.Types.Enum;
@@ -235,15 +236,25 @@ public class PhpGenerator implements IGenerator {
         this.plugins.add(plugin);
         
         // TODO: hack?
-        if (plugin instanceof TemplateFileGeneratorPlugin)
+        if (plugin instanceof TemplateFileGeneratorPlugin) {
             ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("escape", new LambdaValue(args -> new StringValue(this.escape(args[0]))));
+            ((TemplateFileGeneratorPlugin)plugin).modelGlobals.put("escapeBackslash", new LambdaValue(args -> new StringValue(this.escapeBackslash(args[0]))));
+        }
     }
     
     public String escape(IVMValue value) {
         if (value instanceof ExpressionValue && ((ExpressionValue)value).value instanceof RegexLiteral)
-            return JSON.stringify("/" + ((RegexLiteral)((ExpressionValue)value).value).pattern.replaceAll("/", "\\/") + "/");
+            return JSON.stringify("/" + ((RegexLiteral)((ExpressionValue)value).value).pattern.replaceAll("/", "\\\\/") + "/");
+        else if (value instanceof ExpressionValue && ((ExpressionValue)value).value instanceof StringLiteral)
+            return JSON.stringify(((StringLiteral)((ExpressionValue)value).value).stringValue);
         else if (value instanceof StringValue)
             return JSON.stringify(((StringValue)value).value);
+        throw new Error("Not supported VMValue for escape()");
+    }
+    
+    public String escapeBackslash(IVMValue value) {
+        if (value instanceof ExpressionValue && ((ExpressionValue)value).value instanceof StringLiteral)
+            return JSON.stringify(((StringLiteral)((ExpressionValue)value).value).stringValue.replaceAll("\\\\", "\\\\\\\\"));
         throw new Error("Not supported VMValue for escape()");
     }
     
@@ -456,13 +467,13 @@ public class PhpGenerator implements IGenerator {
                 res = "\\OneLang\\Core\\" + res;
         }
         else if (expr instanceof GlobalFunctionCallExpression)
-            res = "Global." + this.name_(((GlobalFunctionCallExpression)expr).func.getName()) + this.exprCall(new IType[0], ((GlobalFunctionCallExpression)expr).getArgs());
+            res = this.name_(((GlobalFunctionCallExpression)expr).func.getName()) + this.exprCall(new IType[0], ((GlobalFunctionCallExpression)expr).getArgs());
         else if (expr instanceof LambdaCallExpression)
-            res = this.expr(((LambdaCallExpression)expr).method) + "(" + Arrays.stream(Arrays.stream(((LambdaCallExpression)expr).args).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")";
+            res = "call_user_func(" + this.expr(((LambdaCallExpression)expr).method) + ", " + Arrays.stream(Arrays.stream(((LambdaCallExpression)expr).args).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")";
         else if (expr instanceof BooleanLiteral)
             res = (((BooleanLiteral)expr).boolValue ? "true" : "false");
         else if (expr instanceof StringLiteral)
-            res = JSON.stringify(((StringLiteral)expr).stringValue).replaceAll("\\$", "\\$");
+            res = JSON.stringify(((StringLiteral)expr).stringValue).replaceAll("\\$", "\\\\\\$");
         else if (expr instanceof NumericLiteral)
             res = ((NumericLiteral)expr).valueAsText;
         else if (expr instanceof CharacterLiteral)
@@ -482,6 +493,8 @@ public class PhpGenerator implements IGenerator {
                             lit += "\\r";
                         else if (Objects.equals(chr, "\t"))
                             lit += "\\t";
+                        else if (Objects.equals(chr, "$"))
+                            lit += "\\$";
                         else if (Objects.equals(chr, "\\"))
                             lit += "\\\\";
                         else if (Objects.equals(chr, "\""))
@@ -498,7 +511,8 @@ public class PhpGenerator implements IGenerator {
                 }
                 else {
                     var repr = this.expr(part.expression);
-                    parts.add(part.expression instanceof ConditionalExpression ? "(" + repr + ")" : repr);
+                    var isComplex = part.expression instanceof ConditionalExpression || part.expression instanceof BinaryExpression || part.expression instanceof NullCoalesceExpression;
+                    parts.add(isComplex ? "(" + repr + ")" : repr);
                 }
             }
             res = parts.stream().collect(Collectors.joining(" . "));
@@ -550,7 +564,7 @@ public class PhpGenerator implements IGenerator {
             res = this.expr(((UnaryExpression)expr).operand) + ((UnaryExpression)expr).operator;
         else if (expr instanceof MapLiteral) {
             var repr = Arrays.stream(Arrays.stream(((MapLiteral)expr).items).map(item -> JSON.stringify(item.key) + " => " + this.expr(item.value)).toArray(String[]::new)).collect(Collectors.joining(",\n"));
-            res = "Array(" + (Objects.equals(repr, "") ? "" : repr.contains("\n") ? "\n" + this.pad(repr) + "\n" : "(" + repr) + ")";
+            res = "Array(" + (Objects.equals(repr, "") ? "" : repr.contains("\n") ? "\n" + this.pad(repr) + "\n" : repr) + ")";
         }
         else if (expr instanceof NullLiteral)
             res = "null";
@@ -601,8 +615,8 @@ public class PhpGenerator implements IGenerator {
     
     public String stmtDefault(Statement stmt) {
         var res = "UNKNOWN-STATEMENT";
-        if (stmt.getAttributes() != null && stmt.getAttributes().containsKey("csharp"))
-            res = stmt.getAttributes().get("csharp");
+        if (stmt.getAttributes() != null && stmt.getAttributes().containsKey("php"))
+            res = stmt.getAttributes().get("php");
         else if (stmt instanceof BreakStatement)
             res = "break;";
         else if (stmt instanceof ReturnStatement)
@@ -687,9 +701,7 @@ public class PhpGenerator implements IGenerator {
                 var isInitializerComplex = field.getInitializer() != null && !(field.getInitializer() instanceof StringLiteral) && !(field.getInitializer() instanceof BooleanLiteral) && !(field.getInitializer() instanceof NumericLiteral);
                 
                 var prefix = this.vis(field.getVisibility(), true) + this.preIf("static ", field.getIsStatic());
-                if (field.interfaceDeclarations.length > 0)
-                    fieldReprs.add(prefix + this.varWoInit(field, field) + ";");
-                else if (isInitializerComplex) {
+                if (isInitializerComplex) {
                     if (field.getIsStatic())
                         staticConstructorStmts.add(new ExpressionStatement(new BinaryExpression(new StaticFieldReference(field), "=", field.getInitializer())));
                     else
@@ -724,7 +736,12 @@ public class PhpGenerator implements IGenerator {
                 
                 var parentCall = ((Class)cls).constructor_.superCallArgs != null ? "parent::__construct(" + Arrays.stream(Arrays.stream(((Class)cls).constructor_.superCallArgs).map(x -> this.expr(x)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ");\n" : "";
                 
-                resList.add(this.preIf("/* throws */ ", ((Class)cls).constructor_.getThrows()) + "function __construct" + "(" + Arrays.stream(Arrays.stream(((Class)cls).constructor_.getParameters()).map(p -> this.var(p, p)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")" + " {\n" + this.pad(parentCall + this.stmts(Stream.of(Stream.of(constrFieldInits, complexFieldInits).flatMap(Stream::of).toArray(Statement[]::new), ((Class)cls).constructor_.getBody().statements).flatMap(Stream::of).toArray(Statement[]::new))) + "\n}");
+                // @java var stmts = Stream.of(constrFieldInits, complexFieldInits, ((Class)cls).constructor_.getBody().statements).flatMap(Collection::stream).toArray(Statement[]::new);
+                // @java-import java.util.Collection
+                // @java-import java.util.stream.Stream
+                var stmts = Stream.of(constrFieldInits, complexFieldInits, ((Class)cls).constructor_.getBody().statements).flatMap(Collection::stream).toArray(Statement[]::new);
+                
+                resList.add(this.preIf("/* throws */ ", ((Class)cls).constructor_.getThrows()) + "function __construct" + "(" + Arrays.stream(Arrays.stream(((Class)cls).constructor_.getParameters()).map(p -> this.var(p, p)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")" + " {\n" + this.pad(parentCall + this.stmts(stmts)) + "\n}");
             }
             else if (complexFieldInits.size() > 0)
                 resList.add("function __construct()\n{\n" + this.pad(this.stmts(complexFieldInits.toArray(Statement[]::new))) + "\n}");
@@ -739,7 +756,9 @@ public class PhpGenerator implements IGenerator {
             methods.add((method.parentInterface instanceof Interface ? "" : this.vis(method.getVisibility(), false)) + this.preIf("static ", method.getIsStatic()) + this.preIf("/* throws */ ", method.getThrows()) + "function " + this.name_(method.getName()) + this.typeArgs(method.typeArguments) + "(" + Arrays.stream(Arrays.stream(method.getParameters()).map(p -> this.var(p, null)).toArray(String[]::new)).collect(Collectors.joining(", ")) + ")" + (method.getBody() != null ? " {\n" + this.pad(this.stmts(method.getBody().statements.toArray(Statement[]::new))) + "\n}" : ";"));
         }
         resList.add(methods.stream().collect(Collectors.joining("\n\n")));
-        return " {\n" + this.pad(Arrays.stream(resList.stream().filter(x -> !Objects.equals(x, "")).toArray(String[]::new)).collect(Collectors.joining("\n\n"))) + "\n}" + (staticConstructorStmts.size() > 0 ? "\n" + this.name_(cls.getName()) + "::StaticInit();" : "");
+        
+        var resListJoined = this.pad(Arrays.stream(resList.stream().filter(x -> !Objects.equals(x, "")).toArray(String[]::new)).collect(Collectors.joining("\n\n")));
+        return " {\n" + resListJoined + "\n}" + (staticConstructorStmts.size() > 0 ? "\n" + this.name_(cls.getName()) + "::StaticInit();" : "");
     }
     
     public String pad(String str) {
@@ -768,7 +787,7 @@ public class PhpGenerator implements IGenerator {
         for (var enum_ : sourceFile.enums) {
             var values = new ArrayList<String>();
             for (Integer i = 0; i < enum_.values.length; i++)
-                values.add("const " + this.enumMemberName(enum_.values[i].name) + " = " + i + 1 + ";");
+                values.add("const " + this.enumMemberName(enum_.values[i].name) + " = " + (i + 1) + ";");
             enums.add("class " + this.enumName(enum_, true) + " {\n" + this.pad(values.stream().collect(Collectors.joining("\n"))) + "\n}");
         }
         
@@ -783,7 +802,8 @@ public class PhpGenerator implements IGenerator {
         var usingsSet = new LinkedHashSet<String>();
         for (var imp : sourceFile.imports) {
             if (imp.getAttributes().containsKey("php-use"))
-                usingsSet.add(imp.getAttributes().get("php-use"));
+                for (var item : imp.getAttributes().get("php-use").split("\\n", -1))
+                    usingsSet.add(item);
             else {
                 var fileNs = this.pathToNs(imp.exportScope.scopeName);
                 if (Objects.equals(fileNs, "index"))
@@ -793,11 +813,11 @@ public class PhpGenerator implements IGenerator {
             }
         }
         
-        for (var using : this.usings)
+        for (var using : this.usings.toArray(String[]::new))
             usingsSet.add(using);
         
         var usings = new ArrayList<String>();
-        for (var using : usingsSet)
+        for (var using : usingsSet.toArray(String[]::new))
             usings.add("use " + using + ";");
         
         var result = Arrays.stream(new ArrayList<>(List.of(usings.stream().collect(Collectors.joining("\n")), enums.stream().collect(Collectors.joining("\n")), Arrays.stream(intfs).collect(Collectors.joining("\n\n")), classes.stream().collect(Collectors.joining("\n\n")), main)).stream().filter(x -> !Objects.equals(x, "")).toArray(String[]::new)).collect(Collectors.joining("\n\n"));

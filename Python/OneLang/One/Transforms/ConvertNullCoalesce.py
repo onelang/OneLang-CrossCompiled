@@ -48,11 +48,15 @@ class ConvertNullCoalesce(astTrans.AstTransformer):
         super().visit_method_base(method_base)
     
     def visit_block(self, block):
+        # @csharp var prevStatements = this.statements;
+        # @java var prevStatements = this.statements;
         prev_statements = self.statements
         self.statements = []
         for stmt in block.statements:
             self.statements.append(self.visit_statement(stmt))
         block.statements = self.statements
+        # @csharp this.statements = prevStatements;
+        # @java this.statements = prevStatements;
         self.statements = prev_statements
         return block
     

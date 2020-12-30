@@ -3,7 +3,8 @@ using One;
 
 namespace One.Transforms
 {
-    public class ConvertToMethodCall : AstTransformer {
+    public class ConvertToMethodCall : AstTransformer
+    {
         public ConvertToMethodCall(): base("ConvertToMethodCall")
         {
             

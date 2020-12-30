@@ -81,11 +81,15 @@ class ConvertNullCoalesce extends AstTransformer {
     }
     
     protected function visitBlock($block) {
+        // @csharp var prevStatements = this.statements;
+        // @java var prevStatements = this.statements;
         $prevStatements = $this->statements;
         $this->statements = array();
         foreach ($block->statements as $stmt)
             $this->statements[] = $this->visitStatement($stmt);
         $block->statements = $this->statements;
+        // @csharp this.statements = prevStatements;
+        // @java this.statements = prevStatements;
         $this->statements = $prevStatements;
         return $block;
     }

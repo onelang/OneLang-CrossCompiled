@@ -19,7 +19,7 @@ class JsonSerializer:
         if obj.is_null():
             return "null"
         elif astTypes.TypeHelper.equals(decl_type, self.lit_types.string):
-            return json.dumps(obj.get_string_value())
+            return json.dumps(obj.get_string_value(), separators=(',', ':'))
         elif astTypes.TypeHelper.equals(decl_type, self.lit_types.boolean):
             return "true" if obj.get_boolean_value() else "false"
         elif astTypes.TypeHelper.is_assignable_to(decl_type, self.lit_types.array):

@@ -366,6 +366,10 @@ class AstTransformer implements ITransformer {
         foreach ($method->parameters as $item)
             $this->visitMethodParameter($item);
         
+        if ($method instanceof Constructor && $method->superCallArgs !== null)
+            for ($i = 0; $i < count($method->superCallArgs); $i++)
+                $method->superCallArgs[$i] = $this->visitExpression($method->superCallArgs[$i]);
+        
         if ($method->body !== null)
             $method->body = $this->visitBlock($method->body);
     }

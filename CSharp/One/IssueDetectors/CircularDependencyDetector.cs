@@ -8,7 +8,8 @@ namespace One.IssueDetectors
         void processNode(TNode node);
     }
     
-    public class GraphCycleDetector<TNode> {
+    public class GraphCycleDetector<TNode>
+    {
         public Map<TNode, bool> nodeIsInPath;
         public IGraphVisitor<TNode> visitor;
         
@@ -41,7 +42,8 @@ namespace One.IssueDetectors
         }
     }
     
-    public class CircularDependencyDetector : IGraphVisitor<SourceFile> {
+    public class CircularDependencyDetector : IGraphVisitor<SourceFile>
+    {
         public GraphCycleDetector<SourceFile> detector;
         public DetectionMode detectionMode;
         

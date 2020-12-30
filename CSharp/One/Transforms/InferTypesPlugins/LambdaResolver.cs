@@ -3,7 +3,8 @@ using One.Transforms.InferTypesPlugins.Helpers;
 
 namespace One.Transforms.InferTypesPlugins
 {
-    public class LambdaResolver : InferTypesPlugin {
+    public class LambdaResolver : InferTypesPlugin
+    {
         public LambdaResolver(): base("LambdaResolver")
         {
             

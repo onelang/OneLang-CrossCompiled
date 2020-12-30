@@ -8,7 +8,8 @@ using VM;
 
 namespace Generator
 {
-    public class JavaGenerator : IGenerator {
+    public class JavaGenerator : IGenerator
+    {
         public Set<string> imports;
         public IInterface currentClass;
         public string[] reservedWords;
@@ -73,6 +74,13 @@ namespace Generator
             throw new Error($"Not supported VMValue for escape()");
         }
         
+        public string escapeRepl(IVMValue value)
+        {
+            if (value is ExpressionValue exprValue2 && exprValue2.value is StringLiteral strLit)
+                return JSON.stringify(strLit.stringValue.replace(new RegExp("\\\\"), "\\\\").replace(new RegExp("\\$"), "\\$"));
+            throw new Error($"Not supported VMValue for escapeRepl()");
+        }
+        
         public void addPlugin(IGeneratorPlugin plugin)
         {
             this.plugins.push(plugin);
@@ -83,6 +91,7 @@ namespace Generator
                 templFileGenPlug.modelGlobals.set("isArray", new LambdaValue(args => new BooleanValue(this.isArray((((ExpressionValue)args.get(0))).value))));
                 templFileGenPlug.modelGlobals.set("toArray", new LambdaValue(args => new StringValue(this.toArray((((TypeValue)args.get(0))).type))));
                 templFileGenPlug.modelGlobals.set("escape", new LambdaValue(args => new StringValue(this.escape(args.get(0)))));
+                templFileGenPlug.modelGlobals.set("escapeRepl", new LambdaValue(args => new StringValue(this.escapeRepl(args.get(0)))));
             }
         }
         
@@ -136,52 +145,57 @@ namespace Generator
             return this.typeArgs(args.map(x => this.type(x)));
         }
         
+        public IType unpackPromise(IType t)
+        {
+            return t is ClassType classType && classType.decl == this.currentClass.parentFile.literalTypes.promise.decl ? classType.typeArguments.get(0) : t;
+        }
+        
         public string type(IType t, bool mutates = true, bool isNew = false)
         {
-            if (t is ClassType classType || t is InterfaceType) {
+            t = this.unpackPromise(t);
+            
+            if (t is ClassType classType2 || t is InterfaceType) {
                 var decl = (((IInterfaceType)t)).getDecl();
                 if (decl.parentFile.exportScope != null)
                     this.imports.add(this.toImport(decl.parentFile.exportScope) + "." + decl.name);
             }
             
-            if (t is ClassType classType2) {
-                var typeArgs = this.typeArgs(classType2.typeArguments.map(x => this.type(x)));
-                if (classType2.decl.name == "TsString")
+            if (t is ClassType classType3) {
+                var typeArgs = this.typeArgs(classType3.typeArguments.map(x => this.type(x)));
+                if (classType3.decl.name == "TsString")
                     return "String";
-                else if (classType2.decl.name == "TsBoolean")
+                else if (classType3.decl.name == "TsBoolean")
                     return "Boolean";
-                else if (classType2.decl.name == "TsNumber")
+                else if (classType3.decl.name == "TsNumber")
                     return "Integer";
-                else if (classType2.decl.name == "TsArray") {
+                else if (classType3.decl.name == "TsArray") {
                     var realType = isNew ? "ArrayList" : "List";
                     if (mutates) {
                         this.imports.add($"java.util.{realType}");
-                        return $"{realType}<{this.type(classType2.typeArguments.get(0))}>";
+                        return $"{realType}<{this.type(classType3.typeArguments.get(0))}>";
                     }
                     else
-                        return $"{this.type(classType2.typeArguments.get(0))}[]";
+                        return $"{this.type(classType3.typeArguments.get(0))}[]";
                 }
-                else if (classType2.decl.name == "Map") {
+                else if (classType3.decl.name == "Map") {
                     var realType = isNew ? "LinkedHashMap" : "Map";
                     this.imports.add($"java.util.{realType}");
-                    return $"{realType}<{this.type(classType2.typeArguments.get(0))}, {this.type(classType2.typeArguments.get(1))}>";
+                    return $"{realType}<{this.type(classType3.typeArguments.get(0))}, {this.type(classType3.typeArguments.get(1))}>";
                 }
-                else if (classType2.decl.name == "Set") {
+                else if (classType3.decl.name == "Set") {
                     var realType = isNew ? "LinkedHashSet" : "Set";
                     this.imports.add($"java.util.{realType}");
-                    return $"{realType}<{this.type(classType2.typeArguments.get(0))}>";
+                    return $"{realType}<{this.type(classType3.typeArguments.get(0))}>";
                 }
-                else if (classType2.decl.name == "Promise")
-                    return classType2.typeArguments.get(0) is VoidType ? "void" : $"{this.type(classType2.typeArguments.get(0))}";
-                else if (classType2.decl.name == "Object")
+                else if (classType3.decl.name == "Object")
                     //this.imports.add("System");
                     return $"Object";
-                else if (classType2.decl.name == "TsMap") {
+                else if (classType3.decl.name == "TsMap") {
                     var realType = isNew ? "LinkedHashMap" : "Map";
                     this.imports.add($"java.util.{realType}");
-                    return $"{realType}<String, {this.type(classType2.typeArguments.get(0))}>";
+                    return $"{realType}<String, {this.type(classType3.typeArguments.get(0))}>";
                 }
-                return this.name_(classType2.decl.name) + typeArgs;
+                return this.name_(classType3.decl.name) + typeArgs;
             }
             else if (t is InterfaceType intType)
                 return $"{this.name_(intType.decl.name)}{this.typeArgs(intType.typeArguments.map(x => this.type(x)))}";
@@ -196,10 +210,11 @@ namespace Generator
             else if (t is GenericsType genType)
                 return $"{genType.typeVarName}";
             else if (t is LambdaType lambdType) {
-                var isFunc = !(lambdType.returnType is VoidType);
+                var retType = this.unpackPromise(lambdType.returnType);
+                var isFunc = !(retType is VoidType);
                 var paramTypes = lambdType.parameters.map(x => this.type(x.type, false)).ToList();
                 if (isFunc)
-                    paramTypes.push(this.type(lambdType.returnType, false));
+                    paramTypes.push(this.type(retType, false));
                 this.imports.add("java.util.function." + (isFunc ? "Function" : "Consumer"));
                 return $"{(isFunc ? "Function" : "Consumer")}<{paramTypes.join(", ")}>";
             }
@@ -211,7 +226,7 @@ namespace Generator
         
         public bool isTsArray(IType type)
         {
-            return type is ClassType classType3 && classType3.decl.name == "TsArray";
+            return type is ClassType classType4 && classType4.decl.name == "TsArray";
         }
         
         public string vis(Visibility v)
@@ -224,13 +239,13 @@ namespace Generator
             string type;
             if (attr != null && attr.attributes != null && attr.attributes.hasKey("java-type"))
                 type = attr.attributes.get("java-type");
-            else if (v.type is ClassType classType4 && classType4.decl.name == "TsArray") {
+            else if (v.type is ClassType classType5 && classType5.decl.name == "TsArray") {
                 if (v.mutability.mutated) {
                     this.imports.add("java.util.List");
-                    type = $"List<{this.type(classType4.typeArguments.get(0))}>";
+                    type = $"List<{this.type(classType5.typeArguments.get(0))}>";
                 }
                 else
-                    type = $"{this.type(classType4.typeArguments.get(0))}[]";
+                    type = $"{this.type(classType5.typeArguments.get(0))}[]";
             }
             else
                 type = this.type(v.type);
@@ -301,8 +316,8 @@ namespace Generator
         
         public string inferExprNameForType(IType type)
         {
-            if (type is ClassType classType5 && classType5.typeArguments.every((x, _) => x is ClassType)) {
-                var fullName = classType5.typeArguments.map(x => (((ClassType)x)).decl.name).join("") + classType5.decl.name;
+            if (type is ClassType classType6 && classType6.typeArguments.every((x, _) => x is ClassType)) {
+                var fullName = classType6.typeArguments.map(x => (((ClassType)x)).decl.name).join("") + classType6.decl.name;
                 return NameUtils.shortName(fullName);
             }
             return null;
@@ -340,12 +355,14 @@ namespace Generator
                 res = $"{this.name_(statMethCallExpr.method.parentInterface.name)}.{this.methodCall(statMethCallExpr)}";
             else if (expr is GlobalFunctionCallExpression globFunctCallExpr)
                 res = $"Global.{this.name_(globFunctCallExpr.func.name)}{this.exprCall(new IType[0], globFunctCallExpr.args)}";
-            else if (expr is LambdaCallExpression lambdCallExpr)
-                res = $"{this.expr(lambdCallExpr.method)}.apply({lambdCallExpr.args.map(x => this.expr(x)).join(", ")})";
+            else if (expr is LambdaCallExpression lambdCallExpr) {
+                var resType = this.unpackPromise(lambdCallExpr.actualType);
+                res = $"{this.expr(lambdCallExpr.method)}.{(resType is VoidType ? "accept" : "apply")}({lambdCallExpr.args.map(x => this.expr(x)).join(", ")})";
+            }
             else if (expr is BooleanLiteral boolLit)
                 res = $"{(boolLit.boolValue ? "true" : "false")}";
-            else if (expr is StringLiteral strLit)
-                res = $"{JSON.stringify(strLit.stringValue)}";
+            else if (expr is StringLiteral strLit2)
+                res = $"{JSON.stringify(strLit2.stringValue)}";
             else if (expr is NumericLiteral numLit)
                 res = $"{numLit.valueAsText}";
             else if (expr is CharacterLiteral charLit)
@@ -381,7 +398,8 @@ namespace Generator
                     }
                     else {
                         var repr = this.expr(part.expression);
-                        parts.push(part.expression is ConditionalExpression ? $"({repr})" : repr);
+                        var isComplex = part.expression is ConditionalExpression condExpr || part.expression is BinaryExpression;
+                        parts.push(isComplex ? $"({repr})" : repr);
                     }
                 }
                 res = parts.join(" + ");
@@ -416,8 +434,8 @@ namespace Generator
             }
             else if (expr is CastExpression castExpr)
                 res = $"(({this.type(castExpr.newType)}){this.expr(castExpr.expression)})";
-            else if (expr is ConditionalExpression condExpr)
-                res = $"{this.expr(condExpr.condition)} ? {this.expr(condExpr.whenTrue)} : {this.mutatedExpr(condExpr.whenFalse, condExpr.whenTrue)}";
+            else if (expr is ConditionalExpression condExpr2)
+                res = $"{this.expr(condExpr2.condition)} ? {this.expr(condExpr2.whenTrue)} : {this.mutatedExpr(condExpr2.whenFalse, condExpr2.whenTrue)}";
             else if (expr is InstanceOfExpression instOfExpr)
                 res = $"{this.expr(instOfExpr.expr)} instanceof {this.type(instOfExpr.checkType)}";
             else if (expr is ParenthesizedExpression parExpr)
@@ -448,8 +466,9 @@ namespace Generator
                     res = $"new {this.type(mapLit.actualType, true, true)}()";
                 else {
                     this.imports.add($"java.util.Map");
+                    this.imports.add($"java.util.LinkedHashMap");
                     var repr = mapLit.items.map(item => $"{JSON.stringify(item.key)}, {this.expr(item.value)}").join(", ");
-                    res = $"Map.of({repr})";
+                    res = $"new LinkedHashMap<>(Map.of({repr}))";
                 }
             }
             else if (expr is NullLiteral)
@@ -494,7 +513,7 @@ namespace Generator
             else if (expr is EnumMemberReference enumMembRef)
                 res = $"{this.name_(enumMembRef.decl.parentEnum.name)}.{this.name_(enumMembRef.decl.name)}";
             else if (expr is NullCoalesceExpression nullCoalExpr)
-                res = $"{this.expr(nullCoalExpr.defaultExpr)} != null ? {this.expr(nullCoalExpr.defaultExpr)} : {this.mutatedExpr(nullCoalExpr.exprIfNull, nullCoalExpr.defaultExpr)}";
+                res = $"({this.expr(nullCoalExpr.defaultExpr)} != null ? ({this.expr(nullCoalExpr.defaultExpr)}) : ({this.mutatedExpr(nullCoalExpr.exprIfNull, nullCoalExpr.defaultExpr)}))";
             else { }
             return res;
         }
@@ -563,7 +582,8 @@ namespace Generator
             string res = null;
             
             if (stmt.attributes != null && stmt.attributes.hasKey("java-import"))
-                this.imports.add(stmt.attributes.get("java-import"));
+                foreach (var imp in stmt.attributes.get("java-import").split(new RegExp("\\n")))
+                    this.imports.add(imp);
             
             if (stmt.attributes != null && stmt.attributes.hasKey("java"))
                 res = stmt.attributes.get("java");
@@ -662,8 +682,13 @@ namespace Generator
                 
                 var superCall = cls.constructor_.superCallArgs != null ? $"super({cls.constructor_.superCallArgs.map(x => this.expr(x)).join(", ")});\n" : "";
                 
+                // @java var stmts = Stream.of(constrFieldInits, complexFieldInits, cls.constructor_.getBody().statements).flatMap(Collection::stream).toArray(Statement[]::new);
+                // @java-import java.util.Collection
+                // @java-import java.util.stream.Stream
+                var stmts = constrFieldInits.concat(complexFieldInits.ToArray()).concat(cls.constructor_.body.statements.ToArray());
+                
                 // TODO: super calls
-                resList.push(this.methodGen("public " + this.preIf("/* throws */ ", cls.constructor_.throws) + this.name_(cls.name), cls.constructor_.parameters, $"\n{{\n{this.pad(superCall + this.stmts(constrFieldInits.concat(complexFieldInits.ToArray()).concat(cls.constructor_.body.statements.ToArray())))}\n}}"));
+                resList.push(this.methodGen("public " + this.preIf("/* throws */ ", cls.constructor_.throws) + this.name_(cls.name), cls.constructor_.parameters, $"\n{{\n{this.pad(superCall + this.stmts(stmts))}\n}}"));
             }
             else if (complexFieldInits.length() > 0)
                 resList.push($"public {this.name_(cls.name)}()\n{{\n{this.pad(this.stmts(complexFieldInits.ToArray()))}\n}}");
@@ -724,8 +749,10 @@ namespace Generator
         public string toImport(ExportScopeRef scope)
         {
             // TODO: hack
-            if (scope.scopeName == "index")
-                return $"io.onelang.std.{scope.packageName.split(new RegExp("-")).get(0).replace(new RegExp("One\\."), "").toLowerCase()}";
+            if (scope.scopeName == "index") {
+                var name = scope.packageName.split(new RegExp("-")).get(0).replace(new RegExp("One\\."), "").toLowerCase();
+                return $"io.onelang.std.{name}";
+            }
             return $"{scope.packageName}.{scope.scopeName.replace(new RegExp("/"), ".")}";
         }
         
@@ -745,7 +772,8 @@ namespace Generator
                         imports.add($"{impPkg}.{imp.name}");
                 }
                 
-                var head = $"package {packageName};\n\n{Array.from(imports.values()).map(x => $"import {x};").join("\n")}\n\n";
+                var headImports = Array.from(imports.values()).map(x => $"import {x};").join("\n");
+                var head = $"package {packageName};\n\n{headImports}\n\n";
                 
                 foreach (var enum_ in file.enums)
                     result.push(new GeneratedFile($"{dstDir}/{enum_.name}.java", $"{head}public enum {this.name_(enum_.name)} {{ {enum_.values.map(x => this.name_(x.name)).join(", ")} }}"));

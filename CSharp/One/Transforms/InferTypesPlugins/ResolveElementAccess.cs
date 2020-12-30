@@ -5,7 +5,8 @@ using System.Collections.Generic;
 
 namespace One.Transforms.InferTypesPlugins
 {
-    public class ResolveElementAccess : InferTypesPlugin {
+    public class ResolveElementAccess : InferTypesPlugin
+    {
         public ResolveElementAccess(): base("ResolveElementAccess")
         {
             

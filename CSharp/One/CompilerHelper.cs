@@ -3,7 +3,8 @@ using System.Threading.Tasks;
 
 namespace One
 {
-    public class CompilerHelper {
+    public class CompilerHelper
+    {
         public static string baseDir = "./";
         
         public static async Task<Compiler> initProject(string projectName, string sourceDir, string lang = "ts", string packagesDir = null)
