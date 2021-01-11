@@ -1,4 +1,6 @@
 using One.Ast;
+using System.Collections.Generic;
+using System.Linq;
 using Utils;
 using VM;
 
@@ -10,11 +12,11 @@ namespace Template
     
     public class TemplateBlock : ITemplateNode
     {
-        public ITemplateNode[] items;
+        public List<ITemplateNode> items;
         
         public TemplateBlock(ITemplateNode[] items)
         {
-            this.items = items;
+            this.items = items.ToList();
         }
         
         public string format(VMContext context)

@@ -1,7 +1,6 @@
 package OneLang.Template.TemplateParser;
 
 import OneLang.Parsers.Common.Reader.Reader;
-import OneLang.Parsers.Common.ExpressionParser.ExpressionParser;
 import OneLang.Template.Nodes.ExpressionNode;
 import OneLang.Template.Nodes.ForNode;
 import OneLang.Template.Nodes.ITemplateNode;
@@ -16,7 +15,7 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import OneLang.Template.Nodes.TemplateBlock;
 import OneLang.Template.Nodes.ITemplateNode;
-import java.util.ArrayList;
+import OneLang.Template.TemplateParser.BlockIndentManager;
 import OneLang.Template.Nodes.ExpressionNode;
 import OneLang.One.Ast.Expressions.Identifier;
 import OneLang.Template.Nodes.ForNode;
@@ -46,34 +45,37 @@ public class TemplateParser {
         return result;
     }
     
-    public TemplateBlock parseBlock() {
-        var items = new ArrayList<ITemplateNode>();
+    public TemplateBlock parseBlock(Integer indentLen) {
+        var block = new TemplateBlock(new ITemplateNode[0]);
+        var indentMan = new BlockIndentManager(block, indentLen);
         while (!this.reader.getEof()) {
             if (this.reader.peekExactly("{{/"))
                 break;
             if (this.reader.readExactly("${")) {
                 var expr = this.parser.parseExpression();
-                items.add(new ExpressionNode(expr));
+                block.items.add(new ExpressionNode(expr));
                 this.reader.expectToken("}", null);
             }
             else if (this.reader.readExactly("$")) {
                 var id = this.reader.expectIdentifier(null);
-                items.add(new ExpressionNode(new Identifier(id)));
+                block.items.add(new ExpressionNode(new Identifier(id)));
             }
             else if (this.reader.readExactly("{{")) {
+                var blockIndentLen = indentMan.removePrevIndent();
+                
                 if (this.reader.readToken("for")) {
                     var varName = this.reader.expectIdentifier(null);
                     this.reader.expectToken("of", null);
                     var itemsExpr = this.parser.parseExpression();
                     var attrs = this.parseAttributes();
                     this.reader.expectToken("}}", null);
-                    var body = this.parseBlock();
+                    var body = this.parseBlock(blockIndentLen);
                     this.reader.expectToken("{{/for}}", null);
-                    items.add(new ForNode(varName, itemsExpr, body, attrs.get("joiner")));
+                    block.items.add(new ForNode(varName, itemsExpr, body, attrs.get("joiner")));
                 }
                 else {
                     var expr = this.parser.parseExpression();
-                    items.add(new ExpressionNode(expr));
+                    block.items.add(new ExpressionNode(expr));
                     this.reader.expectToken("}}", null);
                 }
             }
@@ -81,13 +83,17 @@ public class TemplateParser {
                 var literal = this.reader.readRegex("([^\\\\]\\\\(\\{\\{|\\$)|\r|\n|(?!\\{\\{|\\$\\{|\\$).)*")[0];
                 if (Objects.equals(literal, ""))
                     throw new Error("This should not happen!");
-                items.add(new LiteralNode(literal));
+                block.items.add(indentMan.deindent(new LiteralNode(literal)));
             }
         }
-        return new TemplateBlock(items.toArray(ITemplateNode[]::new));
+        
+        if (indentLen != 0)
+            indentMan.removePrevIndent();
+        
+        return block;
     }
     
     public TemplateBlock parse() {
-        return this.parseBlock();
+        return this.parseBlock(0);
     }
 }
